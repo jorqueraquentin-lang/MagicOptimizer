@@ -5,6 +5,7 @@
 #include "OptimizerSettings.h"
 #include "PythonBridge.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
+#include "Framework/MultiBox/MultiBoxExtender.h"
 #include "LevelEditor.h"
 #include "EditorUtilitySubsystem.h"
 #include "EditorUtilityWidget.h"
@@ -18,39 +19,121 @@
 
 void FMagicOptimizerModule::StartupModule()
 {
-	// Register settings
+	UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Starting module initialization..."));
+
+	// Check if we're in the editor
+	if (!GIsEditor)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MagicOptimizer: Not in editor mode, skipping initialization"));
+		return;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Editor mode confirmed, proceeding with initialization"));
+
+	// Check if required modules are available
+	if (!FModuleManager::Get().IsModuleLoaded("LevelEditor"))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MagicOptimizer: LevelEditor module not loaded, attempting to load it"));
+		FModuleManager::Get().LoadModule("LevelEditor");
+	}
+
+	if (!FModuleManager::Get().IsModuleLoaded("PythonScriptPlugin"))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MagicOptimizer: PythonScriptPlugin module not loaded, attempting to load it"));
+		FModuleManager::Get().LoadModule("PythonScriptPlugin");
+	}
+
+	// Register settings with error handling
+	UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Initializing settings..."));
+	
 	if (UOptimizerSettings* Settings = UOptimizerSettings::Get())
 	{
 		Settings->GetDefaultSettings();
+		UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Settings initialized successfully"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("MagicOptimizer: Failed to get OptimizerSettings instance"));
 	}
 
-	// Register menu extension
-	FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+	// Register tab spawner with error handling
+	UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Registering tab spawner..."));
 	
-	// Add menu extension
-	MenuExtensibilityManager = LevelEditorModule.GetMenuExtensibilityManager();
-	MenuExtensibilityManager->AddExtender(MenuExtender);
+	if (FGlobalTabmanager::Get())
+	{
+		FGlobalTabmanager::Get()->RegisterNomadTabSpawner(
+			"MagicOptimizer",
+			FOnSpawnTab::CreateRaw(this, &FMagicOptimizerModule::OnSpawnPluginTab))
+			.SetDisplayName(LOCTEXT("MagicOptimizerTab", "Magic Optimizer"))
+			.SetMenuType(ETabSpawnerMenuType::Hidden);
 
-	// Register tab spawner
-	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(
-		"MagicOptimizer",
-		FOnSpawnTab::CreateRaw(this, &FMagicOptimizerModule::OnSpawnPluginTab))
-		.SetDisplayName(LOCTEXT("MagicOptimizerTab", "Magic Optimizer"))
-		.SetMenuType(ETabSpawnerMenuType::Hidden);
+		UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Tab spawner registered successfully"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("MagicOptimizer: GlobalTabmanager not available"));
+	}
 
-	// Add menu item
-	FLevelEditorModule& LevelEditor = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
-	TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender());
-	MenuExtender->AddMenuExtension("WindowLayout", EExtensionHook::After, nullptr, FMenuExtensionDelegate::CreateRaw(this, &FMagicOptimizerModule::AddMenuExtension));
-	LevelEditor.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
+	// Add menu extension to Window menu with comprehensive error handling
+	UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Adding Window menu extension..."));
+	
+	if (FModuleManager::Get().IsModuleLoaded("LevelEditor"))
+	{
+		FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+		
+		if (LevelEditorModule.GetMenuExtensibilityManager())
+		{
+			TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender());
+			MenuExtender->AddMenuExtension("WindowLayout", EExtensionHook::After, nullptr, FMenuExtensionDelegate::CreateRaw(this, &FMagicOptimizerModule::AddMenuExtension));
+			LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
 
-	UE_LOG(LogTemp, Log, TEXT("MagicOptimizer module started"));
+			UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Window menu extension added successfully"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("MagicOptimizer: MenuExtensibilityManager not available"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("MagicOptimizer: LevelEditor module not available for menu extension"));
+	}
+
+	// Alternative: Add to Tools menu as well
+	UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Adding Tools menu extension..."));
+	
+	if (FModuleManager::Get().IsModuleLoaded("LevelEditor"))
+	{
+		FLevelEditorModule& LevelEditorModule2 = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+		
+		if (LevelEditorModule2.GetMenuExtensibilityManager())
+		{
+			TSharedPtr<FExtender> ToolsMenuExtender = MakeShareable(new FExtender());
+			ToolsMenuExtender->AddMenuExtension("AssetEditorToolbar", EExtensionHook::After, nullptr, FMenuExtensionDelegate::CreateRaw(this, &FMagicOptimizerModule::AddMenuExtension));
+			LevelEditorModule2.GetMenuExtensibilityManager()->AddExtender(ToolsMenuExtender);
+
+			UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Tools menu extension added successfully"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("MagicOptimizer: MenuExtensibilityManager not available for Tools menu"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("MagicOptimizer: LevelEditor module not available for Tools menu extension"));
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("MagicOptimizer module started successfully"));
 }
 
 void FMagicOptimizerModule::ShutdownModule()
 {
 	// Unregister tab spawner
-	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner("MagicOptimizer");
+	if (FGlobalTabmanager::Get())
+	{
+		FGlobalTabmanager::Get()->UnregisterNomadTabSpawner("MagicOptimizer");
+	}
 
 	UE_LOG(LogTemp, Log, TEXT("MagicOptimizer module shutdown"));
 }
@@ -68,15 +151,21 @@ void FMagicOptimizerModule::AddMenuExtension(FMenuBuilder& Builder)
 {
 	Builder.AddMenuEntry(
 		LOCTEXT("MagicOptimizerMenu", "Magic Optimizer"),
-		LOCTEXT("MagicOptimizerMenuTooltip", "Open Magic Optimizer panel"),
+		LOCTEXT("MagicOptimizerMenuTooltip", "Open Magic Optimizer panel for asset optimization"),
 		FSlateIcon(FAppStyle::GetAppStyleSetName(), "ClassIcon.BlueprintCore"),
 		FUIAction(FExecuteAction::CreateRaw(this, &FMagicOptimizerModule::OpenOptimizerPanel))
 	);
+
+	// Add a separator for better visibility
+	Builder.AddSeparator();
 }
 
 void FMagicOptimizerModule::OpenOptimizerPanel()
 {
-	FGlobalTabmanager::Get()->TryInvokeTab("MagicOptimizer");
+	if (FGlobalTabmanager::Get())
+	{
+		FGlobalTabmanager::Get()->TryInvokeTab("MagicOptimizer");
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

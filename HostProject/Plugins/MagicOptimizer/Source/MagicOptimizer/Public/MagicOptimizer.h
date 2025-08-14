@@ -4,11 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
-#include "Framework/MultiBox/MultiBoxExtender.h"
-#include "Framework/MultiBox/MultiBoxBuilder.h"
-
-class FMenuExtensibilityManager;
-class FExtender;
 
 class FMagicOptimizerModule : public IModuleInterface
 {
@@ -27,9 +22,5 @@ public:
 	void OpenOptimizerPanel();
 
 private:
-	/** Menu extensibility manager */
-	TSharedPtr<FMenuExtensibilityManager> MenuExtensibilityManager;
-
-	/** Menu extender */
-	TSharedPtr<FExtender> MenuExtender;
+	// No private members needed for this implementation
 };

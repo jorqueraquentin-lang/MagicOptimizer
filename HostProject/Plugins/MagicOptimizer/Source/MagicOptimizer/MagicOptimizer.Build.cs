@@ -8,18 +8,9 @@ public class MagicOptimizer : ModuleRules
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
-		PublicIncludePaths.AddRange(
-			new string[] {
-				// ... add public include paths required here ...
-			}
-			);
-				
+		// No additional include paths needed for this module
 		
-		PrivateIncludePaths.AddRange(
-			new string[] {
-				// ... add other private include paths required here ...
-			}
-			);
+		// No additional private include paths needed for this module
 			
 		
 		PublicDependencyModuleNames.AddRange(
@@ -42,7 +33,8 @@ public class MagicOptimizer : ModuleRules
 				"WorkspaceMenuStructure",
 				"ContentBrowser",
 				"AssetTools",
-				"EditorSubsystem"
+				"EditorSubsystem",
+				"DeveloperSettings"
 			}
 			);
 			
@@ -79,26 +71,15 @@ public class MagicOptimizer : ModuleRules
 				"NaniteTools",
 				"StaticMeshEditor",
 				"TextureEditor",
-				"MaterialEditorUtilities"
+				"MaterialEditorUtilities",
+				"AppFramework"
 			}
 			);
 		
 		
-		DynamicallyLoadedModuleNames.AddRange(
-			new string[]
-			{
-				// ... add any modules that your module loads dynamically here ...
-			}
-			);
+		// No dynamically loaded modules needed for this module
 
-		// Add source files
-		PublicDependencyModuleNames.AddRange(
-			new string[]
-			{
-				"OptimizerSettings",
-				"PythonBridge",
-				"OptimizerRun"
-			}
-			);
+		// These are internal classes, not external modules
+		// They will be compiled as part of this module
 	}
 }
