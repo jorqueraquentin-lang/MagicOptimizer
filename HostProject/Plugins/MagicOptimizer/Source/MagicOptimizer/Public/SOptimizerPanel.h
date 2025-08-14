@@ -31,8 +31,8 @@ protected:
 	UPythonBridge* PythonBridge;
 
 	// UI state
-	TArray<FString> TargetProfiles;
-	TArray<FString> RunModes;
+	TArray<TSharedPtr<FString>> TargetProfiles;
+	TArray<TSharedPtr<FString>> RunModes;
 	FString CurrentProfile;
 	FString CurrentRunMode;
 
@@ -74,12 +74,10 @@ protected:
 	void OnCloseEditorChanged(ECheckBoxState NewState);
 
 	// Profile selection
-	TSharedRef<SWidget> OnGenerateProfileComboItem(FString Item) const;
 	void OnProfileSelected(TSharedPtr<FString> SelectedItem, ESelectInfo::Type SelectInfo);
 	FText GetCurrentProfileText() const;
 
 	// Run mode selection
-	TSharedRef<SWidget> OnGenerateRunModeComboItem(FString Item) const;
 	void OnRunModeSelected(TSharedPtr<FString> SelectedItem, ESelectInfo::Type SelectInfo);
 	FText GetCurrentRunModeText() const;
 

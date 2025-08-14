@@ -171,26 +171,24 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 void SOptimizerPanel::InitializeUI()
 {
 	// Initialize target profiles
-	TargetProfiles = {
-		MakeShareable(new FString(TEXT("PC_Ultra"))),
-		MakeShareable(new FString(TEXT("PC_Balanced"))),
-		MakeShareable(new FString(TEXT("Console_Optimized"))),
-		MakeShareable(new FString(TEXT("Mobile_Low"))),
-		MakeShareable(new FString(TEXT("Mobile_Ultra_Lite"))),
-		MakeShareable(new FString(TEXT("VR"))),
-		MakeShareable(new FString(TEXT("Cinematic"))),
-		MakeShareable(new FString(TEXT("UI_Crisp"))),
-		MakeShareable(new FString(TEXT("Archviz_High_Fidelity"))),
-		MakeShareable(new FString(TEXT("Custom")))
-	};
+	TargetProfiles.Empty();
+	TargetProfiles.Add(MakeShareable(new FString(TEXT("PC_Ultra"))));
+	TargetProfiles.Add(MakeShareable(new FString(TEXT("PC_Balanced"))));
+	TargetProfiles.Add(MakeShareable(new FString(TEXT("Console_Optimized"))));
+	TargetProfiles.Add(MakeShareable(new FString(TEXT("Mobile_Low"))));
+	TargetProfiles.Add(MakeShareable(new FString(TEXT("Mobile_Ultra_Lite"))));
+	TargetProfiles.Add(MakeShareable(new FString(TEXT("VR"))));
+	TargetProfiles.Add(MakeShareable(new FString(TEXT("Cinematic"))));
+	TargetProfiles.Add(MakeShareable(new FString(TEXT("UI_Crisp"))));
+	TargetProfiles.Add(MakeShareable(new FString(TEXT("Archviz_High_Fidelity"))));
+	TargetProfiles.Add(MakeShareable(new FString(TEXT("Custom"))));
 	
 	// Initialize run modes
-	RunModes = {
-		MakeShareable(new FString(TEXT("Audit"))),
-		MakeShareable(new FString(TEXT("Recommend"))),
-		MakeShareable(new FString(TEXT("Apply"))),
-		MakeShareable(new FString(TEXT("Verify")))
-	};
+	RunModes.Empty();
+	RunModes.Add(MakeShareable(new FString(TEXT("Audit"))));
+	RunModes.Add(MakeShareable(new FString(TEXT("Recommend"))));
+	RunModes.Add(MakeShareable(new FString(TEXT("Apply"))));
+	RunModes.Add(MakeShareable(new FString(TEXT("Verify"))));
 	
 	// Set defaults
 	CurrentProfile = TEXT("PC_Balanced");
