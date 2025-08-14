@@ -12,6 +12,7 @@
 #include "Widgets/Layout/SExpandableArea.h"
 
 #include "EditorStyleSet.h"
+#include "ISettingsModule.h"
 #include "OptimizerSettings.h"
 #include "PythonBridge.h"
 #include "Editor.h"
@@ -31,6 +32,19 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 
 	// Initialize UI state
 	InitializeUI();
+
+	// Restore persisted settings into UI
+	if (OptimizerSettings)
+	{
+		if (!OptimizerSettings->TargetProfile.IsEmpty())
+		{
+			CurrentProfile = OptimizerSettings->TargetProfile;
+		}
+		if (!OptimizerSettings->RunMode.IsEmpty())
+		{
+			CurrentRunMode = OptimizerSettings->RunMode;
+		}
+	}
 
 	ChildSlot
 	[
@@ -222,7 +236,16 @@ FReply SOptimizerPanel::OnVerifyClicked()
 
 FReply SOptimizerPanel::OnSettingsClicked()
 {
-	ShowNotification(TEXT("Settings clicked - functionality to be implemented"));
+	// Open our settings page in Project Settings if available
+	if (FModuleManager::Get().IsModuleLoaded("Settings"))
+	{
+		ISettingsModule& SettingsModule = FModuleManager::LoadModuleChecked<ISettingsModule>("Settings");
+		SettingsModule.ShowViewer("Project", "Plugins", TEXT("Magic Optimizer Settings"));
+	}
+	else
+	{
+		ShowNotification(TEXT("Settings module unavailable"), false);
+	}
 	return FReply::Handled();
 }
 
@@ -233,6 +256,13 @@ void SOptimizerPanel::OnProfileSelected(TSharedPtr<FString> SelectedItem, ESelec
 	{
 		CurrentProfile = *SelectedItem;
 		ShowNotification(FString::Printf(TEXT("Profile selected: %s"), *CurrentProfile));
+
+		// Persist to settings
+		if (OptimizerSettings)
+		{
+			OptimizerSettings->TargetProfile = CurrentProfile;
+			OptimizerSettings->SaveSettings();
+		}
 	}
 }
 
@@ -248,6 +278,13 @@ void SOptimizerPanel::OnRunModeSelected(TSharedPtr<FString> SelectedItem, ESelec
 	{
 		CurrentRunMode = *SelectedItem;
 		ShowNotification(FString::Printf(TEXT("Run mode selected: %s"), *CurrentRunMode));
+
+		// Persist to settings
+		if (OptimizerSettings)
+		{
+			OptimizerSettings->RunMode = CurrentRunMode;
+			OptimizerSettings->SaveSettings();
+		}
 	}
 }
 

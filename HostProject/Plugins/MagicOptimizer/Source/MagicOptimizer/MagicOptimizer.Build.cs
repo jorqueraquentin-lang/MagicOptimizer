@@ -56,6 +56,7 @@ public class MagicOptimizer : ModuleRules
 				"AssetTools",
 				"EditorSubsystem",
 				"Projects",
+				"Settings",
 				"InputCore",
 				"ApplicationCore",
 				"RHI",

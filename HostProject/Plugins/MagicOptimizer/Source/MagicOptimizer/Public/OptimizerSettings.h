@@ -79,6 +79,10 @@ public:
 	UPROPERTY(config, EditAnywhere, BlueprintReadWrite, Category = "Profile")
 	FString TargetProfile;
 
+	// Selected run mode (Audit/Recommend/Apply/Verify)
+	UPROPERTY(config, EditAnywhere, BlueprintReadWrite, Category = "Profile")
+	FString RunMode;
+
 	// Whether to use currently selected assets
 	UPROPERTY(config, EditAnywhere, BlueprintReadWrite, Category = "Scope")
 	bool bUseSelection;

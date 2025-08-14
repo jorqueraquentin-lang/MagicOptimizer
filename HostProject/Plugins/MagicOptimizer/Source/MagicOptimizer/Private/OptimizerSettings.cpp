@@ -13,6 +13,7 @@ UOptimizerSettings::UOptimizerSettings()
 	// Set default values
 	CategoryMask = (uint8)EOptimizerCategory::Textures | (uint8)EOptimizerCategory::Meshes;
 	TargetProfile = TEXT("PC_Balanced");
+	RunMode = TEXT("Audit");
 	bUseSelection = false;
 	IncludePathsCsv = TEXT("");
 	ExcludePathsCsv = TEXT("");
@@ -123,6 +124,7 @@ void UOptimizerSettings::SetToDefaults()
 	// Reset to constructor defaults
 	CategoryMask = (uint8)EOptimizerCategory::Textures | (uint8)EOptimizerCategory::Meshes;
 	TargetProfile = TEXT("PC_Balanced");
+	RunMode = TEXT("Audit");
 	bUseSelection = false;
 	IncludePathsCsv = TEXT("");
 	ExcludePathsCsv = TEXT("");

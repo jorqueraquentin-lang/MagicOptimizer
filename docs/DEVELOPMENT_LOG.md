@@ -1234,3 +1234,23 @@ Now that the plugin loads successfully, focus shifts to:
    - Plan error handling approach
 
 **Status**: 📋 **ROADMAP PLANNED** - Ready for careful, incremental development with testing at every step
+
+---
+
+### 2025-08-14 20:55 — Settings persistence implemented (Baby Step)
+
+- Implemented persistence for UI selections via `UDeveloperSettings`:
+  - Added `RunMode` to `UOptimizerSettings` (`config`), with default "Audit"
+  - On profile/run mode selection, values are saved using `SaveConfig()`
+  - On panel construct, previously saved `TargetProfile` and `RunMode` are restored into UI
+- Settings button now opens the Project Settings page for the plugin:
+  - Uses `ISettingsModule::ShowViewer("Project", "Plugins", "Magic Optimizer Settings")`
+  - Added `Settings` module dependency
+- Note: Engine log still reports missing system Python in PATH; Python bridge remains gracefully disabled until Python is available
+
+Verification steps:
+- Change profile and run mode → close/reopen tab and the editor → selections persist ✅
+- Click Settings → Project Settings opens at "Magic Optimizer Settings" ✅
+
+Next baby step:
+- Expand persistence to other options (e.g., dry run, max changes, selection scope) and reflect settings in UI state.
