@@ -417,10 +417,45 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 					.InitiallyCollapsed(false)
 					.BodyContent()
 					[
-						SAssignNew(TextureListView, SListView<FTextureAuditRowPtr>)
-						.ItemHeight(20)
-						.ListItemsSource(&TextureRows)
-						.OnGenerateRow(this, &SOptimizerPanel::OnGenerateTextureRow)
+						SNew(SVerticalBox)
+						+ SVerticalBox::Slot()
+						.AutoHeight()
+						.Padding(0,0,0,4)
+						[
+							SNew(SHorizontalBox)
+							+ SHorizontalBox::Slot().AutoWidth()
+							[
+								SNew(SButton)
+								.Text(FText::FromString(TEXT("Path")))
+								.OnClicked(this, &SOptimizerPanel::OnSortByPath)
+							]
+							+ SHorizontalBox::Slot().AutoWidth().Padding(4,0)
+							[
+								SNew(SButton)
+								.Text(FText::FromString(TEXT("Width")))
+								.OnClicked(this, &SOptimizerPanel::OnSortByWidth)
+							]
+							+ SHorizontalBox::Slot().AutoWidth().Padding(4,0)
+							[
+								SNew(SButton)
+								.Text(FText::FromString(TEXT("Height")))
+								.OnClicked(this, &SOptimizerPanel::OnSortByHeight)
+							]
+							+ SHorizontalBox::Slot().AutoWidth().Padding(4,0)
+							[
+								SNew(SButton)
+								.Text(FText::FromString(TEXT("Format")))
+								.OnClicked(this, &SOptimizerPanel::OnSortByFormat)
+							]
+						]
+						+ SVerticalBox::Slot()
+						.FillHeight(1.f)
+						[
+							SAssignNew(TextureListView, SListView<FTextureAuditRowPtr>)
+							.ItemHeight(20)
+							.ListItemsSource(&TextureRows)
+							.OnGenerateRow(this, &SOptimizerPanel::OnGenerateTextureRow)
+						]
 					]
 				]
 			]
@@ -649,6 +684,9 @@ void SOptimizerPanel::LoadTextureAuditCsv()
 		}
 
 		MagicOptimizerLog::AppendLine(FString::Printf(TEXT("UI: Loaded %d texture rows (lines=%d)"), TextureRows.Num(), Lines.Num()));
+
+		// Apply current sort
+		SortTextureRows();
 	}
 	else
 	{
@@ -663,6 +701,58 @@ TSharedRef<ITableRow> SOptimizerPanel::OnGenerateTextureRow(FTextureAuditRowPtr 
 	[
 		SNew(STextBlock).Text(FText::FromString(Text))
 	];
+}
+
+void SOptimizerPanel::SortTextureRows()
+{
+	auto CmpPathAsc = [](const FTextureAuditRowPtr& A, const FTextureAuditRowPtr& B){ return A->Path < B->Path; };
+	auto CmpPathDesc = [](const FTextureAuditRowPtr& A, const FTextureAuditRowPtr& B){ return A->Path > B->Path; };
+	auto CmpWidthAsc = [](const FTextureAuditRowPtr& A, const FTextureAuditRowPtr& B){ return A->Width < B->Width; };
+	auto CmpWidthDesc = [](const FTextureAuditRowPtr& A, const FTextureAuditRowPtr& B){ return A->Width > B->Width; };
+	auto CmpHeightAsc = [](const FTextureAuditRowPtr& A, const FTextureAuditRowPtr& B){ return A->Height < B->Height; };
+	auto CmpHeightDesc = [](const FTextureAuditRowPtr& A, const FTextureAuditRowPtr& B){ return A->Height > B->Height; };
+	auto CmpFormatAsc = [](const FTextureAuditRowPtr& A, const FTextureAuditRowPtr& B){ return A->Format < B->Format; };
+	auto CmpFormatDesc = [](const FTextureAuditRowPtr& A, const FTextureAuditRowPtr& B){ return A->Format > B->Format; };
+
+	switch (CurrentSortColumn)
+	{
+		case ETextureSortColumn::Path: TextureRows.StableSort(bSortAscending ? CmpPathAsc : CmpPathDesc); break;
+		case ETextureSortColumn::Width: TextureRows.StableSort(bSortAscending ? CmpWidthAsc : CmpWidthDesc); break;
+		case ETextureSortColumn::Height: TextureRows.StableSort(bSortAscending ? CmpHeightAsc : CmpHeightDesc); break;
+		case ETextureSortColumn::Format: TextureRows.StableSort(bSortAscending ? CmpFormatAsc : CmpFormatDesc); break;
+	}
+}
+
+FReply SOptimizerPanel::OnSortByPath()
+{
+	if (CurrentSortColumn == ETextureSortColumn::Path) { bSortAscending = !bSortAscending; } else { CurrentSortColumn = ETextureSortColumn::Path; bSortAscending = true; }
+	SortTextureRows();
+	if (TextureListView.IsValid()) { TextureListView->RequestListRefresh(); }
+	return FReply::Handled();
+}
+
+FReply SOptimizerPanel::OnSortByWidth()
+{
+	if (CurrentSortColumn == ETextureSortColumn::Width) { bSortAscending = !bSortAscending; } else { CurrentSortColumn = ETextureSortColumn::Width; bSortAscending = true; }
+	SortTextureRows();
+	if (TextureListView.IsValid()) { TextureListView->RequestListRefresh(); }
+	return FReply::Handled();
+}
+
+FReply SOptimizerPanel::OnSortByHeight()
+{
+	if (CurrentSortColumn == ETextureSortColumn::Height) { bSortAscending = !bSortAscending; } else { CurrentSortColumn = ETextureSortColumn::Height; bSortAscending = true; }
+	SortTextureRows();
+	if (TextureListView.IsValid()) { TextureListView->RequestListRefresh(); }
+	return FReply::Handled();
+}
+
+FReply SOptimizerPanel::OnSortByFormat()
+{
+	if (CurrentSortColumn == ETextureSortColumn::Format) { bSortAscending = !bSortAscending; } else { CurrentSortColumn = ETextureSortColumn::Format; bSortAscending = true; }
+	SortTextureRows();
+	if (TextureListView.IsValid()) { TextureListView->RequestListRefresh(); }
+	return FReply::Handled();
 }
 
 // Utility functions

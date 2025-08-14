@@ -57,6 +57,11 @@ protected:
 	TArray<FTextureAuditRowPtr> TextureRows;
 	TSharedPtr<class SListView<FTextureAuditRowPtr>> TextureListView;
 
+	// Sorting state for texture results
+	enum class ETextureSortColumn { Path, Width, Height, Format };
+	ETextureSortColumn CurrentSortColumn = ETextureSortColumn::Path;
+	bool bSortAscending = true;
+
 	// UI event handlers
 	FReply OnAuditClicked();
 	FReply OnRecommendClicked();
@@ -127,6 +132,11 @@ protected:
 	// Results loading
 	void LoadTextureAuditCsv();
 	TSharedRef<class ITableRow> OnGenerateTextureRow(FTextureAuditRowPtr Item, const TSharedRef<class STableViewBase>& OwnerTable);
+	void SortTextureRows();
+	FReply OnSortByPath();
+	FReply OnSortByWidth();
+	FReply OnSortByHeight();
+	FReply OnSortByFormat();
 
 	// UI refresh
 	void RefreshUI();

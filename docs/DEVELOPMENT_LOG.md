@@ -1269,15 +1269,15 @@ Verification steps:
 - Toggle options, close/reopen editor → values persist ✅
 - Open Settings from panel → correct page focused ✅
 
-### 2025-08-15 06:05 — Embedded Python “Hello World” and Output Capture (Baby Step)
+### 2025-08-15 06:05 — Embedded Python "Hello World" and Output Capture (Baby Step)
 
 - Implemented basic Python execution path:
   - Prefer UE embedded Python via `IPythonScriptPlugin`
   - Fallback to system Python if available; otherwise report unavailability
-  - If `entry.py` missing, run embedded “Hello World” to validate plumbing
+  - If `entry.py` missing, run embedded "Hello World" to validate plumbing
 - Wired output handling:
   - Captured `StdOut` and `StdErr` in `FOptimizerResult`
-  - Added “Python Output” section in `SOptimizerPanel` to display runtime output and errors
+  - Added "Python Output" section in `SOptimizerPanel` to display runtime output and errors
 - Verified all four phases (Audit/Recommend/Apply/Verify) succeed via embedded Python
 
 Notes:
@@ -1328,7 +1328,7 @@ Next actions:
 
 **Status**: Working plugin shell with basic UI, settings persistence, and Python bridge validation in place; early Audit results surfaced.
 
-**What’s solid right now**:
+**What's solid right now**:
 - C++ module compiles/loads; panel opens from Window menu.
 - `UDeveloperSettings` persistence wired to core toggles and inputs; Settings page deep-link works.
 - Embedded Python path proven; `entry.py` invoked; JSON round‑trip parsed and rendered in the panel.
@@ -1360,7 +1360,7 @@ Next actions:
 
 - Moved badges directly under the main title for better first-glance scanning.
 - Added a concise tagline and four hero bullets to communicate value quickly.
-- Relocated “The Audit, Made Friendly” into `Project Overview` as “Why Audit First” to align with overall flow.
+- Relocated "The Audit, Made Friendly" into `Project Overview` as "Why Audit First" to align with overall flow.
 - Preserved all original content; improved hierarchy and consistency with the rest of the README styling.
 
 ---
@@ -1403,7 +1403,7 @@ Verification:
 ### 2025-08-15 08:45 — UI table visible, CSV loader hardened (Baby Steps)
 
 - `SOptimizerPanel.cpp`:
-  - Sections “Python Output” and “Audit Results (Textures)” expand by default.
+  - Sections "Python Output" and "Audit Results (Textures)" expand by default.
   - Preload `textures.csv` on construct.
   - Switched to `LoadFileToStringArray`, added line count logging, trimmed whitespace/quotes.
   - Parser now preserves empty fields and accepts rows with only `path` so results always show.
@@ -1530,5 +1530,19 @@ Verification:
 **Next**:
 - Surface dimensions in the UI table (already loads 220 rows) and add simple sorting by width/height.
 - Consider computing megapixels and flags (e.g., >4K) in CSV for quick filtering.
+
+---
+
+### 2025-08-15 09:27:55 - UI: Sortable Texture Audit Table 🔽🔼
+
+**Change**: Added sort controls above the "Audit Results (Textures)" list.
+
+**Details**:
+- Buttons for sorting by `Path`, `Width`, `Height`, `Format`
+- Click toggles ascending/descending; list refreshes immediately
+- Sorting also auto-applies after CSV load
+
+**Impact**:
+- Easier inspection of large audits; can quickly find largest textures or group by formats.
 
 ---
