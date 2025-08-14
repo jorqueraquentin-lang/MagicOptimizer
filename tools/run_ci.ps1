@@ -2,7 +2,9 @@ param(
   [string]$Phase = "Audit",
   [string]$Profile = "Mobile_Low",
   [switch]$WithRHI,
-  [switch]$WithScreenshot
+  [switch]$WithScreenshot,
+  [int]$Keep = 5,
+  [int]$MaxAgeDays = 7
 )
 
 $ErrorActionPreference = "Stop"
@@ -15,7 +17,8 @@ $CiPy = Join-Path $RepoRoot "HostProject/Content/Python/magic_optimizer/ci_run.p
 $CiShotPy = Join-Path $RepoRoot "HostProject/Content/Python/magic_optimizer/ci_shot.py"
 $Saved = Join-Path $RepoRoot "HostProject/Saved"
 $MOFolder = Join-Path $Saved "MagicOptimizer"
-$CiOut = Join-Path $RepoRoot ("docs/ci/" + (Get-Date).ToString("yyyyMMdd_HHmmss"))
+$CiRoot = Join-Path $RepoRoot "docs/ci"
+$CiOut = Join-Path $CiRoot ((Get-Date).ToString("yyyyMMdd_HHmmss"))
 
 New-Item -ItemType Directory -Force -Path $CiOut | Out-Null
 
@@ -85,5 +88,25 @@ Copy-Item -Recurse -Force (Join-Path $MOFolder "*") $CiOut -ErrorAction Silently
 Copy-Item -Recurse -Force (Join-Path $Saved "Logs/*") $CiOut -ErrorAction SilentlyContinue
 
 Write-Host "CI artifacts written to $CiOut"
+
+
+# Prune older CI runs (retention)
+try {
+  if (Test-Path $CiRoot) {
+    $runs = Get-ChildItem -Directory $CiRoot | Sort-Object Name -Descending
+    $toKeep = @($runs | Select-Object -First $Keep)
+    $now = Get-Date
+    foreach ($dir in $runs) {
+      $isKept = $toKeep -contains $dir
+      $ageDays = ($now - $dir.CreationTime).TotalDays
+      if (-not $isKept -and $ageDays -gt $MaxAgeDays) {
+        Write-Host ("Pruning old CI run: {0}" -f $dir.FullName)
+        Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $dir.FullName
+      }
+    }
+  }
+} catch {
+  Write-Warning ("CI prune failed: {0}" -f $_)
+}
 
 

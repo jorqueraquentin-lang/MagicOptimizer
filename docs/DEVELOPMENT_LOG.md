@@ -1546,3 +1546,16 @@ Verification:
 - Easier inspection of large audits; can quickly find largest textures or group by formats.
 
 ---
+
+### 2025-08-15 09:28:30 - CI artifacts pruning + flush script 🧹
+
+**Change**: Prevent docs/ci from piling up.
+
+**Details**:
+- `tools/run_ci.ps1`: added retention (keep N=5, max age 7 days; configurable) and automatic pruning after each run
+- `tools/flush_ci.ps1`: manual cleanup tool (flags: `-All`, `-Keep`, `-MaxAgeDays`)
+- `.gitignore`: added `docs/ci/`
+
+**Impact**: CI artifacts are ephemeral; workspace stays clean automatically.
+
+---
