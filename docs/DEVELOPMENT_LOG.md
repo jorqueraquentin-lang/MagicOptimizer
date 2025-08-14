@@ -1514,3 +1514,21 @@ Verification:
 **Testing Method**: Using console command `MagicOptimizer.Run Audit Textures` for autonomous testing.
 
 ---
+
+### 2025-08-15 09:27:15 - Texture Dimensions Populated + Screenshot Loop 📷✅
+
+**Milestone**: CSV now includes width/height for all audited textures; CI before/after screenshots working.
+
+**What Changed**:
+- Python `entry.py`: Added robust dimension extraction using `TextureSource.get_size_x/get_size_y`, fallbacks (`imported_size`, direct `size_x/size_y`, platform data, AssetRegistry tags). Now writes non-empty width/height.
+- CI: Confirmed before/after screenshots captured around Audit run and copied to `docs/ci/<timestamp>/CI/`.
+
+**Evidence**:
+- `HostProject/Saved/MagicOptimizer/Audit/textures.csv` first lines show populated sizes (e.g., `...,32,32,...`).
+- Runtime log shows 220 textures processed and CSV written with 220 rows.
+
+**Next**:
+- Surface dimensions in the UI table (already loads 220 rows) and add simple sorting by width/height.
+- Consider computing megapixels and flags (e.g., >4K) in CSV for quick filtering.
+
+---

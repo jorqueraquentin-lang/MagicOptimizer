@@ -204,6 +204,9 @@ if p == 'audit':
 
         _append_log(f"Audit: Found {total_textures} textures, processing {len(textures_info)} for detailed info")
 
+        # Initialize counter for loaded textures
+        loaded_tex_count = 0
+
         # Load sample for width/height/format - process all textures, not just first 50
         sample_paths = [t.get('path') for t in textures_info]
         _append_log(f"Processing {len(sample_paths)} textures for width/height/format data")
@@ -225,41 +228,140 @@ if p == 'audit':
                 height = None
                 fmt = None
                 
-                # Try to get dimensions from platform data
+                # Resolve texture dimensions robustly
                 try:
-                    # In UE5, texture dimensions are accessed differently
-                    # Try getting from texture properties directly first
-                    width = tex.get_editor_property('size_x')
-                    height = tex.get_editor_property('size_y')
-                    _append_log(f"Texture {path}: {width}x{height} from direct properties")
+                    # Method 1: TextureSource get_size_x/get_size_y (most reliable)
+                    try:
+                        src = tex.get_editor_property('source')
+                        if src and hasattr(src, 'get_size_x') and hasattr(src, 'get_size_y'):
+                            width = int(src.get_size_x())
+                            height = int(src.get_size_y())
+                            _append_log(f"Texture {path}: {width}x{height} from TextureSource")
+                    except Exception:
+                        pass
+                    
+                    # Method 2: imported_size IntPoint
+                    if width is None or height is None:
+                        try:
+                            imported = tex.get_editor_property('imported_size')
+                            if imported is not None:
+                                width = int(getattr(imported, 'x', 0))
+                                height = int(getattr(imported, 'y', 0))
+                                if width and height:
+                                    _append_log(f"Texture {path}: {width}x{height} from imported_size")
+                        except Exception:
+                            pass
+                    
+                    # Method 3: direct size_x/size_y properties
+                    if width is None or height is None:
+                        try:
+                            width = int(tex.get_editor_property('size_x'))
+                            height = int(tex.get_editor_property('size_y'))
+                            if width and height:
+                                _append_log(f"Texture {path}: {width}x{height} from direct properties")
+                        except Exception:
+                            pass
+                    
+                    # Method 3b: blueprint getter methods if available
+                    if width is None or height is None:
+                        try:
+                            if hasattr(tex, 'blueprint_get_size_x') and hasattr(tex, 'blueprint_get_size_y'):
+                                width = int(tex.blueprint_get_size_x())
+                                height = int(tex.blueprint_get_size_y())
+                                if width and height:
+                                    _append_log(f"Texture {path}: {width}x{height} from blueprint getters")
+                        except Exception:
+                            pass
+
+                    # Method 3c: generic getters if exposed
+                    if width is None or height is None:
+                        try:
+                            if hasattr(tex, 'get_size_x') and hasattr(tex, 'get_size_y'):
+                                width = int(tex.get_size_x())
+                                height = int(tex.get_size_y())
+                                if width and height:
+                                    _append_log(f"Texture {path}: {width}x{height} from get_size_* methods")
+                        except Exception:
+                            pass
+
+                    # Method 4: platform_data size
+                    if width is None or height is None:
+                        try:
+                            pd = getattr(tex, 'platform_data', None)
+                            if pd and hasattr(pd, 'size_x') and hasattr(pd, 'size_y'):
+                                width = int(pd.size_x)
+                                height = int(pd.size_y)
+                                if width and height:
+                                    _append_log(f"Texture {path}: {width}x{height} from platform_data")
+                        except Exception:
+                            pass
+
+                    # Method 5: AssetRegistry tags (ImportedSize / Dimensions)
+                    if (width is None or height is None) and hasattr(unreal, 'AssetRegistryHelpers'):
+                        try:
+                            ar = unreal.AssetRegistryHelpers.get_asset_registry()
+                            sop = None
+                            try:
+                                sop = unreal.SoftObjectPath(path)
+                            except Exception:
+                                sop = None
+                            ad = ar.get_asset_by_object_path(sop if sop is not None else path)
+                            if ad:
+                                def _parse_dim_string(sval: str):
+                                    try:
+                                        if not sval:
+                                            return None, None
+                                        st = str(sval).strip()
+                                        import re
+                                        m = re.search(r"(\d+)\D+(\d+)", st)
+                                        if m:
+                                            return int(m.group(1)), int(m.group(2))
+                                    except Exception:
+                                        return None, None
+                                    return None, None
+
+                                w = h = None
+                                # Try ImportedSize first
+                                try:
+                                    val = ad.get_tag_value('ImportedSize')
+                                    # Could be IntPoint-like or string
+                                    if val is not None:
+                                        w = int(getattr(val, 'x', 0)) if hasattr(val, 'x') else None
+                                        h = int(getattr(val, 'y', 0)) if hasattr(val, 'y') else None
+                                        if not (w and h) and isinstance(val, str):
+                                            w, h = _parse_dim_string(val)
+                                except Exception:
+                                    pass
+
+                                # Fallback to Dimensions tag
+                                if not (w and h):
+                                    try:
+                                        val2 = ad.get_tag_value('Dimensions')
+                                        if isinstance(val2, str):
+                                            w, h = _parse_dim_string(val2)
+                                    except Exception:
+                                        pass
+
+                                # Fallback to tags_and_values map
+                                if not (w and h):
+                                    try:
+                                        tv = getattr(ad, 'tags_and_values', None)
+                                        if tv and isinstance(tv, dict):
+                                            cand = tv.get('ImportedSize') or tv.get('Dimensions')
+                                            if cand:
+                                                w, h = _parse_dim_string(cand)
+                                    except Exception:
+                                        pass
+
+                                if w and h:
+                                    width = w
+                                    height = h
+                                    _append_log(f"Texture {path}: {width}x{height} from AssetRegistry tag")
+                        except Exception:
+                            pass
                 except Exception as e:
-                    _append_log(f"Failed to get direct properties for {path}: {e}")
-                    width = None
-                    height = None
-                
-                # If direct properties failed, try alternative methods
-                if width is None or height is None:
-                    try:
-                        # Try getting from imported texture data
-                        imported_texture = tex.get_editor_property('imported_size')
-                        if imported_texture:
-                            width = imported_texture.x
-                            height = imported_texture.y
-                            _append_log(f"Texture {path}: {width}x{height} from imported_size")
-                    except Exception as e:
-                        _append_log(f"Failed to get imported_size for {path}: {e}")
-                
-                # Last resort: try to get from the texture's source data
-                if width is None or height is None:
-                    try:
-                        # Try getting from the texture's source data
-                        source_data = tex.get_editor_property('source')
-                        if source_data:
-                            width = source_data.get_editor_property('size_x')
-                            height = source_data.get_editor_property('size_y')
-                            _append_log(f"Texture {path}: {width}x{height} from source data")
-                    except Exception as e:
-                        _append_log(f"Failed to get source data for {path}: {e}")
+                    _append_log(f"Failed to get dimensions for {path}: {e}")
+                    width = height = None
                 
                 # Get compression format
                 try:
