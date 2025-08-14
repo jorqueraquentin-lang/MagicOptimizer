@@ -43,14 +43,18 @@ void UOptimizerSettings::GetDefaultSettings()
 
 void UOptimizerSettings::SaveSettings()
 {
-	// Save to config file
-	SaveConfig();
+	// Persist to the per-project editor config to ensure values survive restarts
+	SaveConfig(CPF_Config, *GEditorPerProjectIni);
+	if (GConfig)
+	{
+		GConfig->Flush(false, GEditorPerProjectIni);
+	}
 }
 
 void UOptimizerSettings::LoadSettings()
 {
-	// Load from config file
-	LoadConfig();
+	// Load from the per-project editor config
+	LoadConfig(GetClass(), *GEditorPerProjectIni);
 }
 
 FOptimizerPreset* UOptimizerSettings::GetPreset(const FString& PresetName)

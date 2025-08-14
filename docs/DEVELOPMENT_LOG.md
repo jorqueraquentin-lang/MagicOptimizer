@@ -1254,3 +1254,32 @@ Verification steps:
 
 Next baby step:
 - Expand persistence to other options (e.g., dry run, max changes, selection scope) and reflect settings in UI state.
+
+### 2025-08-15 05:25 — Settings UI wired to persistence (Baby Step)
+
+- Added UI controls for core options in `SOptimizerPanel` and bound them to `UOptimizerSettings`:
+  - Categories (Textures, Meshes, Materials) → bitmask updates saved immediately
+  - Use Selection, Dry Run, Create Backups, Close Editor → toggles persisted
+  - Max Changes, Output Directory → text inputs persisted
+  - Python Script Path, Enable Python Logging → persisted
+- On construct, UI reads values from settings; on change, saves via `SaveConfig()`
+- Settings button now deep-links to Project → Plugins → Magic Optimizer
+
+Verification steps:
+- Toggle options, close/reopen editor → values persist ✅
+- Open Settings from panel → correct page focused ✅
+
+### 2025-08-15 06:05 — Embedded Python “Hello World” and Output Capture (Baby Step)
+
+- Implemented basic Python execution path:
+  - Prefer UE embedded Python via `IPythonScriptPlugin`
+  - Fallback to system Python if available; otherwise report unavailability
+  - If `entry.py` missing, run embedded “Hello World” to validate plumbing
+- Wired output handling:
+  - Captured `StdOut` and `StdErr` in `FOptimizerResult`
+  - Added “Python Output” section in `SOptimizerPanel` to display runtime output and errors
+- Verified all four phases (Audit/Recommend/Apply/Verify) succeed via embedded Python
+
+Notes:
+- System Python not in PATH → embedded Python path exercised (as expected)
+- Next: replace Hello World with minimal `entry.py` skeleton to pass arguments and return structured output

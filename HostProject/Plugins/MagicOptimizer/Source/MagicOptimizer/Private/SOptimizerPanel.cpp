@@ -13,6 +13,7 @@
 
 #include "EditorStyleSet.h"
 #include "ISettingsModule.h"
+#include "Misc/ConfigCacheIni.h"
 #include "OptimizerSettings.h"
 #include "PythonBridge.h"
 #include "Editor.h"
@@ -36,6 +37,9 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 	// Restore persisted settings into UI
 	if (OptimizerSettings)
 	{
+		// Ensure latest values from config are loaded
+		OptimizerSettings->LoadSettings();
+
 		if (!OptimizerSettings->TargetProfile.IsEmpty())
 		{
 			CurrentProfile = OptimizerSettings->TargetProfile;
@@ -78,7 +82,7 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 					SNew(SButton)
 					.Text(FText::FromString(TEXT("Settings")))
 					.OnClicked(this, &SOptimizerPanel::OnSettingsClicked)
-					.ButtonStyle(FEditorStyle::Get(), "FlatButton")
+                    .ButtonStyle(FAppStyle::Get(), "FlatButton")
 				]
 				
 				// Profile Selection
@@ -176,6 +180,188 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 						.OnClicked(this, &SOptimizerPanel::OnVerifyClicked)
 					]
 				]
+
+				// Options Section
+				+ SGridPanel::Slot(0, 5)
+				.ColumnSpan(2)
+				.Padding(4.0f)
+				[
+					SNew(SExpandableArea)
+					.AreaTitle(FText::FromString(TEXT("Options")))
+					.BodyContent()
+					[
+						SNew(SGridPanel)
+						.FillColumn(1, 1.0f)
+
+						// Categories (basic)
+						+ SGridPanel::Slot(0, 0)
+						.Padding(4.0f)
+						.VAlign(VAlign_Center)
+						[
+							SNew(STextBlock)
+							.Text(FText::FromString(TEXT("Categories:")))
+						]
+						+ SGridPanel::Slot(1, 0)
+						.Padding(4.0f)
+						[
+							SNew(SGridPanel)
+							+ SGridPanel::Slot(0, 0)
+							.Padding(2.0f)
+							[
+								SNew(SCheckBox)
+								.IsChecked(this, &SOptimizerPanel::IsTexturesChecked)
+								.OnCheckStateChanged(this, &SOptimizerPanel::OnTexturesChanged)
+								.Content()
+								[
+									SNew(STextBlock).Text(FText::FromString(TEXT("Textures")))
+								]
+							]
+							+ SGridPanel::Slot(1, 0)
+							.Padding(2.0f)
+							[
+								SNew(SCheckBox)
+								.IsChecked(this, &SOptimizerPanel::IsMeshesChecked)
+								.OnCheckStateChanged(this, &SOptimizerPanel::OnMeshesChanged)
+								.Content()
+								[
+									SNew(STextBlock).Text(FText::FromString(TEXT("Meshes")))
+								]
+							]
+							+ SGridPanel::Slot(2, 0)
+							.Padding(2.0f)
+							[
+								SNew(SCheckBox)
+								.IsChecked(this, &SOptimizerPanel::IsMaterialsChecked)
+								.OnCheckStateChanged(this, &SOptimizerPanel::OnMaterialsChanged)
+								.Content()
+								[
+									SNew(STextBlock).Text(FText::FromString(TEXT("Materials")))
+								]
+							]
+						]
+
+						// Use Selection
+						+ SGridPanel::Slot(0, 1)
+						.Padding(4.0f)
+						.VAlign(VAlign_Center)
+						[
+							SNew(STextBlock).Text(FText::FromString(TEXT("Use Selection:")))
+						]
+						+ SGridPanel::Slot(1, 1)
+						.Padding(4.0f)
+						[
+							SNew(SCheckBox)
+							.IsChecked(this, &SOptimizerPanel::IsUseSelectionChecked)
+							.OnCheckStateChanged(this, &SOptimizerPanel::OnUseSelectionChanged)
+						]
+
+						// Dry Run / Backups
+						+ SGridPanel::Slot(0, 2)
+						.Padding(4.0f)
+						.VAlign(VAlign_Center)
+						[
+							SNew(STextBlock).Text(FText::FromString(TEXT("Safety:")))
+						]
+						+ SGridPanel::Slot(1, 2)
+						.Padding(4.0f)
+						[
+							SNew(SGridPanel)
+							+ SGridPanel::Slot(0, 0)
+							.Padding(2.0f)
+							[
+								SNew(SCheckBox)
+								.IsChecked(this, &SOptimizerPanel::IsDryRunChecked)
+								.OnCheckStateChanged(this, &SOptimizerPanel::OnDryRunChanged)
+								.Content()[ SNew(STextBlock).Text(FText::FromString(TEXT("Dry Run"))) ]
+							]
+							+ SGridPanel::Slot(1, 0)
+							.Padding(2.0f)
+							[
+								SNew(SCheckBox)
+								.IsChecked(this, &SOptimizerPanel::IsCreateBackupsChecked)
+								.OnCheckStateChanged(this, &SOptimizerPanel::OnCreateBackupsChanged)
+								.Content()[ SNew(STextBlock).Text(FText::FromString(TEXT("Create Backups"))) ]
+							]
+						]
+
+						// Max Changes
+						+ SGridPanel::Slot(0, 3)
+						.Padding(4.0f)
+						.VAlign(VAlign_Center)
+						[
+							SNew(STextBlock).Text(FText::FromString(TEXT("Max Changes:")))
+						]
+						+ SGridPanel::Slot(1, 3)
+						.Padding(4.0f)
+						[
+							SNew(SEditableTextBox)
+							.Text(FText::FromString(GetMaxChanges()))
+							.OnTextChanged(this, &SOptimizerPanel::OnMaxChangesChanged)
+						]
+
+						// Output Directory
+						+ SGridPanel::Slot(0, 4)
+						.Padding(4.0f)
+						.VAlign(VAlign_Center)
+						[
+							SNew(STextBlock).Text(FText::FromString(TEXT("Output Directory:")))
+						]
+						+ SGridPanel::Slot(1, 4)
+						.Padding(4.0f)
+						[
+							SNew(SEditableTextBox)
+							.Text(FText::FromString(GetOutputDirectory()))
+							.OnTextChanged(this, &SOptimizerPanel::OnOutputDirectoryChanged)
+						]
+
+						// Python
+						+ SGridPanel::Slot(0, 5)
+						.Padding(4.0f)
+						.VAlign(VAlign_Center)
+						[
+							SNew(STextBlock).Text(FText::FromString(TEXT("Python Script Path:")))
+						]
+						+ SGridPanel::Slot(1, 5)
+						.Padding(4.0f)
+						[
+							SNew(SEditableTextBox)
+							.Text(FText::FromString(GetPythonScriptPath()))
+							.OnTextChanged(this, &SOptimizerPanel::OnPythonScriptPathChanged)
+						]
+						+ SGridPanel::Slot(1, 6)
+						.Padding(4.0f)
+						[
+							SNew(SCheckBox)
+							.IsChecked(this, &SOptimizerPanel::IsPythonLoggingChecked)
+							.OnCheckStateChanged(this, &SOptimizerPanel::OnPythonLoggingChanged)
+							.Content()[ SNew(STextBlock).Text(FText::FromString(TEXT("Enable Python Logging"))) ]
+						]
+					]
+				]
+
+				// Output Area
+				+ SGridPanel::Slot(0, 6)
+				.ColumnSpan(2)
+				.Padding(4.0f)
+				[
+					SNew(SExpandableArea)
+					.AreaTitle(FText::FromString(TEXT("Python Output")))
+					.BodyContent()
+					[
+						SNew(SScrollBox)
+						+ SScrollBox::Slot()
+						[
+							SNew(STextBlock)
+							.Text_Lambda([this]() { return FText::FromString(LastStdOut.IsEmpty() ? TEXT("(no output)") : LastStdOut); })
+						]
+						+ SScrollBox::Slot()
+						[
+							SNew(STextBlock)
+							.ColorAndOpacity(FLinearColor::Red)
+							.Text_Lambda([this]() { return FText::FromString(LastStdErr); })
+						]
+					]
+				]
 			]
 		]
 	];
@@ -237,11 +423,12 @@ FReply SOptimizerPanel::OnVerifyClicked()
 FReply SOptimizerPanel::OnSettingsClicked()
 {
 	// Open our settings page in Project Settings if available
-	if (FModuleManager::Get().IsModuleLoaded("Settings"))
-	{
-		ISettingsModule& SettingsModule = FModuleManager::LoadModuleChecked<ISettingsModule>("Settings");
-		SettingsModule.ShowViewer("Project", "Plugins", TEXT("Magic Optimizer Settings"));
-	}
+    if (FModuleManager::Get().IsModuleLoaded("Settings"))
+    {
+        ISettingsModule& SettingsModule = FModuleManager::LoadModuleChecked<ISettingsModule>("Settings");
+        // Focus the exact registered settings page
+        SettingsModule.ShowViewer(TEXT("Project"), TEXT("Plugins"), TEXT("MagicOptimizer"));
+    }
 	else
 	{
 		ShowNotification(TEXT("Settings module unavailable"), false);
@@ -314,7 +501,9 @@ void SOptimizerPanel::RunOptimizationPhase(const FString& Phase)
 	Params.Categories = GetSelectedCategories();
 	
 	// Execute optimization
-	FOptimizerResult Result = PythonBridge->RunOptimization(Params);
+    FOptimizerResult Result = PythonBridge->RunOptimization(Params);
+    LastStdOut = Result.StdOut;
+    LastStdErr = Result.StdErr;
 	
 	if (Result.bSuccess)
 	{
@@ -371,42 +560,210 @@ void SOptimizerPanel::LogMessage(const FString& Message, bool bIsError)
 }
 
 // Placeholder implementations for required methods
-ECheckBoxState SOptimizerPanel::IsTexturesChecked() const { return ECheckBoxState::Checked; }
-void SOptimizerPanel::OnTexturesChanged(ECheckBoxState NewState) {}
-ECheckBoxState SOptimizerPanel::IsMeshesChecked() const { return ECheckBoxState::Checked; }
-void SOptimizerPanel::OnMeshesChanged(ECheckBoxState NewState) {}
-ECheckBoxState SOptimizerPanel::IsMaterialsChecked() const { return ECheckBoxState::Checked; }
-void SOptimizerPanel::OnMaterialsChanged(ECheckBoxState NewState) {}
-ECheckBoxState SOptimizerPanel::IsLevelsChecked() const { return ECheckBoxState::Unchecked; }
-void SOptimizerPanel::OnLevelsChanged(ECheckBoxState NewState) {}
-ECheckBoxState SOptimizerPanel::IsRuntimeChecked() const { return ECheckBoxState::Unchecked; }
-void SOptimizerPanel::OnRuntimeChanged(ECheckBoxState NewState) {}
-ECheckBoxState SOptimizerPanel::IsAudioChecked() const { return ECheckBoxState::Unchecked; }
-void SOptimizerPanel::OnAudioChanged(ECheckBoxState NewState) {}
+ECheckBoxState SOptimizerPanel::IsTexturesChecked() const
+{
+	if (!OptimizerSettings) return ECheckBoxState::Unchecked;
+	const bool b = (OptimizerSettings->CategoryMask & (uint8)EOptimizerCategory::Textures) != 0;
+	return b ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+}
+void SOptimizerPanel::OnTexturesChanged(ECheckBoxState NewState)
+{
+	if (!OptimizerSettings) return;
+	if (NewState == ECheckBoxState::Checked)
+		OptimizerSettings->CategoryMask |= (uint8)EOptimizerCategory::Textures;
+	else
+		OptimizerSettings->CategoryMask &= ~(uint8)EOptimizerCategory::Textures;
+	OptimizerSettings->SaveSettings();
+}
+ECheckBoxState SOptimizerPanel::IsMeshesChecked() const
+{
+	if (!OptimizerSettings) return ECheckBoxState::Unchecked;
+	const bool b = (OptimizerSettings->CategoryMask & (uint8)EOptimizerCategory::Meshes) != 0;
+	return b ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+}
+void SOptimizerPanel::OnMeshesChanged(ECheckBoxState NewState)
+{
+	if (!OptimizerSettings) return;
+	if (NewState == ECheckBoxState::Checked)
+		OptimizerSettings->CategoryMask |= (uint8)EOptimizerCategory::Meshes;
+	else
+		OptimizerSettings->CategoryMask &= ~(uint8)EOptimizerCategory::Meshes;
+	OptimizerSettings->SaveSettings();
+}
+ECheckBoxState SOptimizerPanel::IsMaterialsChecked() const
+{
+	if (!OptimizerSettings) return ECheckBoxState::Unchecked;
+	const bool b = (OptimizerSettings->CategoryMask & (uint8)EOptimizerCategory::Materials) != 0;
+	return b ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+}
+void SOptimizerPanel::OnMaterialsChanged(ECheckBoxState NewState)
+{
+	if (!OptimizerSettings) return;
+	if (NewState == ECheckBoxState::Checked)
+		OptimizerSettings->CategoryMask |= (uint8)EOptimizerCategory::Materials;
+	else
+		OptimizerSettings->CategoryMask &= ~(uint8)EOptimizerCategory::Materials;
+	OptimizerSettings->SaveSettings();
+}
+ECheckBoxState SOptimizerPanel::IsLevelsChecked() const
+{
+	if (!OptimizerSettings) return ECheckBoxState::Unchecked;
+	const bool b = (OptimizerSettings->CategoryMask & (uint8)EOptimizerCategory::Levels) != 0;
+	return b ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+}
+void SOptimizerPanel::OnLevelsChanged(ECheckBoxState NewState)
+{
+	if (!OptimizerSettings) return;
+	if (NewState == ECheckBoxState::Checked)
+		OptimizerSettings->CategoryMask |= (uint8)EOptimizerCategory::Levels;
+	else
+		OptimizerSettings->CategoryMask &= ~(uint8)EOptimizerCategory::Levels;
+	OptimizerSettings->SaveSettings();
+}
+ECheckBoxState SOptimizerPanel::IsRuntimeChecked() const
+{
+	if (!OptimizerSettings) return ECheckBoxState::Unchecked;
+	const bool b = (OptimizerSettings->CategoryMask & (uint8)EOptimizerCategory::Runtime) != 0;
+	return b ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+}
+void SOptimizerPanel::OnRuntimeChanged(ECheckBoxState NewState)
+{
+	if (!OptimizerSettings) return;
+	if (NewState == ECheckBoxState::Checked)
+		OptimizerSettings->CategoryMask |= (uint8)EOptimizerCategory::Runtime;
+	else
+		OptimizerSettings->CategoryMask &= ~(uint8)EOptimizerCategory::Runtime;
+	OptimizerSettings->SaveSettings();
+}
+ECheckBoxState SOptimizerPanel::IsAudioChecked() const
+{
+	if (!OptimizerSettings) return ECheckBoxState::Unchecked;
+	const bool b = (OptimizerSettings->CategoryMask & (uint8)EOptimizerCategory::Audio) != 0;
+	return b ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+}
+void SOptimizerPanel::OnAudioChanged(ECheckBoxState NewState)
+{
+	if (!OptimizerSettings) return;
+	if (NewState == ECheckBoxState::Checked)
+		OptimizerSettings->CategoryMask |= (uint8)EOptimizerCategory::Audio;
+	else
+		OptimizerSettings->CategoryMask &= ~(uint8)EOptimizerCategory::Audio;
+	OptimizerSettings->SaveSettings();
+}
 
-ECheckBoxState SOptimizerPanel::IsUseSelectionChecked() const { return ECheckBoxState::Unchecked; }
-void SOptimizerPanel::OnUseSelectionChanged(ECheckBoxState NewState) {}
-FString SOptimizerPanel::GetIncludePaths() const { return TEXT(""); }
-void SOptimizerPanel::OnIncludePathsChanged(const FText& NewText) {}
-FString SOptimizerPanel::GetExcludePaths() const { return TEXT(""); }
-void SOptimizerPanel::OnExcludePathsChanged(const FText& NewText) {}
+ECheckBoxState SOptimizerPanel::IsUseSelectionChecked() const
+{
+	if (!OptimizerSettings) return ECheckBoxState::Unchecked;
+	return OptimizerSettings->bUseSelection ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+}
+void SOptimizerPanel::OnUseSelectionChanged(ECheckBoxState NewState)
+{
+	if (!OptimizerSettings) return;
+	OptimizerSettings->bUseSelection = (NewState == ECheckBoxState::Checked);
+	OptimizerSettings->SaveSettings();
+}
+FString SOptimizerPanel::GetIncludePaths() const
+{
+	return OptimizerSettings ? OptimizerSettings->IncludePathsCsv : TEXT("");
+}
+void SOptimizerPanel::OnIncludePathsChanged(const FText& NewText)
+{
+	if (!OptimizerSettings) return;
+	OptimizerSettings->IncludePathsCsv = NewText.ToString();
+	OptimizerSettings->SaveSettings();
+}
+FString SOptimizerPanel::GetExcludePaths() const
+{
+	return OptimizerSettings ? OptimizerSettings->ExcludePathsCsv : TEXT("");
+}
+void SOptimizerPanel::OnExcludePathsChanged(const FText& NewText)
+{
+	if (!OptimizerSettings) return;
+	OptimizerSettings->ExcludePathsCsv = NewText.ToString();
+	OptimizerSettings->SaveSettings();
+}
 
-ECheckBoxState SOptimizerPanel::IsDryRunChecked() const { return ECheckBoxState::Checked; }
-void SOptimizerPanel::OnDryRunChanged(ECheckBoxState NewState) {}
-ECheckBoxState SOptimizerPanel::IsCreateBackupsChecked() const { return ECheckBoxState::Checked; }
-void SOptimizerPanel::OnCreateBackupsChanged(ECheckBoxState NewState) {}
-ECheckBoxState SOptimizerPanel::IsCloseEditorChecked() const { return ECheckBoxState::Unchecked; }
-void SOptimizerPanel::OnCloseEditorChanged(ECheckBoxState NewState) {}
+ECheckBoxState SOptimizerPanel::IsDryRunChecked() const
+{
+	if (!OptimizerSettings) return ECheckBoxState::Checked;
+	return OptimizerSettings->bDryRun ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+}
+void SOptimizerPanel::OnDryRunChanged(ECheckBoxState NewState)
+{
+	if (!OptimizerSettings) return;
+	OptimizerSettings->bDryRun = (NewState == ECheckBoxState::Checked);
+	OptimizerSettings->SaveSettings();
+}
+ECheckBoxState SOptimizerPanel::IsCreateBackupsChecked() const
+{
+	if (!OptimizerSettings) return ECheckBoxState::Checked;
+	return OptimizerSettings->bCreateBackups ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+}
+void SOptimizerPanel::OnCreateBackupsChanged(ECheckBoxState NewState)
+{
+	if (!OptimizerSettings) return;
+	OptimizerSettings->bCreateBackups = (NewState == ECheckBoxState::Checked);
+	OptimizerSettings->SaveSettings();
+}
+ECheckBoxState SOptimizerPanel::IsCloseEditorChecked() const
+{
+	if (!OptimizerSettings) return ECheckBoxState::Unchecked;
+	return OptimizerSettings->bCloseEditor ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+}
+void SOptimizerPanel::OnCloseEditorChanged(ECheckBoxState NewState)
+{
+	if (!OptimizerSettings) return;
+	OptimizerSettings->bCloseEditor = (NewState == ECheckBoxState::Checked);
+	OptimizerSettings->SaveSettings();
+}
 
-FString SOptimizerPanel::GetMaxChanges() const { return TEXT("100"); }
-void SOptimizerPanel::OnMaxChangesChanged(const FText& NewText) {}
-FString SOptimizerPanel::GetOutputDirectory() const { return TEXT(""); }
-void SOptimizerPanel::OnOutputDirectoryChanged(const FText& NewText) {}
+FString SOptimizerPanel::GetMaxChanges() const
+{
+	if (!OptimizerSettings) return TEXT("100");
+	return FString::FromInt(OptimizerSettings->MaxChanges);
+}
+void SOptimizerPanel::OnMaxChangesChanged(const FText& NewText)
+{
+	if (!OptimizerSettings) return;
+	int32 Parsed = OptimizerSettings->MaxChanges;
+	const FString S = NewText.ToString();
+	Parsed = FCString::Atoi(*S);
+	Parsed = FMath::Clamp(Parsed, 0, 1000000);
+	OptimizerSettings->MaxChanges = Parsed;
+	OptimizerSettings->SaveSettings();
+}
+FString SOptimizerPanel::GetOutputDirectory() const
+{
+	return OptimizerSettings ? OptimizerSettings->OutputDirectory : TEXT("");
+}
+void SOptimizerPanel::OnOutputDirectoryChanged(const FText& NewText)
+{
+	if (!OptimizerSettings) return;
+	OptimizerSettings->OutputDirectory = NewText.ToString();
+	OptimizerSettings->SaveSettings();
+}
 
-FString SOptimizerPanel::GetPythonScriptPath() const { return TEXT(""); }
-void SOptimizerPanel::OnPythonScriptPathChanged(const FText& NewText) {}
-ECheckBoxState SOptimizerPanel::IsPythonLoggingChecked() const { return ECheckBoxState::Checked; }
-void SOptimizerPanel::OnPythonLoggingChanged(ECheckBoxState NewState) {}
+FString SOptimizerPanel::GetPythonScriptPath() const
+{
+	return OptimizerSettings ? OptimizerSettings->PythonScriptPath : TEXT("");
+}
+void SOptimizerPanel::OnPythonScriptPathChanged(const FText& NewText)
+{
+	if (!OptimizerSettings) return;
+	OptimizerSettings->PythonScriptPath = NewText.ToString();
+	OptimizerSettings->SaveSettings();
+}
+ECheckBoxState SOptimizerPanel::IsPythonLoggingChecked() const
+{
+	if (!OptimizerSettings) return ECheckBoxState::Checked;
+	return OptimizerSettings->bEnablePythonLogging ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+}
+void SOptimizerPanel::OnPythonLoggingChanged(ECheckBoxState NewState)
+{
+	if (!OptimizerSettings) return;
+	OptimizerSettings->bEnablePythonLogging = (NewState == ECheckBoxState::Checked);
+	OptimizerSettings->SaveSettings();
+}
 
 void SOptimizerPanel::UpdateUI() {}
 void SOptimizerPanel::RefreshUI() {}

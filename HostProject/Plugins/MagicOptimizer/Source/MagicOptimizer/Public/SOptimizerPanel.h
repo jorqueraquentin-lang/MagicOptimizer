@@ -36,6 +36,10 @@ protected:
 	FString CurrentProfile;
 	FString CurrentRunMode;
 
+	// Output log buffer
+	FString LastStdOut;
+	FString LastStdErr;
+
 	// UI event handlers
 	FReply OnAuditClicked();
 	FReply OnRecommendClicked();

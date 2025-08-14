@@ -13,6 +13,7 @@
 #include "Framework/Application/SlateApplication.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "Styling/AppStyle.h"
+#include "ISettingsModule.h"
 
 #define LOCTEXT_NAMESPACE "FMagicOptimizerModule"
 
@@ -49,6 +50,20 @@ void FMagicOptimizerModule::StartupModule()
 	{
 		Settings->GetDefaultSettings();
 		UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Settings initialized successfully"));
+
+		// Ensure settings section is registered so we can deep-link the Project Settings view
+		if (FModuleManager::Get().IsModuleLoaded("Settings"))
+		{
+			ISettingsModule& SettingsModule = FModuleManager::LoadModuleChecked<ISettingsModule>("Settings");
+			SettingsModule.RegisterSettings(
+				TEXT("Project"),
+				TEXT("Plugins"),
+				TEXT("MagicOptimizer"),
+				LOCTEXT("MagicOptimizerSettingsName", "Magic Optimizer"),
+				LOCTEXT("MagicOptimizerSettingsDesc", "Settings for the Magic Optimizer plugin."),
+				Settings
+			);
+		}
 	}
 	else
 	{
@@ -121,6 +136,13 @@ void FMagicOptimizerModule::StartupModule()
 
 void FMagicOptimizerModule::ShutdownModule()
 {
+	// Unregister settings section if present
+	if (FModuleManager::Get().IsModuleLoaded("Settings"))
+	{
+		ISettingsModule& SettingsModule = FModuleManager::LoadModuleChecked<ISettingsModule>("Settings");
+		SettingsModule.UnregisterSettings(TEXT("Project"), TEXT("Plugins"), TEXT("MagicOptimizer"));
+	}
+
 	// Unregister tab spawner
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(FName("MagicOptimizer"));
 

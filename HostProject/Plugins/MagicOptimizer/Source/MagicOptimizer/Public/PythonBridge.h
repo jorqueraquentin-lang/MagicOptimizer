@@ -22,6 +22,14 @@ struct FOptimizerResult
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Result")
 	FString OutputPath;
 
+	// Captured standard output from Python execution
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Result")
+	FString StdOut;
+
+	// Captured standard error from Python execution
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Result")
+	FString StdErr;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Result")
 	TArray<FString> Errors;
 
