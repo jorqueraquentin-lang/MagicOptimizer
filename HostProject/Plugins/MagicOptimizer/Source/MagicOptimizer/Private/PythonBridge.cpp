@@ -21,6 +21,7 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "ContentBrowserModule.h"
 #include "IContentBrowserSingleton.h"
+#include "OptimizerLogging.h"
 
 UPythonBridge::UPythonBridge()
 {
@@ -42,6 +43,8 @@ bool UPythonBridge::Initialize()
 	if (!OptimizerSettings)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Failed to get OptimizerSettings"));
+		MagicOptimizerLog::AppendLine(TEXT("PythonBridge: Failed to get OptimizerSettings"));
+		MagicOptimizerLog::AppendBacklog(TEXT("PythonBridge.Initialize: Get UOptimizerSettings FAILED"));
 		return false;
 	}
 
@@ -49,11 +52,15 @@ bool UPythonBridge::Initialize()
 	if (!InitializePythonEnvironment())
 	{
 		UE_LOG(LogTemp, Error, TEXT("Failed to initialize Python environment"));
+		MagicOptimizerLog::AppendLine(TEXT("PythonBridge: Failed to initialize Python environment"));
+		MagicOptimizerLog::AppendBacklog(TEXT("PythonBridge.Initialize: InitializePythonEnvironment FAILED"));
 		return false;
 	}
 
 	bPythonInitialized = true;
 	UE_LOG(LogTemp, Log, TEXT("PythonBridge initialized successfully (Version: %s)"), *PythonVersion);
+	MagicOptimizerLog::AppendLine(FString::Printf(TEXT("PythonBridge: Initialized (Version=%s)"), *PythonVersion));
+	MagicOptimizerLog::AppendBacklog(FString::Printf(TEXT("PythonBridge.Initialize: OK Version=%s"), *PythonVersion));
 	return true;
 }
 
@@ -75,6 +82,8 @@ FOptimizerResult UPythonBridge::RunOptimization(const FOptimizerRunParams& Param
 			Result.bSuccess = false;
 			Result.Message = TEXT("Python bridge not initialized");
 			Result.Errors.Add(TEXT("Python bridge not initialized"));
+			MagicOptimizerLog::AppendLine(TEXT("PythonBridge: RunOptimization aborted (not initialized)"));
+			MagicOptimizerLog::AppendBacklog(TEXT("RunOptimization: aborted, not initialized"));
 			return Result;
 		}
 		bPythonInitialized = true;
@@ -102,6 +111,17 @@ FOptimizerResult UPythonBridge::RunOptimization(const FOptimizerRunParams& Param
 	}
 	Arguments.Add(CategoriesStr);
 
+	MagicOptimizerLog::AppendLine(FString::Printf(TEXT("RunOptimization: Phase=%s Profile=%s DryRun=%s MaxChanges=%d UseSel=%s Include='%s' Exclude='%s' Cats=[%s]"),
+		*Params.Phase,
+		*Params.Profile,
+		Params.bDryRun ? TEXT("true") : TEXT("false"),
+		Params.MaxChanges,
+		Params.bUseSelection ? TEXT("true") : TEXT("false"),
+		*Params.IncludePaths,
+		*Params.ExcludePaths,
+		*CategoriesStr));
+	MagicOptimizerLog::AppendBacklog(FString::Printf(TEXT("RunOptimization Args: [%s]"), *FString::Join(Arguments, TEXT(","))));
+
 	// Execute Python script if present, otherwise run embedded hello world
     FString Output, Error;
     const FString BasePath = GetPythonScriptPath();
@@ -109,6 +129,8 @@ FOptimizerResult UPythonBridge::RunOptimization(const FOptimizerRunParams& Param
     {
         const bool bExists = FPlatformFileManager::Get().GetPlatformFile().FileExists(*ScriptPath);
         UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Resolved Python path: %s (entry: %s) Exists=%s"), *BasePath, *ScriptPath, bExists ? TEXT("true") : TEXT("false"));
+		MagicOptimizerLog::AppendLine(FString::Printf(TEXT("PythonBridge: ScriptPath=%s Exists=%s"), *ScriptPath, bExists ? TEXT("true") : TEXT("false")));
+		MagicOptimizerLog::AppendBacklog(FString::Printf(TEXT("ScriptPath=%s Base=%s Exists=%s"), *ScriptPath, *BasePath, bExists ? TEXT("true") : TEXT("false")));
     }
 
 	const bool bHasScript = ValidatePythonScript(ScriptPath);
@@ -123,6 +145,7 @@ FOptimizerResult UPythonBridge::RunOptimization(const FOptimizerRunParams& Param
 		IPlatformFile& PF = FPlatformFileManager::Get().GetPlatformFile();
 		PF.CreateDirectoryTree(*FullOutputDir);
 		const FString ResultFile = FullOutputDir / TEXT("last_result.json");
+		const FString LogFile = MagicOptimizerLog::GetLogFilePath();
 
 		// Build a Python snippet to set sys.argv and exec the file
 		FString PyArgList = TEXT("[");
@@ -138,12 +161,15 @@ FOptimizerResult UPythonBridge::RunOptimization(const FOptimizerRunParams& Param
 			TEXT("import sys, os\n")
 			TEXT("sys.argv = %s\n")
 			TEXT("os.environ['MAGICOPTIMIZER_OUTPUT']=r'%s'\n")
+			TEXT("os.environ['MAGICOPTIMIZER_LOG']=r'%s'\n")
 			TEXT("_p=r'%s'\n")
 			TEXT("_c=open(_p,'r',encoding='utf-8').read()\n")
 			TEXT("exec(compile(_c,_p,'exec'),{'__name__':'__main__'})\n"),
-			*PyArgList, *ResultFile, *ScriptPath);
+			*PyArgList, *ResultFile, *LogFile, *ScriptPath);
 
 		UE_LOG(LogTemp, Log, TEXT("Running embedded Python script: %s"), *ScriptPath);
+		MagicOptimizerLog::AppendLine(FString::Printf(TEXT("PythonBridge: Exec embedded Python (ResultFile=%s)"), *ResultFile));
+		MagicOptimizerLog::AppendBacklog(FString::Printf(TEXT("EmbeddedPython Exec: argv=%s result=%s"), *PyArgList, *ResultFile));
 		bRan = IPythonScriptPlugin::Get()->ExecPythonCommand(*PyCode);
 		// Try to read the result file
 		FString FileContents;
@@ -154,12 +180,16 @@ FOptimizerResult UPythonBridge::RunOptimization(const FOptimizerRunParams& Param
 	}
 	else if (bHasScript)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Running system python script: %s"), *ScriptPath);
+		UE_LOG(LogTemp, Log, TEXT("Running system Python script: %s"), *ScriptPath);
+		MagicOptimizerLog::AppendLine(FString::Printf(TEXT("PythonBridge: Exec system Python: %s"), *ScriptPath));
+		MagicOptimizerLog::AppendBacklog(FString::Printf(TEXT("SystemPython Exec: %s Args=[%s]"), *ScriptPath, *FString::Join(Arguments, TEXT(","))));
 		bRan = ExecutePythonScript(ScriptPath, Arguments, Output, Error);
 	}
     else if (IPythonScriptPlugin::Get())
 	{
         UE_LOG(LogTemp, Log, TEXT("Running embedded Python Hello World (no entry.py found)"));
+		MagicOptimizerLog::AppendLine(TEXT("PythonBridge: Embedded Hello World (no entry.py)"));
+		MagicOptimizerLog::AppendBacklog(TEXT("EmbeddedPython: Hello World fallback"));
 		IPythonScriptPlugin::Get()->ExecPythonCommand(TEXT("print('MagicOptimizer: Hello from embedded Python')"));
 		bRan = true;
 		Output = TEXT("Embedded Python Hello World executed");
@@ -172,6 +202,14 @@ FOptimizerResult UPythonBridge::RunOptimization(const FOptimizerRunParams& Param
 		Result.OutputPath = Output;
 		Result.StdOut = Output;
 		Result.StdErr = Error;
+
+		MagicOptimizerLog::AppendLine(FString::Printf(TEXT("PythonBridge: STDOUT len=%d"), Output.Len()));
+		MagicOptimizerLog::AppendBacklog(FString::Printf(TEXT("STDOUT preview: %s"), *Output.Left(512)));
+		if (!Error.IsEmpty())
+		{
+			MagicOptimizerLog::AppendLine(FString::Printf(TEXT("PythonBridge: STDERR: %s"), *Error.Left(2000)));
+			MagicOptimizerLog::AppendBacklog(FString::Printf(TEXT("STDERR: %s"), *Error.Left(2000)));
+		}
 
 		// Attempt to parse structured JSON from stdout if present
 		TSharedPtr<FJsonObject> JsonObj;
@@ -194,6 +232,8 @@ FOptimizerResult UPythonBridge::RunOptimization(const FOptimizerRunParams& Param
 			if (AssetsProcessed > 0) { Result.AssetsProcessed = AssetsProcessed; }
 			if (AssetsModified > 0) { Result.AssetsModified = AssetsModified; }
 			if (!bOk) { Result.bSuccess = false; }
+			MagicOptimizerLog::AppendLine(FString::Printf(TEXT("PythonBridge: Parsed JSON Message='%s' Processed=%d Modified=%d Success=%s"), *Result.Message, Result.AssetsProcessed, Result.AssetsModified, Result.bSuccess ? TEXT("true") : TEXT("false")));
+			MagicOptimizerLog::AppendBacklog(FString::Printf(TEXT("Parsed JSON: %s"), *Output.Left(2048)));
 		}
 	}
 	else
@@ -205,6 +245,8 @@ FOptimizerResult UPythonBridge::RunOptimization(const FOptimizerRunParams& Param
 			Result.Errors.Add(Error);
 			Result.StdErr = Error;
 		}
+		MagicOptimizerLog::AppendLine(FString::Printf(TEXT("PythonBridge: Execution failed. Error=%s"), *Error.Left(2000)));
+		MagicOptimizerLog::AppendBacklog(FString::Printf(TEXT("Execution FAILED. Error=%s"), *Error.Left(2000)));
 	}
 
 	return Result;

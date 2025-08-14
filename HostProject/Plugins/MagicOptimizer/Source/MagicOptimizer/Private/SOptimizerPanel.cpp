@@ -229,14 +229,48 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 							.OnCheckStateChanged(this, &SOptimizerPanel::OnUseSelectionChanged)
 						]
 
-						// Dry Run / Backups
+						// Include Paths
 						+ SGridPanel::Slot(0, 2)
+						.Padding(4.0f)
+						.VAlign(VAlign_Center)
+						[
+							SNew(STextBlock)
+							.Text(FText::FromString(TEXT("Include Paths (CSV):")))
+							.ToolTipText(FText::FromString(TEXT("Comma-separated Content-relative paths to include (e.g., /Game/Maps,/Game/Props)")))
+						]
+						+ SGridPanel::Slot(1, 2)
+						.Padding(4.0f)
+						[
+							SNew(SEditableTextBox)
+							.Text(FText::FromString(GetIncludePaths()))
+							.OnTextChanged(this, &SOptimizerPanel::OnIncludePathsChanged)
+						]
+
+						// Exclude Paths
+						+ SGridPanel::Slot(0, 3)
+						.Padding(4.0f)
+						.VAlign(VAlign_Center)
+						[
+							SNew(STextBlock)
+							.Text(FText::FromString(TEXT("Exclude Paths (CSV):")))
+							.ToolTipText(FText::FromString(TEXT("Comma-separated Content-relative paths to exclude (e.g., /Game/ThirdParty,/Game/Legacy)")))
+						]
+						+ SGridPanel::Slot(1, 3)
+						.Padding(4.0f)
+						[
+							SNew(SEditableTextBox)
+							.Text(FText::FromString(GetExcludePaths()))
+							.OnTextChanged(this, &SOptimizerPanel::OnExcludePathsChanged)
+						]
+
+						// Dry Run / Backups
+						+ SGridPanel::Slot(0, 4)
 						.Padding(4.0f)
 						.VAlign(VAlign_Center)
 						[
 							SNew(STextBlock).Text(FText::FromString(TEXT("Safety:")))
 						]
-						+ SGridPanel::Slot(1, 2)
+						+ SGridPanel::Slot(1, 4)
 						.Padding(4.0f)
 						[
 							SNew(SGridPanel)
@@ -259,13 +293,13 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 						]
 
 						// Max Changes
-						+ SGridPanel::Slot(0, 3)
+						+ SGridPanel::Slot(0, 5)
 						.Padding(4.0f)
 						.VAlign(VAlign_Center)
 						[
 							SNew(STextBlock).Text(FText::FromString(TEXT("Max Changes:")))
 						]
-						+ SGridPanel::Slot(1, 3)
+						+ SGridPanel::Slot(1, 5)
 						.Padding(4.0f)
 						[
 							SNew(SEditableTextBox)
@@ -274,13 +308,13 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 						]
 
 						// Output Directory
-						+ SGridPanel::Slot(0, 4)
+						+ SGridPanel::Slot(0, 6)
 						.Padding(4.0f)
 						.VAlign(VAlign_Center)
 						[
 							SNew(STextBlock).Text(FText::FromString(TEXT("Output Directory:")))
 						]
-						+ SGridPanel::Slot(1, 4)
+						+ SGridPanel::Slot(1, 6)
 						.Padding(4.0f)
 						[
 							SNew(SEditableTextBox)
@@ -289,20 +323,20 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 						]
 
 						// Python
-						+ SGridPanel::Slot(0, 5)
+						+ SGridPanel::Slot(0, 7)
 						.Padding(4.0f)
 						.VAlign(VAlign_Center)
 						[
 							SNew(STextBlock).Text(FText::FromString(TEXT("Python Script Path:")))
 						]
-						+ SGridPanel::Slot(1, 5)
+						+ SGridPanel::Slot(1, 7)
 						.Padding(4.0f)
 						[
 							SNew(SEditableTextBox)
 							.Text(FText::FromString(GetPythonScriptPath()))
 							.OnTextChanged(this, &SOptimizerPanel::OnPythonScriptPathChanged)
 						]
-						+ SGridPanel::Slot(1, 6)
+						+ SGridPanel::Slot(1, 8)
 						.Padding(4.0f)
 						[
 							SNew(SCheckBox)
@@ -322,33 +356,33 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 					.AreaTitle(FText::FromString(TEXT("Python Output")))
 					.BodyContent()
 					[
-                    SNew(SScrollBox)
-                    + SScrollBox::Slot()
-                    [
-                        SNew(STextBlock)
-                        .Text_Lambda([this]() { return FText::FromString(LastStdOut.IsEmpty() ? TEXT("(no output)") : LastStdOut); })
-                        .AutoWrapText(true)
-                    ]
-                    + SScrollBox::Slot()
-                    [
-                        SNew(STextBlock)
-                        .ColorAndOpacity(FLinearColor::Red)
-                        .Text_Lambda([this]() { return FText::FromString(LastStdErr); })
-                        .AutoWrapText(true)
-                    ]
-					+ SScrollBox::Slot()
-					[
-						SNew(STextBlock)
-						.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
-						.Text_Lambda([this]() {
-							if (LastAssetsProcessed <= 0 && LastAssetsModified <= 0 && LastResultMessage.IsEmpty())
-							{
-								return FText::GetEmpty();
-							}
-							const FString Summary = FString::Printf(TEXT("%s\nAssets processed: %d\nAssets modified: %d"), *LastResultMessage, LastAssetsProcessed, LastAssetsModified);
-							return FText::FromString(Summary);
-						})
-					]
+						SNew(SScrollBox)
+						+ SScrollBox::Slot()
+						[
+							SNew(STextBlock)
+							.Text_Lambda([this]() { return FText::FromString(LastStdOut.IsEmpty() ? TEXT("(no output)") : LastStdOut); })
+							.AutoWrapText(true)
+						]
+						+ SScrollBox::Slot()
+						[
+							SNew(STextBlock)
+							.ColorAndOpacity(FLinearColor::Red)
+							.Text_Lambda([this]() { return FText::FromString(LastStdErr); })
+							.AutoWrapText(true)
+						]
+						+ SScrollBox::Slot()
+						[
+							SNew(STextBlock)
+							.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+							.Text_Lambda([this]() {
+								if (LastAssetsProcessed <= 0 && LastAssetsModified <= 0 && LastResultMessage.IsEmpty())
+								{
+									return FText::GetEmpty();
+								}
+								const FString Summary = FString::Printf(TEXT("%s\nAssets processed: %d\nAssets modified: %d"), *LastResultMessage, LastAssetsProcessed, LastAssetsModified);
+								return FText::FromString(Summary);
+							})
+						]
 					]
 				]
 			]

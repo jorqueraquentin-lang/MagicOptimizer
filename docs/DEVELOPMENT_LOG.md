@@ -1362,3 +1362,39 @@ Next actions:
 - Added a concise tagline and four hero bullets to communicate value quickly.
 - Relocated “The Audit, Made Friendly” into `Project Overview` as “Why Audit First” to align with overall flow.
 - Preserved all original content; improved hierarchy and consistency with the rest of the README styling.
+
+---
+
+### 2025-08-15 07:10 — Repo synced: commit and push to main
+
+- Committed docs and source updates:
+  - `docs/README.md` (hero restructure, badges, Why Audit First)
+  - `docs/DEVELOPMENT_LOG.md` (reflection + readme update entries)
+  - `HostProject/Content/Python/magic_optimizer/entry.py` (JSON round‑trip, audit scaffold)
+  - `HostProject/Plugins/MagicOptimizer/Source/MagicOptimizer/Private/SOptimizerPanel.cpp` (UI wiring for JSON summary)
+  - `HostProject/Plugins/MagicOptimizer/Source/MagicOptimizer/Private/PythonBridge.cpp` (embedded python plumbing)
+  - `HostProject/Plugins/MagicOptimizer/Source/MagicOptimizer/Private/OptimizerLogging.{h,cpp}` (LogMagicOptimizer)
+- Intentionally excluded large untracked project content folders from VCS to keep the repo lean.
+- Pushed to `origin/main` (commit `8f74ac1`).
+
+### 2025-08-15 07:40 — Audit scope filters + CSV export + logging (Baby Steps)
+
+- UI/Settings already wired for Include/Exclude and Use Selection. Implemented Python side:
+  - Honor Include/Exclude CSV and Use Selection in Audit.
+  - Use AssetRegistry ARFilter for `Texture2D` under `/Game`, fallback to `list_assets + find_asset_data` with `asset_class_path` checks.
+  - Keep JSON payload small; write findings CSV to `Saved/MagicOptimizer/Audit/textures.csv`.
+  - Runtime log notes inputs and outputs; assistant-only backlog captures deep details.
+
+Verification:
+- Include `/Game/` and leave exclude empty → non-zero texture count; CSV generated.
+- Toggle Use Selection to limit scope to selected assets.
+
+---
+
+### 2025-08-15 07:55 — Fix: Audit crash (SyntaxError) and Texture2D detection (UE5.6)
+
+- Resolved `SyntaxError: expected 'except' or 'finally'` in `entry.py` by correcting try/except structure during ARFilter fallback.
+- Replaced deprecated `asset_class` usage with UE5.6-compatible checks:
+  - Prefer `asset_class_path` and compare to `/Script/Engine.Texture2D`.
+  - When available, use `TopLevelAssetPath('/Script/Engine','Texture2D')` via ARFilter; fallback remains robust.
+- Outcome: No deprecation warnings; enumeration no longer returns zero for valid projects.

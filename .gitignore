@@ -1,20 +1,28 @@
-# Unreal Engine
-Binaries/
-DerivedDataCache/
-Intermediate/
-Saved/
+# Unreal Engine (scoped to HostProject)
+HostProject/Binaries/
+HostProject/Intermediate/
+HostProject/DerivedDataCache/
+HostProject/Saved/
+
+# MagicOptimizer runtime artifacts (keep logs/CSV out of VCS)
+HostProject/Saved/MagicOptimizer/**
+
+# Plugin-specific build outputs
+HostProject/Plugins/**/Binaries/
+HostProject/Plugins/**/Intermediate/
+HostProject/Plugins/**/DerivedDataCache/
+HostProject/Plugins/**/Saved/
+
+# Visual Studio / IDE
 .vs/
 .vscode/
-
-# Visual Studio
 *.VC.db
-*.sln
+*.VC.db-wal
+*.VC.db-shm
 *.suo
 *.opensdf
 *.sdf
 *.ipch
-*.VC.db-wal
-*.VC.db-shm
 
 # Build artifacts
 *.pdb
@@ -22,6 +30,13 @@ Saved/
 *.exe
 *.dll
 
+# Python
+__pycache__/
+*.pyc
+
 # OS files
 .DS_Store
 Thumbs.db
+
+# Optional: ignore large project assets (uncomment if desired)
+# HostProject/Content/**
