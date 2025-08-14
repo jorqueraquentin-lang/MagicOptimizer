@@ -22,5 +22,10 @@ public:
 	void OpenOptimizerPanel();
 
 private:
-	// No private members needed for this implementation
+	// Console command: MagicOptimizer.Run [Phase] [CategoriesCsv]
+	void RegisterConsoleCommands();
+	void UnregisterConsoleCommands();
+	void ConsoleRun(const TArray<FString>& Args);
+
+	struct IConsoleCommand* ConsoleRunCommand = nullptr;
 };

@@ -4,6 +4,7 @@
 #include "SOptimizerPanel.h"
 #include "OptimizerSettings.h"
 #include "PythonBridge.h"
+#include "OptimizerRun.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "Framework/MultiBox/MultiBoxExtender.h"
 #include "LevelEditor.h"
@@ -132,10 +133,14 @@ void FMagicOptimizerModule::StartupModule()
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("MagicOptimizer module started successfully"));
+
+	// Register console commands for headless/manual triggering
+	RegisterConsoleCommands();
 }
 
 void FMagicOptimizerModule::ShutdownModule()
 {
+	UnregisterConsoleCommands();
 	// Unregister settings section if present
 	if (FModuleManager::Get().IsModuleLoaded("Settings"))
 	{
@@ -174,6 +179,44 @@ void FMagicOptimizerModule::AddMenuExtension(FMenuBuilder& Builder)
 void FMagicOptimizerModule::OpenOptimizerPanel()
 {
 	FGlobalTabmanager::Get()->TryInvokeTab(FName("MagicOptimizer"));
+}
+
+void FMagicOptimizerModule::RegisterConsoleCommands()
+{
+	if (ConsoleRunCommand == nullptr)
+	{
+		ConsoleRunCommand = IConsoleManager::Get().RegisterConsoleCommand(
+			TEXT("MagicOptimizer.Run"),
+			TEXT("Run MagicOptimizer phase inside the open editor. Usage: MagicOptimizer.Run [Phase=Audit] [Categories=Textures,Meshes,Materials]"),
+			FConsoleCommandWithArgsDelegate::CreateRaw(this, &FMagicOptimizerModule::ConsoleRun),
+			ECVF_Default);
+	}
+}
+
+void FMagicOptimizerModule::UnregisterConsoleCommands()
+{
+	if (ConsoleRunCommand)
+	{
+		IConsoleManager::Get().UnregisterConsoleObject(ConsoleRunCommand);
+		ConsoleRunCommand = nullptr;
+	}
+}
+
+void FMagicOptimizerModule::ConsoleRun(const TArray<FString>& Args)
+{
+	FString Phase = Args.Num() > 0 ? Args[0] : TEXT("Audit");
+	FString CategoriesCsv = Args.Num() > 1 ? Args[1] : TEXT("Textures,Meshes,Materials");
+
+	TArray<FString> Categories;
+	CategoriesCsv.ParseIntoArray(Categories, TEXT(","), /*CullEmpty*/ true);
+
+	UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: ConsoleRun Phase=%s Categories=%s"), *Phase, *CategoriesCsv);
+
+	UOptimizerRun* Runner = NewObject<UOptimizerRun>();
+	if (Runner)
+	{
+		Runner->Run(Phase, Categories);
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -39,6 +39,9 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 	// Initialize UI state
 	InitializeUI();
 
+	// Preload latest CSV if present
+	LoadTextureAuditCsv();
+
 	// Restore persisted settings into UI
     if (OptimizerSettings)
     {
@@ -358,13 +361,14 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 				[
 					SNew(SExpandableArea)
 					.AreaTitle(FText::FromString(TEXT("Python Output")))
+					.InitiallyCollapsed(false)
 					.BodyContent()
 					[
 						SNew(SScrollBox)
 						+ SScrollBox::Slot()
 						[
 							SNew(STextBlock)
-							.Text_Lambda([this]() { return FText::FromString(LastStdOut.IsEmpty() ? TEXT("(no output)") : LastStdOut); })
+							.Text_Lambda([this]() { return FText::FromString(LastResultMessage.IsEmpty() ? TEXT("(no output)") : LastResultMessage); })
 							.AutoWrapText(true)
 						]
 						+ SScrollBox::Slot()
@@ -387,6 +391,19 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 								return FText::FromString(Summary);
 							})
 						]
+						+ SScrollBox::Slot()
+						[
+							SNew(SExpandableArea)
+							.AreaTitle(FText::FromString(TEXT("Raw JSON (debug)")))
+							.InitiallyCollapsed(true)
+							.BodyContent()
+							[
+								SNew(STextBlock)
+								.Font(FCoreStyle::GetDefaultFontStyle("Mono", 9))
+								.Text_Lambda([this]() { return FText::FromString(LastStdOut); })
+								.AutoWrapText(true)
+							]
+						]
 					]
 				]
 
@@ -397,6 +414,7 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 				[
 					SNew(SExpandableArea)
 					.AreaTitle(FText::FromString(TEXT("Audit Results (Textures)")))
+					.InitiallyCollapsed(false)
 					.BodyContent()
 					[
 						SAssignNew(TextureListView, SListView<FTextureAuditRowPtr>)
@@ -579,30 +597,62 @@ void SOptimizerPanel::LoadTextureAuditCsv()
 	FString SubDir = OptimizerSettings ? OptimizerSettings->OutputDirectory : TEXT("Saved/MagicOptimizer");
 	FString FullDir = SavedDir / SubDir;
 	FString CsvPath = FullDir / TEXT("textures.csv");
-	FString Contents;
+
+	// Fallback to default location
 	if (!FPaths::FileExists(CsvPath))
 	{
-		// Also try default path
 		CsvPath = SavedDir / TEXT("MagicOptimizer/Audit/textures.csv");
 	}
-	if (FPaths::FileExists(CsvPath) && FFileHelper::LoadFileToString(Contents, *CsvPath))
+
+	MagicOptimizerLog::AppendLine(FString::Printf(TEXT("UI: Loading texture audit CSV: %s"), *CsvPath));
+
+	TArray<FString> Lines;
+	if (FPaths::FileExists(CsvPath) && FFileHelper::LoadFileToStringArray(Lines, *CsvPath))
 	{
-		TArray<FString> Lines;
-		Contents.ParseIntoArrayLines(Lines);
-		for (int32 i = 1; i < Lines.Num(); ++i) // skip header
+		// Skip header if present
+		int32 StartIndex = 0;
+		if (Lines.Num() > 0 && Lines[0].StartsWith(TEXT("path"), ESearchCase::IgnoreCase))
 		{
-			TArray<FString> Cells;
-			Lines[i].ParseIntoArray(Cells, TEXT(","));
-			if (Cells.Num() >= 4)
+			StartIndex = 1;
+		}
+
+		for (int32 i = StartIndex; i < Lines.Num(); ++i)
+		{
+			const FString& Line = Lines[i];
+			if (Line.TrimStartAndEnd().IsEmpty())
 			{
+				continue;
+			}
+			TArray<FString> Cells;
+			Line.ParseIntoArray(Cells, TEXT(","), /*CullEmpty*/ false);
+			if (Cells.Num() >= 1)
+			{
+				// Trim whitespace and quotes
+				auto TrimCell = [](const FString& In) -> FString
+				{
+					FString S = In;
+					S.TrimStartAndEndInline();
+					if (S.Len() >= 2 && S.StartsWith(TEXT("\"")) && S.EndsWith(TEXT("\"")))
+					{
+						S = S.Mid(1, S.Len() - 2);
+					}
+					return S;
+				};
+
 				FTextureAuditRowPtr Row = MakeShared<FTextureAuditRow>();
-				Row->Path = Cells[0].TrimStartAndEnd();
-				Row->Width = FCString::Atoi(*Cells[1]);
-				Row->Height = FCString::Atoi(*Cells[2]);
-				Row->Format = Cells[3].TrimStartAndEnd();
+				Row->Path = TrimCell(Cells[0]);
+				Row->Width = Cells.Num() > 1 ? FCString::Atoi(*TrimCell(Cells[1])) : 0;
+				Row->Height = Cells.Num() > 2 ? FCString::Atoi(*TrimCell(Cells[2])) : 0;
+				Row->Format = Cells.Num() > 3 ? TrimCell(Cells[3]) : TEXT("");
 				TextureRows.Add(Row);
 			}
 		}
+
+		MagicOptimizerLog::AppendLine(FString::Printf(TEXT("UI: Loaded %d texture rows (lines=%d)"), TextureRows.Num(), Lines.Num()));
+	}
+	else
+	{
+		MagicOptimizerLog::AppendLine(TEXT("UI: Texture audit CSV not found or unreadable"));
 	}
 }
 

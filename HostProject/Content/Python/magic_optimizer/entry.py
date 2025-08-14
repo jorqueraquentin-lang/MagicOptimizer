@@ -175,10 +175,10 @@ if p == 'audit':
                         continue
                     ar_count += 1
                     total_textures += 1
-                    if len(textures_info) < 50:
-                        name = str(a.asset_name) if hasattr(a, 'asset_name') else None
-                        if pkg and name:
-                            textures_info.append({"path": f"{pkg}.{name}"})
+                    # Add all textures to info, not just first 50
+                    name = str(a.asset_name) if hasattr(a, 'asset_name') else None
+                    if pkg and name:
+                        textures_info.append({"path": f"{pkg}.{name}"})
                 except Exception:
                     pass
 
@@ -197,36 +197,103 @@ if p == 'audit':
                     if not _is_texture2d_assetdata(data):
                         continue
                     total_textures += 1
-                    if len(textures_info) < 50:
-                        textures_info.append({"path": pth})
+                    # Add all textures to info, not just first 50
+                    textures_info.append({"path": pth})
                 except Exception:
                     pass
 
-        # Load sample for width/height/format
+        _append_log(f"Audit: Found {total_textures} textures, processing {len(textures_info)} for detailed info")
+
+        # Load sample for width/height/format - process all textures, not just first 50
         sample_paths = [t.get('path') for t in textures_info]
-        for path in sample_paths:
+        _append_log(f"Processing {len(sample_paths)} textures for width/height/format data")
+        
+        for i, path in enumerate(sample_paths):
             try:
+                _append_log(f"Loading texture {i+1}/{len(sample_paths)}: {path}")
                 asset = unreal.EditorAssetLibrary.load_asset(path)
-                if asset and isinstance(asset, unreal.Texture2D):
+                if not asset:
+                    _append_log(f"Failed to load asset: {path}")
+                    continue
+                
+                tex = unreal.Texture2D.cast(asset)
+                if not tex:
+                    _append_log(f"Failed to cast to Texture2D: {path}")
+                    continue
+                
+                width = None
+                height = None
+                fmt = None
+                
+                # Try to get dimensions from platform data
+                try:
+                    # In UE5, texture dimensions are accessed differently
+                    # Try getting from texture properties directly first
+                    width = tex.get_editor_property('size_x')
+                    height = tex.get_editor_property('size_y')
+                    _append_log(f"Texture {path}: {width}x{height} from direct properties")
+                except Exception as e:
+                    _append_log(f"Failed to get direct properties for {path}: {e}")
                     width = None
                     height = None
-                    fmt = None
-                    pd = asset.get_editor_property('platform_data') if hasattr(asset, 'get_editor_property') else None
-                    if pd:
-                        width = getattr(pd, 'size_x', None)
-                        height = getattr(pd, 'size_y', None)
-                    if hasattr(asset, 'get_editor_property'):
+                
+                # If direct properties failed, try alternative methods
+                if width is None or height is None:
+                    try:
+                        # Try getting from imported texture data
+                        imported_texture = tex.get_editor_property('imported_size')
+                        if imported_texture:
+                            width = imported_texture.x
+                            height = imported_texture.y
+                            _append_log(f"Texture {path}: {width}x{height} from imported_size")
+                    except Exception as e:
+                        _append_log(f"Failed to get imported_size for {path}: {e}")
+                
+                # Last resort: try to get from the texture's source data
+                if width is None or height is None:
+                    try:
+                        # Try getting from the texture's source data
+                        source_data = tex.get_editor_property('source')
+                        if source_data:
+                            width = source_data.get_editor_property('size_x')
+                            height = source_data.get_editor_property('size_y')
+                            _append_log(f"Texture {path}: {width}x{height} from source data")
+                    except Exception as e:
+                        _append_log(f"Failed to get source data for {path}: {e}")
+                
+                # Get compression format
+                try:
+                    cs = tex.get_editor_property('compression_settings')
+                    if cs is not None:
+                        # Try to get the enum name, fallback to string representation
                         try:
-                            fmt = str(asset.get_editor_property('compression_settings'))
-                        except Exception:
-                            fmt = None
-                    for r in textures_info:
-                        if r.get('path') == path:
-                            r.update({"width": width, "height": height, "format": fmt})
-                            break
-                    loaded_tex_count += 1
-            except Exception:
-                pass
+                            fmt = cs.name if hasattr(cs, 'name') else str(cs)
+                        except:
+                            fmt = str(cs)
+                        _append_log(f"Texture {path}: format={fmt}")
+                except Exception as e:
+                    _append_log(f"Failed to get compression settings for {path}: {e}")
+                
+                # Update the texture info
+                for r in textures_info:
+                    if r.get('path') == path:
+                        r.update({
+                            "width": width if width is not None else "",
+                            "height": height if height is not None else "",
+                            "format": fmt if fmt is not None else ""
+                        })
+                        break
+                
+                loaded_tex_count += 1
+                _append_log(f"Successfully processed texture {path}: {width}x{height} format={fmt}")
+                
+            except Exception as e:
+                _append_log(f"Exception processing texture {path}: {e}")
+                # Still update the row with empty values
+                for r in textures_info:
+                    if r.get('path') == path:
+                        r.update({"width": "", "height": "", "format": ""})
+                        break
 
     # Write CSV
     try:
@@ -235,11 +302,29 @@ if p == 'audit':
             with open(csv_path, 'w', newline='', encoding='utf-8') as f:
                 w = csv.writer(f)
                 w.writerow(['path', 'width', 'height', 'format'])
-                for row in textures_info:
-                    w.writerow([row.get('path', ''), row.get('width', ''), row.get('height', ''), row.get('format', '')])
-            _append_log(f"CSV written: {csv_path} rows={len(textures_info)} total={total_textures}")
-    except Exception:
-        pass
+                
+                # Log what we're writing
+                _append_log(f"Writing CSV with {len(textures_info)} texture rows")
+                
+                for i, row in enumerate(textures_info):
+                    path = row.get('path', '')
+                    width = row.get('width', '')
+                    height = row.get('height', '')
+                    fmt = row.get('format', '')
+                    
+                    # Log first few rows for debugging
+                    if i < 5:
+                        _append_log(f"CSV row {i}: path='{path}' width='{width}' height='{height}' format='{fmt}'")
+                    
+                    w.writerow([path, width, height, fmt])
+                
+            _append_log(f"CSV written successfully: {csv_path} rows={len(textures_info)} total={total_textures}")
+        else:
+            _append_log("No CSV directory specified, skipping CSV write")
+    except Exception as e:
+        _append_log(f"Failed to write CSV: {e}")
+        import traceback
+        _append_log(f"CSV error traceback: {traceback.format_exc()}")
 
     assets_processed = total_textures
     assets_modified = 0

@@ -1,0 +1,147 @@
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Success: Audit | Audit OK (Console_Optimized) - 0 textures found (AR:0, List:625, Loaded:0) | Processed=0 Modified=0
+[yyyy-MM-dd HH:mm:ss] UI: Recommend button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Recommend Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Success: Recommend | Recommendations generated for Console_Optimized | Processed=42 Modified=0
+[yyyy-MM-dd HH:mm:ss] UI: Apply button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Apply Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Success: Apply | Dry-run: would apply changes to Console_Optimized | Processed=42 Modified=0
+[yyyy-MM-dd HH:mm:ss] UI: Verify button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Verify Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Success: Verify | Verification passed for Console_Optimized | Processed=42 Modified=0
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Success: Audit | Audit OK (Console_Optimized) - 0 textures found (AR:0, List:625, Loaded:0) | Processed=0 Modified=0
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Success: Audit | Audit OK (Console_Optimized) - 0 textures found (AR:0, List:625, Loaded:0) | Processed=0 Modified=0
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Success: Audit | Audit OK (Console_Optimized) - 0 textures found (AR:0, List:625, Loaded:0) | Processed=0 Modified=0
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Failure: Audit | Optimization failed | Err=
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Failure: Audit | Optimization failed | Err=
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Failure: Audit | Optimization failed | Err=
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Failure: Audit | Optimization failed | Err=
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Failure: Audit | Optimization failed | Err=
+[yyyy-MM-dd HH:mm:ss] UI: Recommend button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Recommend Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Failure: Recommend | Optimization failed | Err=
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Failure: Audit | Optimization failed | Err=
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Failure: Audit | Optimization failed | Err=
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Success: Audit | Audit OK (Console_Optimized) - 220 textures found (AR:0, List:625, Loaded:0) | Processed=220 Modified=0
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Success: Audit | Audit OK (Console_Optimized) - 220 textures found (AR:0, List:625, Loaded:0) | Processed=220 Modified=0
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Success: Audit | Audit OK (Console_Optimized) - 220 textures found (AR:0, List:625, Loaded:0) | Processed=220 Modified=0
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Success: Audit | Audit OK (Console_Optimized) - 220 textures found (AR:0, List:625, Loaded:0) | Processed=220 Modified=0
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Success: Audit | Audit OK (Console_Optimized) - 220 textures found (AR:0, List:625, Loaded:0) | Processed=220 Modified=0
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Success: Audit | Audit OK (Console_Optimized) - 220 textures found (AR:0, List:625, Loaded:0) | Processed=220 Modified=0
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Console_Optimized
+[yyyy-MM-dd HH:mm:ss] Success: Audit | Audit OK (Console_Optimized) - 220 textures found (AR:0, List:625, Loaded:0) | Processed=220 Modified=0
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Mobile_Low
+[yyyy-MM-dd HH:mm:ss] Success: Audit | Audit OK (Mobile_Low) - 220 textures found (AR:0, List:625, Loaded:0) | Processed=220 Modified=0
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Mobile_Low
+[yyyy-MM-dd HH:mm:ss] Success: Audit | Audit OK (Mobile_Low) - 220 textures found (AR:0, List:625, Loaded:0) | Processed=220 Modified=0
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Mobile_Low
+[yyyy-MM-dd HH:mm:ss] Success: Audit | Audit OK (Mobile_Low) - 220 textures found (AR:0, List:625, Loaded:0) | Processed=220 Modified=0
+[yyyy-MM-dd HH:mm:ss] PythonBridge: Initialized (Version=UE Embedded Python)
+[yyyy-MM-dd HH:mm:ss] PythonBridge: Initialized (Version=UE Embedded Python)
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Mobile_Low
+[yyyy-MM-dd HH:mm:ss] RunOptimization: Phase=Audit Profile=Mobile_Low DryRun=true MaxChanges=100 UseSel=false Include='' Exclude='' Cats=[Textures,Meshes,Materials]
+[yyyy-MM-dd HH:mm:ss] PythonBridge: ScriptPath=D:/Documents/UE_Plugins/MagicOptimizer/HostProject/Content/Python/magic_optimizer/entry.py Exists=true
+[yyyy-MM-dd HH:mm:ss] PythonBridge: Exec embedded Python (ResultFile=D:/Documents/UE_Plugins/MagicOptimizer/HostProject/Saved/Saved/MagicOptimizer/last_result.json)
+[2025-08-15 08:15:33] PY: entry.py start phase=Audit profile=Mobile_Low dry=True max=100 useSel=False include='' exclude='' cats='Textures,Meshes,Materials'
+[2025-08-15 08:15:33] PY: Audit: querying AssetRegistry with ARFilter for Texture2D under /Game ...
+[2025-08-15 08:15:33] PY: Audit: ARFilter unavailable/empty, falling back to list_assets + find_asset_data
+[2025-08-15 08:15:33] PY: CSV written: D:/Documents/UE_Plugins/MagicOptimizer/HostProject/Saved/MagicOptimizer\Audit\textures.csv rows=50 total=220
+[2025-08-15 08:15:33] PY: entry.py done success=True msg='Audit OK (Mobile_Low) - 220 textures found (AR:0, List:625, Loaded:0)' processed=220 modified=0
+[yyyy-MM-dd HH:mm:ss] PythonBridge: STDOUT len=320
+[yyyy-MM-dd HH:mm:ss] PythonBridge: Parsed JSON Message='Audit OK (Mobile_Low) - 220 textures found (AR:0, List:625, Loaded:0)' Processed=220 Modified=0 Success=true
+[yyyy-MM-dd HH:mm:ss] Success: Audit | Audit OK (Mobile_Low) - 220 textures found (AR:0, List:625, Loaded:0) | Processed=220 Modified=0
+[yyyy-MM-dd HH:mm:ss] UI: Loading texture audit CSV: D:/Documents/UE_Plugins/MagicOptimizer/HostProject/Saved/MagicOptimizer/Audit/textures.csv
+[yyyy-MM-dd HH:mm:ss] UI: Loaded 0 texture rows
+[yyyy-MM-dd HH:mm:ss] PythonBridge: Initialized (Version=UE Embedded Python)
+[yyyy-MM-dd HH:mm:ss] PythonBridge: Initialized (Version=UE Embedded Python)
+[yyyy-MM-dd HH:mm:ss] UI: Loading texture audit CSV: D:/Documents/UE_Plugins/MagicOptimizer/HostProject/Saved/MagicOptimizer/Audit/textures.csv
+[yyyy-MM-dd HH:mm:ss] UI: Loaded 0 texture rows (lines=51)
+[yyyy-MM-dd HH:mm:ss] PythonBridge: Initialized (Version=UE Embedded Python)
+[yyyy-MM-dd HH:mm:ss] PythonBridge: Initialized (Version=UE Embedded Python)
+[yyyy-MM-dd HH:mm:ss] UI: Loading texture audit CSV: D:/Documents/UE_Plugins/MagicOptimizer/HostProject/Saved/MagicOptimizer/Audit/textures.csv
+[yyyy-MM-dd HH:mm:ss] UI: Loaded 0 texture rows (lines=51)
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Mobile_Low
+[yyyy-MM-dd HH:mm:ss] RunOptimization: Phase=Audit Profile=Mobile_Low DryRun=true MaxChanges=100 UseSel=false Include='' Exclude='' Cats=[Textures,Meshes,Materials]
+[yyyy-MM-dd HH:mm:ss] PythonBridge: ScriptPath=D:/Documents/UE_Plugins/MagicOptimizer/HostProject/Content/Python/magic_optimizer/entry.py Exists=true
+[yyyy-MM-dd HH:mm:ss] PythonBridge: Exec embedded Python (ResultFile=D:/Documents/UE_Plugins/MagicOptimizer/HostProject/Saved/Saved/MagicOptimizer/last_result.json)
+[2025-08-15 08:22:17] PY: entry.py start phase=Audit profile=Mobile_Low dry=True max=100 useSel=False include='' exclude='' cats='Textures,Meshes,Materials'
+[2025-08-15 08:22:17] PY: Audit: querying AssetRegistry with ARFilter for Texture2D under /Game ...
+[2025-08-15 08:22:17] PY: Audit: ARFilter unavailable/empty, falling back to list_assets + find_asset_data
+[2025-08-15 08:22:17] PY: CSV written: D:/Documents/UE_Plugins/MagicOptimizer/HostProject/Saved/MagicOptimizer\Audit\textures.csv rows=50 total=220
+[2025-08-15 08:22:17] PY: entry.py done success=True msg='Audit OK (Mobile_Low) - 220 textures found (AR:0, List:625, Loaded:0)' processed=220 modified=0
+[yyyy-MM-dd HH:mm:ss] PythonBridge: STDOUT len=320
+[yyyy-MM-dd HH:mm:ss] PythonBridge: Parsed JSON Message='Audit OK (Mobile_Low) - 220 textures found (AR:0, List:625, Loaded:0)' Processed=220 Modified=0 Success=true
+[yyyy-MM-dd HH:mm:ss] Success: Audit | Audit OK (Mobile_Low) - 220 textures found (AR:0, List:625, Loaded:0) | Processed=220 Modified=0
+[yyyy-MM-dd HH:mm:ss] UI: Loading texture audit CSV: D:/Documents/UE_Plugins/MagicOptimizer/HostProject/Saved/MagicOptimizer/Audit/textures.csv
+[yyyy-MM-dd HH:mm:ss] UI: Loaded 0 texture rows (lines=51)
+[yyyy-MM-dd HH:mm:ss] PythonBridge: Initialized (Version=UE Embedded Python)
+[yyyy-MM-dd HH:mm:ss] PythonBridge: Initialized (Version=UE Embedded Python)
+[yyyy-MM-dd HH:mm:ss] UI: Loading texture audit CSV: D:/Documents/UE_Plugins/MagicOptimizer/HostProject/Saved/MagicOptimizer/Audit/textures.csv
+[yyyy-MM-dd HH:mm:ss] UI: Loaded 50 texture rows (lines=51)
+[yyyy-MM-dd HH:mm:ss] UI: Audit button clicked
+[yyyy-MM-dd HH:mm:ss] Run: Phase=Audit Profile=Mobile_Low
+[yyyy-MM-dd HH:mm:ss] RunOptimization: Phase=Audit Profile=Mobile_Low DryRun=true MaxChanges=100 UseSel=false Include='' Exclude='' Cats=[Textures,Meshes,Materials]
+[yyyy-MM-dd HH:mm:ss] PythonBridge: ScriptPath=D:/Documents/UE_Plugins/MagicOptimizer/HostProject/Content/Python/magic_optimizer/entry.py Exists=true
+[yyyy-MM-dd HH:mm:ss] PythonBridge: Exec embedded Python (ResultFile=D:/Documents/UE_Plugins/MagicOptimizer/HostProject/Saved/Saved/MagicOptimizer/last_result.json)
+[2025-08-15 08:25:34] PY: entry.py start phase=Audit profile=Mobile_Low dry=True max=100 useSel=False include='' exclude='' cats='Textures,Meshes,Materials'
+[2025-08-15 08:25:34] PY: Audit: querying AssetRegistry with ARFilter for Texture2D under /Game ...
+[2025-08-15 08:25:34] PY: Audit: ARFilter unavailable/empty, falling back to list_assets + find_asset_data
+[2025-08-15 08:25:34] PY: CSV written: D:/Documents/UE_Plugins/MagicOptimizer/HostProject/Saved/MagicOptimizer\Audit\textures.csv rows=50 total=220
+[2025-08-15 08:25:34] PY: entry.py done success=True msg='Audit OK (Mobile_Low) - 220 textures found (AR:0, List:625, Loaded:0)' processed=220 modified=0
+[yyyy-MM-dd HH:mm:ss] PythonBridge: STDOUT len=320
+[yyyy-MM-dd HH:mm:ss] PythonBridge: Parsed JSON Message='Audit OK (Mobile_Low) - 220 textures found (AR:0, List:625, Loaded:0)' Processed=220 Modified=0 Success=true
+[yyyy-MM-dd HH:mm:ss] Success: Audit | Audit OK (Mobile_Low) - 220 textures found (AR:0, List:625, Loaded:0) | Processed=220 Modified=0
+[yyyy-MM-dd HH:mm:ss] UI: Loading texture audit CSV: D:/Documents/UE_Plugins/MagicOptimizer/HostProject/Saved/MagicOptimizer/Audit/textures.csv
+[yyyy-MM-dd HH:mm:ss] UI: Loaded 50 texture rows (lines=51)
+[yyyy-MM-dd HH:mm:ss] PythonBridge: Initialized (Version=UE Embedded Python)
+[yyyy-MM-dd HH:mm:ss] PythonBridge: Initialized (Version=UE Embedded Python)
+[yyyy-MM-dd HH:mm:ss] UI: Loading texture audit CSV: D:/Documents/UE_Plugins/MagicOptimizer/HostProject/Saved/MagicOptimizer/Audit/textures.csv
+[yyyy-MM-dd HH:mm:ss] UI: Loaded 50 texture rows (lines=51)
+[yyyy-MM-dd HH:mm:ss] PythonBridge: Initialized (Version=UE Embedded Python)
+[yyyy-MM-dd HH:mm:ss] PythonBridge: Initialized (Version=UE Embedded Python)
+[yyyy-MM-dd HH:mm:ss] PythonBridge: Initialized (Version=UE Embedded Python)
+[yyyy-MM-dd HH:mm:ss] UI: Loading texture audit CSV: D:/Documents/UE_Plugins/MagicOptimizer/HostProject/Saved/MagicOptimizer/Audit/textures.csv
+[yyyy-MM-dd HH:mm:ss] UI: Loaded 50 texture rows (lines=51)
+[yyyy-MM-dd HH:mm:ss] PythonBridge: Initialized (Version=UE Embedded Python)
+[yyyy-MM-dd HH:mm:ss] PythonBridge: Initialized (Version=UE Embedded Python)
+[yyyy-MM-dd HH:mm:ss] UI: Loading texture audit CSV: D:/Documents/UE_Plugins/MagicOptimizer/HostProject/Saved/MagicOptimizer/Audit/textures.csv
+[yyyy-MM-dd HH:mm:ss] UI: Loaded 50 texture rows (lines=51)
