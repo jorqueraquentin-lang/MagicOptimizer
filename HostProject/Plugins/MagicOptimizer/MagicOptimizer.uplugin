@@ -17,8 +17,8 @@
 	"Modules": [
 		{
 			"Name": "MagicOptimizer",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
 		}
 	]
 }

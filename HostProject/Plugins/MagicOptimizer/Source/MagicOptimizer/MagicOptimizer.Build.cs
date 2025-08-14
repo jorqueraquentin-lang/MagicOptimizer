@@ -26,7 +26,23 @@ public class MagicOptimizer : ModuleRules
 			new string[]
 			{
 				"Core",
-				// ... add other public dependencies that you statically link with here ...
+				"CoreUObject",
+				"Engine",
+				"Slate",
+				"SlateCore",
+				"UnrealEd",
+				"AssetRegistry",
+				"EditorAssetLibrary",
+				"PythonScriptPlugin",
+				"PythonScriptPluginEditor",
+				"EditorStyle",
+				"PropertyEditor",
+				"DetailCustomizations",
+				"LevelEditor",
+				"WorkspaceMenuStructure",
+				"ContentBrowser",
+				"AssetTools",
+				"EditorSubsystem"
 			}
 			);
 			
@@ -38,7 +54,32 @@ public class MagicOptimizer : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				// ... add private dependencies that you statically link with here ...	
+				"UnrealEd",
+				"AssetRegistry",
+				"EditorAssetLibrary",
+				"PythonScriptPlugin",
+				"PythonScriptPluginEditor",
+				"EditorStyle",
+				"PropertyEditor",
+				"DetailCustomizations",
+				"LevelEditor",
+				"WorkspaceMenuStructure",
+				"ContentBrowser",
+				"AssetTools",
+				"EditorSubsystem",
+				"Projects",
+				"InputCore",
+				"ApplicationCore",
+				"RHI",
+				"RenderCore",
+				"Renderer",
+				"MaterialEditor",
+				"MeshUtilities",
+				"MeshReductionInterface",
+				"NaniteTools",
+				"StaticMeshEditor",
+				"TextureEditor",
+				"MaterialEditorUtilities"
 			}
 			);
 		
@@ -47,6 +88,16 @@ public class MagicOptimizer : ModuleRules
 			new string[]
 			{
 				// ... add any modules that your module loads dynamically here ...
+			}
+			);
+
+		// Add source files
+		PublicDependencyModuleNames.AddRange(
+			new string[]
+			{
+				"OptimizerSettings",
+				"PythonBridge",
+				"OptimizerRun"
 			}
 			);
 	}
