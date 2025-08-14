@@ -9,6 +9,7 @@
 UENUM(BlueprintType)
 enum class EOptimizerCategory : uint8
 {
+	None = 0x00,
 	Textures = 0x01,
 	Meshes = 0x02,
 	Materials = 0x04,
@@ -125,13 +126,13 @@ public:
 	static UOptimizerSettings* Get();
 
 	// Get default settings
-	virtual void GetDefaultSettings() override;
+	virtual void GetDefaultSettings();
 
 	// Save settings
-	virtual void SaveSettings() override;
+	virtual void SaveSettings();
 
 	// Load settings
-	virtual void LoadSettings() override;
+	virtual void LoadSettings();
 
 	// Get preset by name
 	FOptimizerPreset* GetPreset(const FString& PresetName);
@@ -147,5 +148,5 @@ public:
 
 protected:
 	// Default values
-	virtual void SetToDefaults() override;
+	virtual void SetToDefaults();
 };

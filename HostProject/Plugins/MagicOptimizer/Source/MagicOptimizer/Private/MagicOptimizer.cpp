@@ -7,8 +7,7 @@
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "Framework/MultiBox/MultiBoxExtender.h"
 #include "LevelEditor.h"
-#include "EditorUtilitySubsystem.h"
-#include "EditorUtilityWidget.h"
+
 #include "WorkspaceMenuStructure.h"
 #include "WorkspaceMenuStructureModule.h"
 #include "Framework/Application/SlateApplication.h"
@@ -59,20 +58,13 @@ void FMagicOptimizerModule::StartupModule()
 	// Register tab spawner with error handling
 	UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Registering tab spawner..."));
 	
-	if (FGlobalTabmanager::Get())
-	{
-		FGlobalTabmanager::Get()->RegisterNomadTabSpawner(
-			"MagicOptimizer",
-			FOnSpawnTab::CreateRaw(this, &FMagicOptimizerModule::OnSpawnPluginTab))
-			.SetDisplayName(LOCTEXT("MagicOptimizerTab", "Magic Optimizer"))
-			.SetMenuType(ETabSpawnerMenuType::Hidden);
+	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(
+		FName("MagicOptimizer"),
+		FOnSpawnTab::CreateRaw(this, &FMagicOptimizerModule::OnSpawnPluginTab))
+		.SetDisplayName(LOCTEXT("MagicOptimizerTab", "Magic Optimizer"))
+		.SetMenuType(ETabSpawnerMenuType::Hidden);
 
-		UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Tab spawner registered successfully"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("MagicOptimizer: GlobalTabmanager not available"));
-	}
+	UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Tab spawner registered successfully"));
 
 	// Add menu extension to Window menu with comprehensive error handling
 	UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Adding Window menu extension..."));
@@ -130,10 +122,7 @@ void FMagicOptimizerModule::StartupModule()
 void FMagicOptimizerModule::ShutdownModule()
 {
 	// Unregister tab spawner
-	if (FGlobalTabmanager::Get())
-	{
-		FGlobalTabmanager::Get()->UnregisterNomadTabSpawner("MagicOptimizer");
-	}
+	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(FName("MagicOptimizer"));
 
 	UE_LOG(LogTemp, Log, TEXT("MagicOptimizer module shutdown"));
 }
@@ -162,10 +151,7 @@ void FMagicOptimizerModule::AddMenuExtension(FMenuBuilder& Builder)
 
 void FMagicOptimizerModule::OpenOptimizerPanel()
 {
-	if (FGlobalTabmanager::Get())
-	{
-		FGlobalTabmanager::Get()->TryInvokeTab("MagicOptimizer");
-	}
+	FGlobalTabmanager::Get()->TryInvokeTab(FName("MagicOptimizer"));
 }
 
 #undef LOCTEXT_NAMESPACE

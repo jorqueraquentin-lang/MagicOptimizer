@@ -7,7 +7,6 @@
 #include "OptimizerSettings.h"
 #include "PythonBridge.h"
 
-class SComboBox;
 class SCheckBox;
 class SButton;
 class SEditableTextBox;

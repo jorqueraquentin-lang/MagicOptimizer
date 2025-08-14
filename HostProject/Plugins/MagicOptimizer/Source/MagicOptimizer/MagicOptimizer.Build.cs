@@ -23,9 +23,7 @@ public class MagicOptimizer : ModuleRules
 				"SlateCore",
 				"UnrealEd",
 				"AssetRegistry",
-				"EditorAssetLibrary",
 				"PythonScriptPlugin",
-				"PythonScriptPluginEditor",
 				"EditorStyle",
 				"PropertyEditor",
 				"DetailCustomizations",
@@ -48,9 +46,7 @@ public class MagicOptimizer : ModuleRules
 				"SlateCore",
 				"UnrealEd",
 				"AssetRegistry",
-				"EditorAssetLibrary",
 				"PythonScriptPlugin",
-				"PythonScriptPluginEditor",
 				"EditorStyle",
 				"PropertyEditor",
 				"DetailCustomizations",
@@ -68,10 +64,8 @@ public class MagicOptimizer : ModuleRules
 				"MaterialEditor",
 				"MeshUtilities",
 				"MeshReductionInterface",
-				"NaniteTools",
 				"StaticMeshEditor",
 				"TextureEditor",
-				"MaterialEditorUtilities",
 				"AppFramework"
 			}
 			);

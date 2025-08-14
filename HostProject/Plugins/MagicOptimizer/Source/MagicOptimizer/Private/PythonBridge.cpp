@@ -10,11 +10,9 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "IPythonScriptPlugin.h"
-#include "PythonScriptPlugin.h"
-#include "PythonScriptPluginEditor.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Editor.h"
-#include "EditorUtilitySubsystem.h"
+
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "ContentBrowserModule.h"
 #include "IContentBrowserSingleton.h"
@@ -193,7 +191,9 @@ bool UPythonBridge::IsPythonModuleAvailable(const FString& ModuleName) const
 	FString Output, Error;
 	FString Command = FString::Printf(TEXT("python -c \"import %s; print('OK')\""), *ModuleName);
 	
-	return ExecutePythonCommand(Command, Output, Error) && Output.Contains(TEXT("OK"));
+	// Create a temporary non-const instance to call ExecutePythonCommand
+	UPythonBridge* NonConstThis = const_cast<UPythonBridge*>(this);
+	return NonConstThis->ExecutePythonCommand(Command, Output, Error) && Output.Contains(TEXT("OK"));
 }
 
 UOptimizerSettings* UPythonBridge::GetOptimizerSettings() const
@@ -243,7 +243,7 @@ bool UPythonBridge::ExecutePythonCommand(const FString& Command, FString& Output
 	
 	// Use FPlatformProcess::ExecProcess for cross-platform compatibility
 	FString StdOut, StdErr;
-	const bool bSuccess = FPlatformProcess::ExecProcess(*Command, &StdOut, &StdErr, &ReturnCode);
+	const bool bSuccess = FPlatformProcess::ExecProcess(*Command, nullptr, &ReturnCode, &StdOut, &StdErr);
 	
 	Output = StdOut;
 	Error = StdErr;
