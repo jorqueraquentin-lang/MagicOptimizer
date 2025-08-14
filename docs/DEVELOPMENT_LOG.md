@@ -1293,3 +1293,19 @@ Notes:
 
 Next:
 - Expand `entry.py` to actually consume argv and emit real metrics; surface parsed stats in the panel
+
+### 2025-08-15 06:26 — UI shows parsed JSON summary (message + counts)
+
+- Panel now displays a summary under "Python Output" with parsed `message`, `assetsProcessed`, and `assetsModified`
+- Verified across all phases; matches `entry.py` JSON
+- This completes Phase 2 Step 5 (result handling)
+
+Next:
+- Phase 3 Step 7: Basic texture audit (enumerate textures, collect size/format), return JSON for display
+
+### 2025-08-15 06:35 — Started Phase 3 Step 7: Basic texture audit via Python
+
+- Extended `entry.py` to detect UE embedded Python and, for `Audit` phase, enumerate `Texture2D` assets via `AssetRegistry`:
+  - Returns count, and a sample list (up to 50) with `path`, `width`, `height`, `format`
+- Message reports total textures found
+- Next: surface a small table in the panel and add simple filters (e.g., include/exclude paths)

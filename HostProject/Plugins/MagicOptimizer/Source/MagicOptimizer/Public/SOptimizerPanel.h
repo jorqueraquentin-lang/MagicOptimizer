@@ -32,13 +32,15 @@ protected:
 
 	// UI state
 	TArray<TSharedPtr<FString>> TargetProfiles;
-	TArray<TSharedPtr<FString>> RunModes;
 	FString CurrentProfile;
-	FString CurrentRunMode;
 
 	// Output log buffer
 	FString LastStdOut;
 	FString LastStdErr;
+
+	int32 LastAssetsProcessed = 0;
+	int32 LastAssetsModified = 0;
+	FString LastResultMessage;
 
 	// UI event handlers
 	FReply OnAuditClicked();
@@ -81,9 +83,6 @@ protected:
 	void OnProfileSelected(TSharedPtr<FString> SelectedItem, ESelectInfo::Type SelectInfo);
 	FText GetCurrentProfileText() const;
 
-	// Run mode selection
-	void OnRunModeSelected(TSharedPtr<FString> SelectedItem, ESelectInfo::Type SelectInfo);
-	FText GetCurrentRunModeText() const;
 
 	// Max changes input
 	FString GetMaxChanges() const;

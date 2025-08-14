@@ -35,20 +35,17 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 	InitializeUI();
 
 	// Restore persisted settings into UI
-	if (OptimizerSettings)
-	{
-		// Ensure latest values from config are loaded
-		OptimizerSettings->LoadSettings();
+    if (OptimizerSettings)
+    {
+        // Ensure latest values from config are loaded
+        OptimizerSettings->LoadSettings();
 
-		if (!OptimizerSettings->TargetProfile.IsEmpty())
-		{
-			CurrentProfile = OptimizerSettings->TargetProfile;
-		}
-		if (!OptimizerSettings->RunMode.IsEmpty())
-		{
-			CurrentRunMode = OptimizerSettings->RunMode;
-		}
-	}
+        if (!OptimizerSettings->TargetProfile.IsEmpty())
+        {
+            CurrentProfile = OptimizerSettings->TargetProfile;
+        }
+        // No dropdown: ignore persisted RunMode
+    }
 
 	ChildSlot
 	[
@@ -111,34 +108,10 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 					]
 				]
 				
-				// Run Mode Selection
-				+ SGridPanel::Slot(0, 3)
-				.Padding(4.0f)
-				.VAlign(VAlign_Center)
-				[
-					SNew(STextBlock)
-					.Text(FText::FromString(TEXT("Run Mode:")))
-				]
-				
-				+ SGridPanel::Slot(1, 3)
-				.Padding(4.0f)
-				[
-					SNew(SComboBox<TSharedPtr<FString>>)
-					.OptionsSource(&RunModes)
-					.OnGenerateWidget_Lambda([](TSharedPtr<FString> Item)
-					{
-						return SNew(STextBlock).Text(FText::FromString(*Item));
-					})
-					.OnSelectionChanged(this, &SOptimizerPanel::OnRunModeSelected)
-					.Content()
-					[
-						SNew(STextBlock)
-						.Text(this, &SOptimizerPanel::GetCurrentRunModeText)
-					]
-				]
+                // Removed Run Mode dropdown (buttons below are the actions)
 				
 				// Action Buttons
-				+ SGridPanel::Slot(0, 4)
+                + SGridPanel::Slot(0, 3)
 				.ColumnSpan(2)
 				.Padding(4.0f)
 				[
@@ -182,7 +155,7 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 				]
 
 				// Options Section
-				+ SGridPanel::Slot(0, 5)
+                + SGridPanel::Slot(0, 4)
 				.ColumnSpan(2)
 				.Padding(4.0f)
 				[
@@ -340,7 +313,7 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 				]
 
 				// Output Area
-				+ SGridPanel::Slot(0, 6)
+                + SGridPanel::Slot(0, 5)
 				.ColumnSpan(2)
 				.Padding(4.0f)
 				[
@@ -362,6 +335,19 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
                         .Text_Lambda([this]() { return FText::FromString(LastStdErr); })
                         .AutoWrapText(true)
                     ]
+					+ SScrollBox::Slot()
+					[
+						SNew(STextBlock)
+						.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+						.Text_Lambda([this]() {
+							if (LastAssetsProcessed <= 0 && LastAssetsModified <= 0 && LastResultMessage.IsEmpty())
+							{
+								return FText::GetEmpty();
+							}
+							const FString Summary = FString::Printf(TEXT("%s\nAssets processed: %d\nAssets modified: %d"), *LastResultMessage, LastAssetsProcessed, LastAssetsModified);
+							return FText::FromString(Summary);
+						})
+					]
 					]
 				]
 			]
@@ -385,16 +371,8 @@ void SOptimizerPanel::InitializeUI()
 	TargetProfiles.Add(MakeShareable(new FString(TEXT("Archviz_High_Fidelity"))));
 	TargetProfiles.Add(MakeShareable(new FString(TEXT("Custom"))));
 	
-	// Initialize run modes
-	RunModes.Empty();
-	RunModes.Add(MakeShareable(new FString(TEXT("Audit"))));
-	RunModes.Add(MakeShareable(new FString(TEXT("Recommend"))));
-	RunModes.Add(MakeShareable(new FString(TEXT("Apply"))));
-	RunModes.Add(MakeShareable(new FString(TEXT("Verify"))));
-	
-	// Set defaults
-	CurrentProfile = TEXT("PC_Balanced");
-	CurrentRunMode = TEXT("Audit");
+    // Set defaults
+    CurrentProfile = TEXT("PC_Balanced");
 }
 
 // Button event handlers
@@ -460,27 +438,7 @@ FText SOptimizerPanel::GetCurrentProfileText() const
 	return FText::FromString(CurrentProfile);
 }
 
-// Run mode selection
-void SOptimizerPanel::OnRunModeSelected(TSharedPtr<FString> SelectedItem, ESelectInfo::Type SelectInfo)
-{
-	if (SelectedItem.IsValid())
-	{
-		CurrentRunMode = *SelectedItem;
-		ShowNotification(FString::Printf(TEXT("Run mode selected: %s"), *CurrentRunMode));
-
-		// Persist to settings
-		if (OptimizerSettings)
-		{
-			OptimizerSettings->RunMode = CurrentRunMode;
-			OptimizerSettings->SaveSettings();
-		}
-	}
-}
-
-FText SOptimizerPanel::GetCurrentRunModeText() const
-{
-	return FText::FromString(CurrentRunMode);
-}
+// Removed run mode selection handlers (using buttons only)
 
 // Run optimization phase
 void SOptimizerPanel::RunOptimizationPhase(const FString& Phase)
@@ -506,6 +464,9 @@ void SOptimizerPanel::RunOptimizationPhase(const FString& Phase)
     FOptimizerResult Result = PythonBridge->RunOptimization(Params);
     LastStdOut = Result.StdOut;
     LastStdErr = Result.StdErr;
+    LastAssetsProcessed = Result.AssetsProcessed;
+    LastAssetsModified = Result.AssetsModified;
+    LastResultMessage = Result.Message;
 	
 	if (Result.bSuccess)
 	{
