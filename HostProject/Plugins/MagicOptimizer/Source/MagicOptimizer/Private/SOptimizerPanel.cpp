@@ -10,6 +10,8 @@
 #include "Widgets/Layout/SGridPanel.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/Layout/SExpandableArea.h"
+#include "Widgets/Views/SListView.h"
+#include "Widgets/Views/STableRow.h"
 
 #include "EditorStyleSet.h"
 #include "ISettingsModule.h"
@@ -20,6 +22,8 @@
 #include "Editor.h"
 #include "Framework/Application/SlateApplication.h"
 #include "HAL/PlatformApplicationMisc.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
 
 void SOptimizerPanel::Construct(const FArguments& InArgs)
 {
@@ -385,6 +389,22 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 						]
 					]
 				]
+
+				// Audit Results
+				+ SGridPanel::Slot(0, 6)
+				.ColumnSpan(2)
+				.Padding(4.0f)
+				[
+					SNew(SExpandableArea)
+					.AreaTitle(FText::FromString(TEXT("Audit Results (Textures)")))
+					.BodyContent()
+					[
+						SAssignNew(TextureListView, SListView<FTextureAuditRowPtr>)
+						.ItemHeight(20)
+						.ListItemsSource(&TextureRows)
+						.OnGenerateRow(this, &SOptimizerPanel::OnGenerateTextureRow)
+					]
+				]
 			]
 		]
 	];
@@ -513,6 +533,14 @@ void SOptimizerPanel::RunOptimizationPhase(const FString& Phase)
 	{
 		ShowNotification(FString::Printf(TEXT("%s phase completed successfully"), *Phase));
         MagicOptimizerLog::AppendLine(FString::Printf(TEXT("Success: %s | %s | Processed=%d Modified=%d"), *Phase, *Result.Message, Result.AssetsProcessed, Result.AssetsModified));
+		if (Phase == TEXT("Audit"))
+		{
+			LoadTextureAuditCsv();
+			if (TextureListView.IsValid())
+			{
+				TextureListView->RequestListRefresh();
+			}
+		}
 	}
 	else
 	{
@@ -542,6 +570,49 @@ FOptimizerRunParams SOptimizerPanel::BuildRunParams(const FString& Phase) const
 	Params.bUseSelection = false;
 	Params.Categories = GetSelectedCategories();
 	return Params;
+}
+
+void SOptimizerPanel::LoadTextureAuditCsv()
+{
+	TextureRows.Empty();
+	FString SavedDir = FPaths::ProjectSavedDir();
+	FString SubDir = OptimizerSettings ? OptimizerSettings->OutputDirectory : TEXT("Saved/MagicOptimizer");
+	FString FullDir = SavedDir / SubDir;
+	FString CsvPath = FullDir / TEXT("textures.csv");
+	FString Contents;
+	if (!FPaths::FileExists(CsvPath))
+	{
+		// Also try default path
+		CsvPath = SavedDir / TEXT("MagicOptimizer/Audit/textures.csv");
+	}
+	if (FPaths::FileExists(CsvPath) && FFileHelper::LoadFileToString(Contents, *CsvPath))
+	{
+		TArray<FString> Lines;
+		Contents.ParseIntoArrayLines(Lines);
+		for (int32 i = 1; i < Lines.Num(); ++i) // skip header
+		{
+			TArray<FString> Cells;
+			Lines[i].ParseIntoArray(Cells, TEXT(","));
+			if (Cells.Num() >= 4)
+			{
+				FTextureAuditRowPtr Row = MakeShared<FTextureAuditRow>();
+				Row->Path = Cells[0].TrimStartAndEnd();
+				Row->Width = FCString::Atoi(*Cells[1]);
+				Row->Height = FCString::Atoi(*Cells[2]);
+				Row->Format = Cells[3].TrimStartAndEnd();
+				TextureRows.Add(Row);
+			}
+		}
+	}
+}
+
+TSharedRef<ITableRow> SOptimizerPanel::OnGenerateTextureRow(FTextureAuditRowPtr Item, const TSharedRef<STableViewBase>& OwnerTable)
+{
+	const FString Text = FString::Printf(TEXT("%s | %dx%d | %s"), *Item->Path, Item->Width, Item->Height, *Item->Format);
+	return SNew(STableRow<FTextureAuditRowPtr>, OwnerTable)
+	[
+		SNew(STextBlock).Text(FText::FromString(Text))
+	];
 }
 
 // Utility functions

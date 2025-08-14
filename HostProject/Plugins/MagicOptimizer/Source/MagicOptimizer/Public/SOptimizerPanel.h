@@ -12,6 +12,17 @@ class SButton;
 class SEditableTextBox;
 class SScrollBox;
 class SNotificationList;
+class SListViewBase;
+
+typedef TSharedPtr<struct FTextureAuditRow> FTextureAuditRowPtr;
+
+struct FTextureAuditRow
+{
+	FString Path;
+	int32 Width = 0;
+	int32 Height = 0;
+	FString Format;
+};
 
 class MAGICOPTIMIZER_API SOptimizerPanel : public SCompoundWidget
 {
@@ -41,6 +52,10 @@ protected:
 	int32 LastAssetsProcessed = 0;
 	int32 LastAssetsModified = 0;
 	FString LastResultMessage;
+
+	// Audit results data
+	TArray<FTextureAuditRowPtr> TextureRows;
+	TSharedPtr<class SListView<FTextureAuditRowPtr>> TextureListView;
 
 	// UI event handlers
 	FReply OnAuditClicked();
@@ -108,6 +123,10 @@ protected:
 	void RunOptimizationPhase(const FString& Phase);
 	TArray<FString> GetSelectedCategories() const;
 	FOptimizerRunParams BuildRunParams(const FString& Phase) const;
+
+	// Results loading
+	void LoadTextureAuditCsv();
+	TSharedRef<class ITableRow> OnGenerateTextureRow(FTextureAuditRowPtr Item, const TSharedRef<class STableViewBase>& OwnerTable);
 
 	// UI refresh
 	void RefreshUI();
