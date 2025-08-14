@@ -299,22 +299,19 @@ UOptimizerSettings* UPythonBridge::GetOptimizerSettings() const
 
 bool UPythonBridge::InitializePythonEnvironment()
 {
-	// Prefer Unreal's embedded Python if available
-	if (IPythonScriptPlugin::Get())
-	{
-		PythonVersion = TEXT("UE Embedded Python");
-		UE_LOG(LogTemp, Log, TEXT("Using embedded Python"));
-		FString OutputDir = OptimizerSettings ? OptimizerSettings->OutputDirectory : TEXT("Saved/MagicOptimizer");
-		if (!CreateOutputDirectory(OutputDir))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Failed to create output directory: %s"), *OutputDir);
-		}
-		return true;
-	}
+    // Prefer Unreal's embedded Python if available (avoid executing any code here to prevent crashes)
+    if (IPythonScriptPlugin::Get() != nullptr)
+    {
+        PythonVersion = TEXT("UE Embedded Python");
+        UE_LOG(LogTemp, Log, TEXT("Using embedded Python"));
+        const FString OutputDir = OptimizerSettings ? OptimizerSettings->OutputDirectory : TEXT("Saved/MagicOptimizer");
+        CreateOutputDirectory(OutputDir);
+        return true;
+    }
 
 	// Fallback: system Python
 	FString Output, Error;
-	if (!ExecutePythonCommand(TEXT("python --version"), Output, Error))
+    if (!ExecutePythonCommand(TEXT("python --version"), Output, Error))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Python not found in system PATH"));
 		return false;

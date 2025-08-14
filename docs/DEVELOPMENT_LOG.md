@@ -1309,3 +1309,56 @@ Next:
   - Returns count, and a sample list (up to 50) with `path`, `width`, `height`, `format`
 - Message reports total textures found
 - Next: surface a small table in the panel and add simple filters (e.g., include/exclude paths)
+
+### 2025-08-15 06:50 — Audit phase scope and schema locked (importance emphasized)
+
+- Declared Audit as the authoritative phase; Recommend/Apply/Verify depend on Audit completeness
+- Locked a unified JSON schema to cover textures, meshes, materials, levels, and cross-category findings
+- Execution model: C++ orchestrates per-category; Python auditors return exhaustive structured JSON; UI renders summary and findings
+- Added runtime plugin log at `Saved/MagicOptimizer/MagicOptimizerRuntime.log` for action/result traces (timestamps)
+- Iterating on texture discovery (AR + EditorAssetLibrary fallbacks) to be robust on large projects
+
+Next actions:
+- Finalize texture enumerator and add top-N findings (oversize, wrong compression, no mips, non-streaming)
+- Implement mesh/material/level auditors with same JSON and merge strategy
+
+---
+
+### 2025-08-14 21:15 — Reflection and alignment on current status and next steps
+
+**Status**: Working plugin shell with basic UI, settings persistence, and Python bridge validation in place; early Audit results surfaced.
+
+**What’s solid right now**:
+- C++ module compiles/loads; panel opens from Window menu.
+- `UDeveloperSettings` persistence wired to core toggles and inputs; Settings page deep-link works.
+- Embedded Python path proven; `entry.py` invoked; JSON round‑trip parsed and rendered in the panel.
+- Texture Audit prototype enumerates `Texture2D` assets and returns counts/sample.
+
+**Gaps and risks**:
+- System Python not on PATH; currently relying on embedded Python only.
+- Texture enumeration robustness on large projects (performance, timeouts, editor responsiveness) needs validation.
+- UI only shows a minimal summary; no sortable table or filters yet.
+- Mesh/Material/Level auditors not started; unified schema agreed but not implemented across categories.
+
+**Immediate next baby steps**:
+1. Panel: render a small, virtualized table for Texture Audit top findings (oversize, wrong compression, no mips, non‑streaming).
+2. Scope: add include/exclude path filters in UI and plumb to Python argv.
+3. Python: extend `entry.py` Audit to compute those top findings and cap payload size; keep full details to CSV on disk.
+4. Logging: adopt `OptimizerLogging.h/.cpp` for a consistent `LogMagicOptimizer` category and route Python/stdout lines to it.
+
+**Decisions/assumptions**:
+- Audit is authoritative; downstream phases consume Audit output.
+- JSON is for UI summaries; CSV is the durable artifact for diffing/re‑runs.
+- No C++ exceptions; use UE patterns and explicit error returns/logs.
+
+**Mini‑milestone definition of done (DoD)**:
+- Run Audit on a medium project: panel shows a table with top texture issues; include/exclude paths honored; CSV written to `Saved/MagicOptimizer/Audit`.
+
+---
+
+### 2025-08-15 06:58 — README hero section restructured (Documentation UI)
+
+- Moved badges directly under the main title for better first-glance scanning.
+- Added a concise tagline and four hero bullets to communicate value quickly.
+- Relocated “The Audit, Made Friendly” into `Project Overview` as “Why Audit First” to align with overall flow.
+- Preserved all original content; improved hierarchy and consistency with the rest of the README styling.

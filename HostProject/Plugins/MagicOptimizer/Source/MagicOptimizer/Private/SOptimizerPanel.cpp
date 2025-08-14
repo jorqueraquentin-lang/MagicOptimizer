@@ -14,6 +14,7 @@
 #include "EditorStyleSet.h"
 #include "ISettingsModule.h"
 #include "Misc/ConfigCacheIni.h"
+#include "OptimizerLogging.h"
 #include "OptimizerSettings.h"
 #include "PythonBridge.h"
 #include "Editor.h"
@@ -378,24 +379,28 @@ void SOptimizerPanel::InitializeUI()
 // Button event handlers
 FReply SOptimizerPanel::OnAuditClicked()
 {
+    MagicOptimizerLog::AppendLine(TEXT("UI: Audit button clicked"));
 	RunOptimizationPhase(TEXT("Audit"));
 	return FReply::Handled();
 }
 
 FReply SOptimizerPanel::OnRecommendClicked()
 {
+    MagicOptimizerLog::AppendLine(TEXT("UI: Recommend button clicked"));
 	RunOptimizationPhase(TEXT("Recommend"));
 	return FReply::Handled();
 }
 
 FReply SOptimizerPanel::OnApplyClicked()
 {
+    MagicOptimizerLog::AppendLine(TEXT("UI: Apply button clicked"));
 	RunOptimizationPhase(TEXT("Apply"));
 	return FReply::Handled();
 }
 
 FReply SOptimizerPanel::OnVerifyClicked()
 {
+    MagicOptimizerLog::AppendLine(TEXT("UI: Verify button clicked"));
 	RunOptimizationPhase(TEXT("Verify"));
 	return FReply::Handled();
 }
@@ -446,6 +451,7 @@ void SOptimizerPanel::RunOptimizationPhase(const FString& Phase)
 	if (!PythonBridge || !PythonBridge->IsPythonAvailable())
 	{
 		ShowNotification(TEXT("Python bridge not available"), false);
+        MagicOptimizerLog::AppendLine(TEXT("Error: Python bridge not available"));
 		return;
 	}
 	
@@ -460,7 +466,8 @@ void SOptimizerPanel::RunOptimizationPhase(const FString& Phase)
 	// Get selected categories
 	Params.Categories = GetSelectedCategories();
 	
-	// Execute optimization
+    // Execute optimization
+    MagicOptimizerLog::AppendLine(FString::Printf(TEXT("Run: Phase=%s Profile=%s"), *Phase, *CurrentProfile));
     FOptimizerResult Result = PythonBridge->RunOptimization(Params);
     LastStdOut = Result.StdOut;
     LastStdErr = Result.StdErr;
@@ -471,10 +478,12 @@ void SOptimizerPanel::RunOptimizationPhase(const FString& Phase)
 	if (Result.bSuccess)
 	{
 		ShowNotification(FString::Printf(TEXT("%s phase completed successfully"), *Phase));
+        MagicOptimizerLog::AppendLine(FString::Printf(TEXT("Success: %s | %s | Processed=%d Modified=%d"), *Phase, *Result.Message, Result.AssetsProcessed, Result.AssetsModified));
 	}
 	else
 	{
 		ShowNotification(FString::Printf(TEXT("%s phase failed: %s"), *Phase, *Result.Message), false);
+        MagicOptimizerLog::AppendLine(FString::Printf(TEXT("Failure: %s | %s | Err=%s"), *Phase, *Result.Message, *Result.StdErr));
 	}
 }
 

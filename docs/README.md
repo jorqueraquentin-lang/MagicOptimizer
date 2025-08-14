@@ -6,6 +6,11 @@
 
 A comprehensive UE5.6 plugin for automated asset optimization and editor tools, featuring a Python backend for analysis logic and C++ frontend for seamless Unreal Engine integration.
 
+- **Four-phase workflow**: Audit → Recommend → Apply → Verify
+- **Safety-first**: Dry Run, change caps, backups, verification
+- **UE-native UX**: Slate UI in-editor; Python+C++ under the hood
+- **Status**: Working plugin shell; core features next
+
 ## 🎯 **Current Status: WORKING PLUGIN SHELL** ✅
 
 **BREAKTHROUGH ACHIEVED**: The MagicOptimizer plugin now successfully compiles and loads in UE5.6! After resolving all major compilation errors, the plugin appears in the editor and opens its UI panel.
@@ -24,6 +29,22 @@ MagicOptimizer is designed to be the ultimate asset optimization tool for Unreal
 - **Safety-First Approach**: Dry-run modes, change caps, and comprehensive revert capabilities
 - **Platform-Specific Presets**: Optimized configurations for PC, Console, Mobile, VR, and more
 - **Python + C++ Architecture**: Flexible Python backend with robust UE5.6 integration
+
+### 💡 **Why Audit First**
+
+Audit is the heart of MagicOptimizer. Think of it as your project’s health report: quick to run, safe by design, and rich enough to guide every decision that follows.
+
+- **What you get**:
+  - A clear, human-friendly summary of risks and opportunities
+  - A structured report under the hood that powers Recommendations and Apply
+  - Coverage across Textures, Meshes, Materials, and Levels (UE5.6-ready)
+
+- **Why it matters**:
+  - Great recommendations start with great visibility
+  - Audit is non-destructive and fast, so you can run it often
+  - Everything else in MagicOptimizer builds on it
+
+Curious about the nuts and bolts? The full technical schema and execution details are in the Development Log, but you don’t need to know any of that to benefit from the results.
 
 ## 🏗️ **Architecture & Design**
 
