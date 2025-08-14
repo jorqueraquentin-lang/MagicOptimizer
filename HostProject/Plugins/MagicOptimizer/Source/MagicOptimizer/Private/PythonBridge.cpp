@@ -10,6 +10,11 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "IPythonScriptPlugin.h"
+#include "Serialization/JsonSerializer.h"
+#include "Dom/JsonObject.h"
+#include "Policies/CondensedJsonPrintPolicy.h"
+#include "Serialization/JsonReader.h"
+#include "JsonObjectConverter.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Editor.h"
 
@@ -54,25 +59,25 @@ bool UPythonBridge::Initialize()
 
 bool UPythonBridge::IsPythonAvailable() const
 {
-    // Consider embedded Python presence as available
-    return bPythonInitialized || (IPythonScriptPlugin::Get() != nullptr);
+	// Consider embedded Python presence as available
+	return bPythonInitialized || (IPythonScriptPlugin::Get() != nullptr);
 }
 
 FOptimizerResult UPythonBridge::RunOptimization(const FOptimizerRunParams& Params)
 {
 	FOptimizerResult Result;
 
-    if (!bPythonInitialized)
+	if (!bPythonInitialized)
 	{
-        // Attempt lazy initialization now
-        if (!InitializePythonEnvironment())
-        {
-            Result.bSuccess = false;
-            Result.Message = TEXT("Python bridge not initialized");
-            Result.Errors.Add(TEXT("Python bridge not initialized"));
-            return Result;
-        }
-        bPythonInitialized = true;
+		// Attempt lazy initialization now
+		if (!InitializePythonEnvironment())
+		{
+			Result.bSuccess = false;
+			Result.Message = TEXT("Python bridge not initialized");
+			Result.Errors.Add(TEXT("Python bridge not initialized"));
+			return Result;
+		}
+		bPythonInitialized = true;
 	}
 
 	// Prepare arguments for Python script
@@ -98,31 +103,98 @@ FOptimizerResult UPythonBridge::RunOptimization(const FOptimizerRunParams& Param
 	Arguments.Add(CategoriesStr);
 
 	// Execute Python script if present, otherwise run embedded hello world
-	FString Output, Error;
-	FString ScriptPath = GetPythonScriptPath() / TEXT("entry.py");
+    FString Output, Error;
+    const FString BasePath = GetPythonScriptPath();
+    const FString ScriptPath = BasePath / TEXT("entry.py");
+    {
+        const bool bExists = FPlatformFileManager::Get().GetPlatformFile().FileExists(*ScriptPath);
+        UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Resolved Python path: %s (entry: %s) Exists=%s"), *BasePath, *ScriptPath, bExists ? TEXT("true") : TEXT("false"));
+    }
 
 	const bool bHasScript = ValidatePythonScript(ScriptPath);
 	bool bRan = false;
-	if (bHasScript)
+
+	// If we have embedded Python and a script, execute it within embedded Python and read a result file
+	if (bHasScript && IPythonScriptPlugin::Get())
+	{
+		// Ensure output directory exists and build an output file path
+		const FString OutputDir = OptimizerSettings ? OptimizerSettings->OutputDirectory : TEXT("Saved/MagicOptimizer");
+		const FString FullOutputDir = FPaths::ProjectSavedDir() / OutputDir;
+		IPlatformFile& PF = FPlatformFileManager::Get().GetPlatformFile();
+		PF.CreateDirectoryTree(*FullOutputDir);
+		const FString ResultFile = FullOutputDir / TEXT("last_result.json");
+
+		// Build a Python snippet to set sys.argv and exec the file
+		FString PyArgList = TEXT("[");
+		// argv[0] is the script path
+		PyArgList += FString::Printf(TEXT("r'%s'"), *ScriptPath);
+		for (const FString& Arg : Arguments)
+		{
+			PyArgList += TEXT(", r'") + Arg.ReplaceCharWithEscapedChar() + TEXT("'");
+		}
+		PyArgList += TEXT("]");
+
+		const FString PyCode = FString::Printf(
+			TEXT("import sys, os\n")
+			TEXT("sys.argv = %s\n")
+			TEXT("os.environ['MAGICOPTIMIZER_OUTPUT']=r'%s'\n")
+			TEXT("_p=r'%s'\n")
+			TEXT("_c=open(_p,'r',encoding='utf-8').read()\n")
+			TEXT("exec(compile(_c,_p,'exec'),{'__name__':'__main__'})\n"),
+			*PyArgList, *ResultFile, *ScriptPath);
+
+		UE_LOG(LogTemp, Log, TEXT("Running embedded Python script: %s"), *ScriptPath);
+		bRan = IPythonScriptPlugin::Get()->ExecPythonCommand(*PyCode);
+		// Try to read the result file
+		FString FileContents;
+		if (bRan && PF.FileExists(*ResultFile) && FFileHelper::LoadFileToString(FileContents, *ResultFile))
+		{
+			Output = FileContents;
+		}
+	}
+	else if (bHasScript)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Running system python script: %s"), *ScriptPath);
 		bRan = ExecutePythonScript(ScriptPath, Arguments, Output, Error);
 	}
-	else if (IPythonScriptPlugin::Get())
+    else if (IPythonScriptPlugin::Get())
 	{
-		UE_LOG(LogTemp, Log, TEXT("Running embedded Python Hello World"));
+        UE_LOG(LogTemp, Log, TEXT("Running embedded Python Hello World (no entry.py found)"));
 		IPythonScriptPlugin::Get()->ExecPythonCommand(TEXT("print('MagicOptimizer: Hello from embedded Python')"));
 		bRan = true;
 		Output = TEXT("Embedded Python Hello World executed");
 	}
 
-    if (bRan)
+	if (bRan)
 	{
 		Result.bSuccess = true;
 		Result.Message = bHasScript ? TEXT("Optimization completed successfully") : TEXT("Embedded Python executed (Hello World)");
-        Result.OutputPath = Output;
-        Result.StdOut = Output;
-        Result.StdErr = Error;
+		Result.OutputPath = Output;
+		Result.StdOut = Output;
+		Result.StdErr = Error;
+
+		// Attempt to parse structured JSON from stdout if present
+		TSharedPtr<FJsonObject> JsonObj;
+		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Output);
+		if (FJsonSerializer::Deserialize(Reader, JsonObj) && JsonObj.IsValid())
+		{
+			// Optional fields we care about
+			FString Msg;
+			int32 AssetsProcessed = 0;
+			int32 AssetsModified = 0;
+			bool bOk = false;
+			JsonObj->TryGetStringField(TEXT("message"), Msg);
+			JsonObj->TryGetNumberField(TEXT("assetsProcessed"), AssetsProcessed);
+			JsonObj->TryGetNumberField(TEXT("assetsModified"), AssetsModified);
+			JsonObj->TryGetBoolField(TEXT("success"), bOk);
+			if (!Msg.IsEmpty())
+			{
+				Result.Message = Msg;
+			}
+			if (AssetsProcessed > 0) { Result.AssetsProcessed = AssetsProcessed; }
+			if (AssetsModified > 0) { Result.AssetsModified = AssetsModified; }
+			if (!bOk) { Result.bSuccess = false; }
+		}
 	}
 	else
 	{
@@ -130,8 +202,8 @@ FOptimizerResult UPythonBridge::RunOptimization(const FOptimizerRunParams& Param
 		Result.Message = TEXT("Optimization failed");
 		if (!Error.IsEmpty())
 		{
-            Result.Errors.Add(Error);
-            Result.StdErr = Error;
+			Result.Errors.Add(Error);
+			Result.StdErr = Error;
 		}
 	}
 
@@ -155,11 +227,13 @@ FOptimizerResult UPythonBridge::RunPhase(const FString& Phase, const TArray<FStr
 
 FString UPythonBridge::GetPythonScriptPath() const
 {
-	if (OptimizerSettings)
-	{
-		return OptimizerSettings->PythonScriptPath;
-	}
-	return PythonScriptPath;
+    FString Path = OptimizerSettings ? OptimizerSettings->PythonScriptPath : PythonScriptPath;
+    if (FPaths::IsRelative(Path))
+    {
+        // Resolve relative to project directory so "Content/..." works
+        return FPaths::ConvertRelativePathToFull(FPaths::ProjectDir() / Path);
+    }
+    return Path;
 }
 
 void UPythonBridge::SetPythonScriptPath(const FString& NewPath)
@@ -205,11 +279,11 @@ bool UPythonBridge::IsPythonModuleAvailable(const FString& ModuleName) const
 	}
 
 	// Prefer embedded Python
-    if (IPythonScriptPlugin::Get())
-    {
-        const FString Code = FString::Printf(TEXT("import %s"), *ModuleName);
-        return IPythonScriptPlugin::Get()->ExecPythonCommand(*Code);
-    }
+	if (IPythonScriptPlugin::Get())
+	{
+		const FString Code = FString::Printf(TEXT("import %s"), *ModuleName);
+		return IPythonScriptPlugin::Get()->ExecPythonCommand(*Code);
+	}
 
 	// Fallback to system Python
 	FString Output, Error;

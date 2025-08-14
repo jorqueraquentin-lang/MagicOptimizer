@@ -57,6 +57,8 @@ public class MagicOptimizer : ModuleRules
 				"EditorSubsystem",
 				"Projects",
 				"Settings",
+				"Json",
+				"JsonUtilities",
 				"InputCore",
 				"ApplicationCore",
 				"RHI",

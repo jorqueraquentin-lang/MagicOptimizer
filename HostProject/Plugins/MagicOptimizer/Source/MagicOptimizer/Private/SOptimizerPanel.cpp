@@ -348,18 +348,20 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 					.AreaTitle(FText::FromString(TEXT("Python Output")))
 					.BodyContent()
 					[
-						SNew(SScrollBox)
-						+ SScrollBox::Slot()
-						[
-							SNew(STextBlock)
-							.Text_Lambda([this]() { return FText::FromString(LastStdOut.IsEmpty() ? TEXT("(no output)") : LastStdOut); })
-						]
-						+ SScrollBox::Slot()
-						[
-							SNew(STextBlock)
-							.ColorAndOpacity(FLinearColor::Red)
-							.Text_Lambda([this]() { return FText::FromString(LastStdErr); })
-						]
+                    SNew(SScrollBox)
+                    + SScrollBox::Slot()
+                    [
+                        SNew(STextBlock)
+                        .Text_Lambda([this]() { return FText::FromString(LastStdOut.IsEmpty() ? TEXT("(no output)") : LastStdOut); })
+                        .AutoWrapText(true)
+                    ]
+                    + SScrollBox::Slot()
+                    [
+                        SNew(STextBlock)
+                        .ColorAndOpacity(FLinearColor::Red)
+                        .Text_Lambda([this]() { return FText::FromString(LastStdErr); })
+                        .AutoWrapText(true)
+                    ]
 					]
 				]
 			]

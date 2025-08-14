@@ -1283,3 +1283,13 @@ Verification steps:
 Notes:
 - System Python not in PATH → embedded Python path exercised (as expected)
 - Next: replace Hello World with minimal `entry.py` skeleton to pass arguments and return structured output
+
+### 2025-08-15 06:20 — entry.py executed via embedded Python; JSON path validated
+
+- Fixed script encoding (remove UTF-8 BOM) and corrected Python dict syntax
+- `entry.py` now writes JSON to `MAGICOPTIMIZER_OUTPUT`; plugin reads and parses it
+- Verified by running all phases (Audit/Recommend/Apply/Verify) with success messages
+- Added diagnostic logging to show resolved script path and existence for easier troubleshooting
+
+Next:
+- Expand `entry.py` to actually consume argv and emit real metrics; surface parsed stats in the panel
