@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "MagicOptimizer",
+	"Description": "UE 5.6 plugin for asset optimization and editor tools",
+	"Category": "Other",
+	"CreatedBy": "Quentin Jorquera",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "MagicOptimizer",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
