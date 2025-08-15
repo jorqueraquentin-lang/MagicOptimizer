@@ -1620,3 +1620,57 @@ Verification:
    - AC: `textures_recommendations.csv` written; at least 2 rule hits in sample project
 
 ---
+
+### 2025-08-15 15:02
+- Implemented per-row Actions for texture recommendations list (Copy/Open) and added an Actions column header in `SOptimizerPanel.cpp`.
+- Built successfully; addressed only deprecation warnings (Slate ItemHeight, AssetRegistry object path FName). No errors.
+- Ran in-editor CI with Phase=Recommend twice; artifacts saved under `docs/ci/20250815_145542/` and `docs/ci/20250815_145906/`. Log shows: "Recommendations generated for Mobile_Low: 0/2 with issues" with assetsProcessed=2.
+- Began architecture hardening: extracted row models to `Public/ViewModels/TextureModels.h` to reduce `SOptimizerPanel` size and prepare for Services split (CSV IO, Recommender, Editor actions).
+- Next: move CSV parsing/loading into `Services/Csv`, switch deprecated `GetAssetByObjectPath(FName)` to `FSoftObjectPath`, and consider splitting UI sections into `STextureAuditSection` and `STextureRecommendSection`.
+
+---
+
+### 2025-08-15 15:22
+- Refactor: Introduced service layers to future-proof iteration as files grow.
+  - `Private/Services/Csv/TextureCsvReader.{h,cpp}` for audit/recommend CSV IO.
+  - `Private/Services/Editor/ContentBrowserActions.{h,cpp}` for Copy/Open actions (clipboard + Content Browser sync).
+  - Moved row models to `Public/ViewModels/TextureModels.h` to decouple data from UI.
+- `SOptimizerPanel` now uses these services for loading CSVs and row actions (reduced widget size, clearer separation of concerns).
+- Build: green (Development Editor | Win64). CI (Phase=Audit) ran successfully with artifacts under `docs/ci/20250815_151746/`.
+- Next:
+  - Extract UI sections into `STextureAuditSection` and `STextureRecommendSection` widgets.
+  - Create `TextureTableViewModel` for sort/filter state and operations.
+  - Migrate any remaining CSV parsing from widget code to the CSV service.
+
+---
+
+### 2025-08-15 15:34
+- Feature: Introduced a self-learning knowledge system to accumulate cross-project insights for better audits and recommendations over time.
+  - Python `entry.py`: emits JSONL events and CSV aggregates under `Saved/MagicOptimizer/Knowledge/`.
+    - `events.jsonl`: append-only event stream with `texture_observed` and `texture_recommend` entries.
+    - `kb_textures.csv`: paths, dimensions, format, tokenized name features, profile context.
+    - `kb_texture_recs.csv`: per-asset issues and recommendations with profile context.
+  - Purpose: enable future dev sessions to mine naming conventions, recurring issues, and profile-specific patterns to evolve rule packs.
+- Initial scope: Textures (observed + recommendation logs). Meshes/Materials/Levels to follow as categories mature.
+- Next:
+  - Add anonymization toggles and project-scoped opt-out.
+  - Add summarization script to generate human-readable insights from Knowledge/*.csv.
+  - Feed summaries back into `docs/DEVELOPMENT_LOG.md` and rule tuning.
+
+---
+
+### 2025-08-15 15:58
+- Docs: Reorganized docs to reduce confusion and surface QoL status clearly.
+  - Added `docs/DEV_README.md` (developer-focused guide with Architecture, Feature Index with Why/How/Status/Long-Term, and QoL rollup).
+  - Replaced `docs/README.md` content with a concise docs index pointing to root README, DEV_README, and the Development Log.
+  - Ensured QoL overview (Auto-Testing, Self-Learning, Clean Output, Console Commands, CSV-first, Services/ViewModels, CI Pruning) with statuses.
+- Next: keep DEV_README updated as features evolve; avoid duplication with root README.
+
+---
+
+### 2025-08-15 16:07
+- Docs consolidation: keep a single hero page in root `README.md` and a single thorough `docs/DEV_README.md`.
+  - Deleted `docs/README.md` (content merged into `DEV_README` where relevant, with developer focus and QoL rollup).
+  - Ensured previous sections (Overview, Why Audit First, Presets, Install/Usage, Safety, Advanced Options, Performance, Known Issues, Contributing, License, Acknowledgments, Support) are represented in `docs/DEV_README.md` in a developer-centric form.
+
+---

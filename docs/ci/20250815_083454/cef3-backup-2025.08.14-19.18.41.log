@@ -1,5 +1,0 @@
-[0815/051658.229:ERROR:cache_util_win.cc(20)] Unable to move the cache: Access is denied. (0x5)
-[0815/051658.229:ERROR:cache_util.cc(144)] Unable to move cache folder D:/Documents/UE_Plugins/MagicOptimizer/HostProject/Saved/webcache_4430\Cache to D:/Documents/UE_Plugins/MagicOptimizer/HostProject/Saved/webcache_4430\old_Cache_000
-[0815/051658.229:ERROR:disk_cache.cc(184)] Unable to create cache
-[0815/051701.232:WARNING:value_store_frontend.cc(45)] Reading mhjfbmdgcfjbbpaeojofohoefgiehjai.alarms from  failed: IO error: .../LOCK: File currently in use. (ChromeMethodBFE: 15::LockFile::2)
-[0815/051841.559:ERROR:gpu_init.cc(426)] Passthrough is not supported, GL is disabled

@@ -4,6 +4,8 @@ try:
 except Exception:
     unreal = None
 
+from datetime import datetime
+
 
 def _to_bool(s: str) -> bool:
     return str(s).strip().lower() == 'true'
@@ -26,6 +28,134 @@ def _parse_csv_list(s: str):
     if not s:
         return []
     return [p.strip() for p in s.split(',') if p.strip()]
+
+
+# --- Self-learning knowledge base (opt-in, default on internally) ---
+def _kb_get_dir():
+    try:
+        if unreal is not None and hasattr(unreal, 'Paths'):
+            saved_dir = unreal.Paths.project_saved_dir()
+        else:
+            saved_dir = os.path.join(os.getcwd(), 'Saved')
+        d = os.path.join(saved_dir, 'MagicOptimizer', 'Knowledge')
+        os.makedirs(d, exist_ok=True)
+        return d
+    except Exception:
+        return None
+
+
+_KB_RUN_ID = datetime.now().strftime('%Y%m%d_%H%M%S')
+
+
+def _kb_write_jsonl(event: dict):
+    try:
+        kb_dir = _kb_get_dir()
+        if not kb_dir:
+            return
+        path = os.path.join(kb_dir, 'events.jsonl')
+        event = dict(event or {})
+        event.setdefault('run_id', _KB_RUN_ID)
+        with open(path, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(event, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
+
+def _kb_append_csv(csv_name: str, header_fields: list, row_values: list):
+    try:
+        kb_dir = _kb_get_dir()
+        if not kb_dir:
+            return
+        path = os.path.join(kb_dir, csv_name)
+        file_exists = os.path.exists(path)
+        with open(path, 'a', newline='', encoding='utf-8') as f:
+            w = csv.writer(f)
+            if not file_exists:
+                w.writerow(header_fields)
+            w.writerow(row_values)
+    except Exception:
+        pass
+
+
+def _tokenize_name(name: str):
+    try:
+        base = (name or '').lower()
+        base = base.replace('.', '_')
+        tokens = []
+        for chunk in base.replace('-', '_').split('_'):
+            c = chunk.strip()
+            if not c:
+                continue
+            tokens.append(c)
+        return tokens
+    except Exception:
+        return []
+
+
+def _kb_emit_texture_observed(path: str, width, height, fmt: str, profile: str):
+    try:
+        pkg = ''
+        asset = ''
+        if path and '.' in path:
+            pkg, asset = path.split('.', 1)
+        else:
+            pkg = path or ''
+            asset = pkg.split('/')[-1] if pkg else ''
+        tokens = _tokenize_name(asset)
+        evt = {
+            'type': 'texture_observed',
+            'phase': 'Audit',
+            'profile': profile,
+            'path': path,
+            'package': pkg,
+            'asset': asset,
+            'width': width if width is not None else '',
+            'height': height if height is not None else '',
+            'format': fmt or '',
+            'tokens': tokens,
+            'ts': datetime.now().isoformat(timespec='seconds'),
+        }
+        _kb_write_jsonl(evt)
+        _kb_append_csv(
+            'kb_textures.csv',
+            ['run_id', 'phase', 'profile', 'path', 'package', 'asset', 'width', 'height', 'format', 'tokens'],
+            [_KB_RUN_ID, 'Audit', profile, path, pkg, asset, width or '', height or '', fmt or '', ' '.join(tokens)],
+        )
+    except Exception:
+        pass
+
+
+def _kb_emit_texture_recommendation(path: str, width, height, fmt: str, issues_list, recs_list, profile: str):
+    try:
+        pkg = ''
+        asset = ''
+        if path and '.' in path:
+            pkg, asset = path.split('.', 1)
+        else:
+            pkg = path or ''
+            asset = pkg.split('/')[-1] if pkg else ''
+        evt = {
+            'type': 'texture_recommend',
+            'phase': 'Recommend',
+            'profile': profile,
+            'path': path,
+            'package': pkg,
+            'asset': asset,
+            'width': width if width is not None else '',
+            'height': height if height is not None else '',
+            'format': fmt or '',
+            'issues': issues_list or [],
+            'recommendations': recs_list or [],
+            'ts': datetime.now().isoformat(timespec='seconds'),
+        }
+        _kb_write_jsonl(evt)
+        _kb_append_csv(
+            'kb_texture_recs.csv',
+            ['run_id', 'profile', 'path', 'width', 'height', 'format', 'issues', 'recommendations'],
+            [_KB_RUN_ID, profile, path, width or '', height or '', fmt or '', '; '.join(issues_list or []), '; '.join(recs_list or [])],
+        )
+    except Exception:
+        pass
 
 
 def _path_matches_filters(path_str: str, includes, excludes) -> bool:
@@ -388,6 +518,11 @@ if p == 'audit':
                 
                 loaded_tex_count += 1
                 _append_log(f"Successfully processed texture {path}: {width}x{height} format={fmt}")
+                # Self-learning: record observed texture info
+                try:
+                    _kb_emit_texture_observed(path, width, height, fmt, profile)
+                except Exception:
+                    pass
                 
             except Exception as e:
                 _append_log(f"Exception processing texture {path}: {e}")
@@ -432,9 +567,88 @@ if p == 'audit':
     assets_modified = 0
     msg = f"Audit OK ({profile}) - {total_textures} textures found (AR:{ar_count}, List:{eal_list_count}, Loaded:{loaded_tex_count})"
 elif p == 'recommend':
-    assets_processed = 42
+    total = 0
+    issues_count = 0
+    rec_rows = []
+    src_csv = os.path.join(csv_dir, 'textures.csv') if csv_dir else None
+    out_csv = os.path.join(csv_dir, 'textures_recommend.csv') if csv_dir else None
+    try:
+        if src_csv and os.path.exists(src_csv):
+            with open(src_csv, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for r in reader:
+                    total += 1
+                    path = r.get('path', '')
+                    try:
+                        width = int(r.get('width') or 0)
+                    except Exception:
+                        width = 0
+                    try:
+                        height = int(r.get('height') or 0)
+                    except Exception:
+                        height = 0
+                    fmt = r.get('format', '') or ''
+
+                    recs = []
+                    issues = []
+
+                    prof = (profile or '').lower()
+                    max_dim = 4096
+                    if 'mobile' in prof:
+                        max_dim = 1024
+                    elif 'vr' in prof:
+                        max_dim = 2048
+                    elif 'ui' in prof:
+                        max_dim = 4096
+                    elif 'cinematic' in prof:
+                        max_dim = 8192
+                    elif 'console' in prof:
+                        max_dim = 4096
+
+                    if width > 0 and height > 0:
+                        if max(width, height) > max_dim:
+                            issues.append(f"Large texture ({width}x{height})")
+                            recs.append(f"Downscale to <= {max_dim}px on longest side")
+                    else:
+                        issues.append("Missing dimensions")
+                        recs.append("Open asset to populate dimensions in CSV, or reimport")
+
+                    fmt_lower = fmt.lower()
+                    name_lower = path.lower()
+                    if ('_n' in name_lower or 'normal' in name_lower) and ('normal' not in fmt_lower):
+                        issues.append("Normal map compression mismatch")
+                        recs.append("Set Compression Settings = TC_Normalmap")
+                    if ('orm' in name_lower or 'mask' in name_lower) and ('mask' not in fmt_lower):
+                        issues.append("Mask/ORM compression mismatch")
+                        recs.append("Set Compression Settings = TC_Masks")
+                    if not fmt:
+                        recs.append("Ensure platform-appropriate compression (BCn/ASTC)")
+
+                    if issues or recs:
+                        issues_count += 1
+                    rec_rows.append([path, width or '', height or '', fmt, '; '.join(issues), '; '.join(recs)])
+        # Self-learning: record recommendations per texture
+        try:
+            for row in rec_rows:
+                pth, w, h, fm, iss, rcs = row
+                iss_list = [s.strip() for s in str(iss).split(';') if s.strip()]
+                rcs_list = [s.strip() for s in str(rcs).split(';') if s.strip()]
+                _kb_emit_texture_recommendation(pth, w, h, fm, iss_list, rcs_list, profile)
+        except Exception:
+            pass
+        if out_csv:
+            with open(out_csv, 'w', newline='', encoding='utf-8') as f:
+                w = csv.writer(f)
+                w.writerow(['path', 'width', 'height', 'format', 'issues', 'recommendations'])
+                for row in rec_rows:
+                    w.writerow(row)
+            _append_log(f"Recommendations CSV written: {out_csv} rows={len(rec_rows)} with_issues={issues_count} of total={total}")
+    except Exception as e:
+        _append_log(f"Recommend failed: {e}")
+
+    assets_processed = total
     assets_modified = 0
-    msg = f"Recommendations generated for {profile}"
+    msg = f"Recommendations generated for {profile}: {issues_count}/{total} with issues"
 elif p == 'apply':
     assets_processed = min(max_changes, 42)
     assets_modified = 3 if not dry_run else 0

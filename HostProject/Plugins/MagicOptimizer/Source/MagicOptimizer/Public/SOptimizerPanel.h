@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
+#include "Widgets/Views/SHeaderRow.h"
 #include "OptimizerSettings.h"
 #include "PythonBridge.h"
+#include "ViewModels/TextureModels.h"
 
 class SCheckBox;
 class SButton;
@@ -14,15 +16,7 @@ class SScrollBox;
 class SNotificationList;
 class SListViewBase;
 
-typedef TSharedPtr<struct FTextureAuditRow> FTextureAuditRowPtr;
-
-struct FTextureAuditRow
-{
-	FString Path;
-	int32 Width = 0;
-	int32 Height = 0;
-	FString Format;
-};
+// Moved row models to ViewModels/TextureModels.h
 
 class MAGICOPTIMIZER_API SOptimizerPanel : public SCompoundWidget
 {
@@ -48,15 +42,21 @@ protected:
 	// Output log buffer
 	FString LastStdOut;
 	FString LastStdErr;
-
+	FString LastResultMessage;
 	int32 LastAssetsProcessed = 0;
 	int32 LastAssetsModified = 0;
-	FString LastResultMessage;
 
 	// Audit results data
 	TArray<FTextureAuditRowPtr> TextureRows;
 	TArray<FTextureAuditRowPtr> AllTextureRows;
 	TSharedPtr<class SListView<FTextureAuditRowPtr>> TextureListView;
+	TSharedPtr<SHeaderRow> TextureHeaderRow;
+
+	// Recommendations data
+	TArray<FTextureRecRowPtr> TextureRecRows;
+	TArray<FTextureRecRowPtr> AllTextureRecRows;
+	TSharedPtr<class SListView<FTextureRecRowPtr>> TextureRecListView;
+	TSharedPtr<SHeaderRow> TextureRecHeaderRow;
 
 	// Sorting state for texture results
 	enum class ETextureSortColumn { Path, Width, Height, Format };
@@ -133,11 +133,16 @@ protected:
 	// Results loading
 	void LoadTextureAuditCsv();
 	TSharedRef<class ITableRow> OnGenerateTextureRow(FTextureAuditRowPtr Item, const TSharedRef<class STableViewBase>& OwnerTable);
+	void LoadTextureRecommendationsCsv();
+	TSharedRef<class ITableRow> OnGenerateTextureRecRow(FTextureRecRowPtr Item, const TSharedRef<class STableViewBase>& OwnerTable);
+
 	void SortTextureRows();
 	FReply OnSortByPath();
 	FReply OnSortByWidth();
 	FReply OnSortByHeight();
 	FReply OnSortByFormat();
+	EColumnSortMode::Type GetSortModeForColumn(ETextureSortColumn Column) const;
+	void OnHeaderColumnSort(const EColumnSortPriority::Type SortPriority, const FName& ColumnId, const EColumnSortMode::Type NewSortMode);
 
 	// Filters for texture results
 	FString TextureFilterText;

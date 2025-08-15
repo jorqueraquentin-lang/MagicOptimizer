@@ -24,6 +24,12 @@
 #include "HAL/PlatformApplicationMisc.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "ContentBrowserModule.h"
+#include "IContentBrowserSingleton.h"
+#include "Modules/ModuleManager.h"
+#include "Services/Csv/TextureCsvReader.h"
+#include "Services/Editor/ContentBrowserActions.h"
 
 void SOptimizerPanel::Construct(const FArguments& InArgs)
 {
@@ -455,13 +461,55 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 							]
 						]
 						+ SVerticalBox::Slot()
+						.AutoHeight()
+						.Padding(0,0,0,2)
+						[
+							SNew(STextBlock)
+							.Text_Lambda([this]() { return FText::FromString(FString::Printf(TEXT("Filtered %d / %d"), TextureRows.Num(), AllTextureRows.Num())); })
+						]
+						+ SVerticalBox::Slot()
 						.FillHeight(1.f)
 						[
 							SAssignNew(TextureListView, SListView<FTextureAuditRowPtr>)
 							.ItemHeight(20)
 							.ListItemsSource(&TextureRows)
 							.OnGenerateRow(this, &SOptimizerPanel::OnGenerateTextureRow)
+							.HeaderRow(
+								SAssignNew(TextureHeaderRow, SHeaderRow)
+								+ SHeaderRow::Column(FName(TEXT("Path"))).DefaultLabel(FText::FromString(TEXT("Path"))).HAlignCell(HAlign_Left).OnSort(this, &SOptimizerPanel::OnHeaderColumnSort)
+								+ SHeaderRow::Column(FName(TEXT("Width"))).DefaultLabel(FText::FromString(TEXT("Width"))).HAlignCell(HAlign_Right).OnSort(this, &SOptimizerPanel::OnHeaderColumnSort)
+								+ SHeaderRow::Column(FName(TEXT("Height"))).DefaultLabel(FText::FromString(TEXT("Height"))).HAlignCell(HAlign_Right).OnSort(this, &SOptimizerPanel::OnHeaderColumnSort)
+								+ SHeaderRow::Column(FName(TEXT("Format"))).DefaultLabel(FText::FromString(TEXT("Format"))).HAlignCell(HAlign_Left).OnSort(this, &SOptimizerPanel::OnHeaderColumnSort)
+								+ SHeaderRow::Column(FName(TEXT("Actions"))).DefaultLabel(FText::FromString(TEXT("Actions"))).HAlignCell(HAlign_Center)
+							)
 						]
+					]
+				]
+
+				// Recommendations
+				+ SGridPanel::Slot(0, 7)
+				.ColumnSpan(2)
+				.Padding(4.0f)
+				[
+					SNew(SExpandableArea)
+					.AreaTitle(FText::FromString(TEXT("Texture Recommendations")))
+					.InitiallyCollapsed(false)
+					.BodyContent()
+					[
+						SAssignNew(TextureRecListView, SListView<FTextureRecRowPtr>)
+						.ItemHeight(20)
+						.ListItemsSource(&TextureRecRows)
+						.OnGenerateRow(this, &SOptimizerPanel::OnGenerateTextureRecRow)
+						.HeaderRow(
+							SAssignNew(TextureRecHeaderRow, SHeaderRow)
+							+ SHeaderRow::Column(FName(TEXT("Path"))).DefaultLabel(FText::FromString(TEXT("Path"))).HAlignCell(HAlign_Left)
+							+ SHeaderRow::Column(FName(TEXT("Width"))).DefaultLabel(FText::FromString(TEXT("Width"))).HAlignCell(HAlign_Right)
+							+ SHeaderRow::Column(FName(TEXT("Height"))).DefaultLabel(FText::FromString(TEXT("Height"))).HAlignCell(HAlign_Right)
+							+ SHeaderRow::Column(FName(TEXT("Format"))).DefaultLabel(FText::FromString(TEXT("Format"))).HAlignCell(HAlign_Left)
+							+ SHeaderRow::Column(FName(TEXT("Issues"))).DefaultLabel(FText::FromString(TEXT("Issues"))).HAlignCell(HAlign_Left)
+							+ SHeaderRow::Column(FName(TEXT("Recommendations"))).DefaultLabel(FText::FromString(TEXT("Recommendations"))).HAlignCell(HAlign_Left)
+							+ SHeaderRow::Column(FName(TEXT("Actions"))).DefaultLabel(FText::FromString(TEXT("Actions"))).HAlignCell(HAlign_Center)
+						)
 					]
 				]
 			]
@@ -600,6 +648,14 @@ void SOptimizerPanel::RunOptimizationPhase(const FString& Phase)
 				TextureListView->RequestListRefresh();
 			}
 		}
+		else if (Phase == TEXT("Recommend"))
+		{
+			LoadTextureRecommendationsCsv();
+			if (TextureRecListView.IsValid())
+			{
+				TextureRecListView->RequestListRefresh();
+			}
+		}
 	}
 	else
 	{
@@ -634,81 +690,183 @@ FOptimizerRunParams SOptimizerPanel::BuildRunParams(const FString& Phase) const
 void SOptimizerPanel::LoadTextureAuditCsv()
 {
 	AllTextureRows.Empty();
-	FString SavedDir = FPaths::ProjectSavedDir();
-	FString SubDir = OptimizerSettings ? OptimizerSettings->OutputDirectory : TEXT("Saved/MagicOptimizer");
-	FString FullDir = SavedDir / SubDir;
-	FString CsvPath = FullDir / TEXT("textures.csv");
-
-	// Fallback to default location
-	if (!FPaths::FileExists(CsvPath))
-	{
-		CsvPath = SavedDir / TEXT("MagicOptimizer/Audit/textures.csv");
-	}
-
-	MagicOptimizerLog::AppendLine(FString::Printf(TEXT("UI: Loading texture audit CSV: %s"), *CsvPath));
-
-	TArray<FString> Lines;
-	if (FPaths::FileExists(CsvPath) && FFileHelper::LoadFileToStringArray(Lines, *CsvPath))
-	{
-		// Skip header if present
-		int32 StartIndex = 0;
-		if (Lines.Num() > 0 && Lines[0].StartsWith(TEXT("path"), ESearchCase::IgnoreCase))
-		{
-			StartIndex = 1;
-		}
-
-		for (int32 i = StartIndex; i < Lines.Num(); ++i)
-		{
-			const FString& Line = Lines[i];
-			if (Line.TrimStartAndEnd().IsEmpty())
-			{
-				continue;
-			}
-			TArray<FString> Cells;
-			Line.ParseIntoArray(Cells, TEXT(","), /*CullEmpty*/ false);
-			if (Cells.Num() >= 1)
-			{
-				// Trim whitespace and quotes
-				auto TrimCell = [](const FString& In) -> FString
-				{
-					FString S = In;
-					S.TrimStartAndEndInline();
-					if (S.Len() >= 2 && S.StartsWith(TEXT("\"")) && S.EndsWith(TEXT("\"")))
-					{
-						S = S.Mid(1, S.Len() - 2);
-					}
-					return S;
-				};
-
-				FTextureAuditRowPtr Row = MakeShared<FTextureAuditRow>();
-				Row->Path = TrimCell(Cells[0]);
-				Row->Width = Cells.Num() > 1 ? FCString::Atoi(*TrimCell(Cells[1])) : 0;
-				Row->Height = Cells.Num() > 2 ? FCString::Atoi(*TrimCell(Cells[2])) : 0;
-				Row->Format = Cells.Num() > 3 ? TrimCell(Cells[3]) : TEXT("");
-				AllTextureRows.Add(Row);
-			}
-		}
-
-		MagicOptimizerLog::AppendLine(FString::Printf(TEXT("UI: Loaded %d texture rows (lines=%d)"), AllTextureRows.Num(), Lines.Num()));
-
-		// Apply current sort and filter
-		ApplyTextureFilterAndSort();
-	}
-	else
+	TArray<FTextureAuditRowPtr> Parsed;
+	const bool bOk = TextureCsvReader::ReadAuditCsv(OptimizerSettings, Parsed);
+	if (!bOk)
 	{
 		MagicOptimizerLog::AppendLine(TEXT("UI: Texture audit CSV not found or unreadable"));
+		TextureRows.Empty();
+		if (TextureListView.IsValid()) { TextureListView->RequestListRefresh(); }
+		return;
 	}
+	AllTextureRows = MoveTemp(Parsed);
+	MagicOptimizerLog::AppendLine(FString::Printf(TEXT("UI: Loaded %d texture rows"), AllTextureRows.Num()));
+	ApplyTextureFilterAndSort();
 }
 
 TSharedRef<ITableRow> SOptimizerPanel::OnGenerateTextureRow(FTextureAuditRowPtr Item, const TSharedRef<STableViewBase>& OwnerTable)
 {
-	const FString Text = FString::Printf(TEXT("%s | %dx%d | %s"), *Item->Path, Item->Width, Item->Height, *Item->Format);
 	return SNew(STableRow<FTextureAuditRowPtr>, OwnerTable)
 	[
-		SNew(STextBlock).Text(FText::FromString(Text))
+		SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot().FillWidth(0.6f)
+		[
+			SNew(STextBlock).Text(FText::FromString(Item->Path))
+		]
+		+ SHorizontalBox::Slot().FillWidth(0.15f).HAlign(HAlign_Right)
+		[
+			SNew(STextBlock).Text(FText::FromString(FString::FromInt(Item->Width)))
+		]
+		+ SHorizontalBox::Slot().FillWidth(0.15f).HAlign(HAlign_Right)
+		[
+			SNew(STextBlock).Text(FText::FromString(FString::FromInt(Item->Height)))
+		]
+		+ SHorizontalBox::Slot().FillWidth(0.1f)
+		[
+			SNew(STextBlock).Text(FText::FromString(Item->Format))
+		]
+		+ SHorizontalBox::Slot().AutoWidth().Padding(6.0f, 0.0f)
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot().AutoWidth().Padding(0.0f, 0.0f, 4.0f, 0.0f)
+			[
+				SNew(SButton)
+				.Text(FText::FromString(TEXT("Copy")))
+				.OnClicked_Lambda([this, Item]()
+				{
+					if (Item.IsValid())
+					{
+						ContentBrowserActions::CopyPathToClipboard(Item->Path);
+						ShowNotification(FString::Printf(TEXT("Copied path to clipboard: %s"), *Item->Path));
+					}
+					return FReply::Handled();
+				})
+			]
+			+ SHorizontalBox::Slot().AutoWidth()
+			[
+				SNew(SButton)
+				.Text(FText::FromString(TEXT("Open")))
+				.OnClicked_Lambda([this, Item]()
+				{
+					if (!Item.IsValid())
+					{
+						return FReply::Handled();
+					}
+					const bool bOk = ContentBrowserActions::SyncToAssetPath(Item->Path);
+					ShowNotification(bOk ? TEXT("Opened in Content Browser") : FString::Printf(TEXT("Asset not found: %s"), *Item->Path), bOk);
+					return FReply::Handled();
+				})
+			]
+		]
 	];
 }
 
+void SOptimizerPanel::LoadTextureRecommendationsCsv()
+{
+	AllTextureRecRows.Empty();
+	TArray<FTextureRecRowPtr> Parsed;
+	const bool bOk = TextureCsvReader::ReadRecommendationsCsv(OptimizerSettings, Parsed);
+	if (!bOk)
+	{
+		MagicOptimizerLog::AppendLine(TEXT("UI: Texture recommendations CSV not found or unreadable"));
+		TextureRecRows.Empty();
+		if (TextureRecListView.IsValid()) { TextureRecListView->RequestListRefresh(); }
+		return;
+	}
+	AllTextureRecRows = MoveTemp(Parsed);
+	TextureRecRows = AllTextureRecRows;
+	if (TextureRecListView.IsValid()) { TextureRecListView->RequestListRefresh(); }
+	MagicOptimizerLog::AppendLine(FString::Printf(TEXT("UI: Loaded %d recommendation rows"), TextureRecRows.Num()));
+}
+
+TSharedRef<ITableRow> SOptimizerPanel::OnGenerateTextureRecRow(FTextureRecRowPtr Item, const TSharedRef<STableViewBase>& OwnerTable)
+{
+    return SNew(STableRow<FTextureRecRowPtr>, OwnerTable)
+    [
+        SNew(SHorizontalBox)
+        + SHorizontalBox::Slot().FillWidth(0.35f)
+        [
+            SNew(STextBlock).Text(FText::FromString(Item->Path))
+        ]
+        + SHorizontalBox::Slot().FillWidth(0.08f).HAlign(HAlign_Right)
+        [
+            SNew(STextBlock).Text(FText::FromString(FString::FromInt(Item->Width)))
+        ]
+        + SHorizontalBox::Slot().FillWidth(0.08f).HAlign(HAlign_Right)
+        [
+            SNew(STextBlock).Text(FText::FromString(FString::FromInt(Item->Height)))
+        ]
+        + SHorizontalBox::Slot().FillWidth(0.12f)
+        [
+            SNew(STextBlock).Text(FText::FromString(Item->Format))
+        ]
+        + SHorizontalBox::Slot().FillWidth(0.17f)
+        [
+            SNew(STextBlock).Text(FText::FromString(Item->Issues))
+        ]
+        + SHorizontalBox::Slot().FillWidth(0.20f)
+        [
+            SNew(STextBlock).Text(FText::FromString(Item->Recommendations))
+        ]
+        + SHorizontalBox::Slot().AutoWidth().Padding(6.0f, 0.0f)
+        [
+            SNew(SHorizontalBox)
+            + SHorizontalBox::Slot().AutoWidth().Padding(0.0f, 0.0f, 4.0f, 0.0f)
+            [
+                SNew(SButton)
+                .Text(FText::FromString(TEXT("Copy")))
+                .OnClicked_Lambda([this, Item]()
+                {
+                    if (Item.IsValid())
+                    {
+                        FPlatformApplicationMisc::ClipboardCopy(*Item->Path);
+                        ShowNotification(FString::Printf(TEXT("Copied path to clipboard: %s"), *Item->Path));
+                    }
+                    return FReply::Handled();
+                })
+            ]
+            + SHorizontalBox::Slot().AutoWidth()
+            [
+                SNew(SButton)
+                .Text(FText::FromString(TEXT("Open")))
+                .OnClicked_Lambda([this, Item]()
+                {
+                    if (!Item.IsValid())
+                    {
+                        return FReply::Handled();
+                    }
+
+                    FString ObjectPath = Item->Path;
+                    if (!ObjectPath.Contains(TEXT(".")))
+                    {
+                        FString PackageName;
+                        FString AssetName;
+                        if (ObjectPath.Split(TEXT("/"), &PackageName, &AssetName, ESearchCase::IgnoreCase, ESearchDir::FromEnd))
+                        {
+                            ObjectPath = ObjectPath + TEXT(".") + AssetName;
+                        }
+                    }
+
+                    FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+                    const FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FName(*ObjectPath));
+                    if (AssetData.IsValid())
+                    {
+                        FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
+                        TArray<FAssetData> AssetsToSync;
+                        AssetsToSync.Add(AssetData);
+                        ContentBrowserModule.Get().SyncBrowserToAssets(AssetsToSync);
+                        ShowNotification(TEXT("Opened in Content Browser"));
+                    }
+                    else
+                    {
+                        ShowNotification(FString::Printf(TEXT("Asset not found: %s"), *ObjectPath), false);
+                    }
+                    return FReply::Handled();
+                })
+            ]
+        ]
+    ];
+}
 void SOptimizerPanel::SortTextureRows()
 {
 	auto CmpPathAsc = [](const FTextureAuditRowPtr& A, const FTextureAuditRowPtr& B){ return A->Path < B->Path; };
@@ -727,6 +885,25 @@ void SOptimizerPanel::SortTextureRows()
 		case ETextureSortColumn::Height: TextureRows.StableSort(bSortAscending ? CmpHeightAsc : CmpHeightDesc); break;
 		case ETextureSortColumn::Format: TextureRows.StableSort(bSortAscending ? CmpFormatAsc : CmpFormatDesc); break;
 	}
+}
+
+EColumnSortMode::Type SOptimizerPanel::GetSortModeForColumn(ETextureSortColumn Column) const
+{
+	if (CurrentSortColumn != Column) { return EColumnSortMode::None; }
+	return bSortAscending ? EColumnSortMode::Ascending : EColumnSortMode::Descending;
+}
+
+void SOptimizerPanel::OnHeaderColumnSort(const EColumnSortPriority::Type /*SortPriority*/, const FName& ColumnId, const EColumnSortMode::Type NewSortMode)
+{
+	if (ColumnId == "Path") { CurrentSortColumn = ETextureSortColumn::Path; }
+	else if (ColumnId == "Width") { CurrentSortColumn = ETextureSortColumn::Width; }
+	else if (ColumnId == "Height") { CurrentSortColumn = ETextureSortColumn::Height; }
+	else if (ColumnId == "Format") { CurrentSortColumn = ETextureSortColumn::Format; }
+	else { return; }
+
+	bSortAscending = (NewSortMode != EColumnSortMode::Descending);
+	SortTextureRows();
+	if (TextureListView.IsValid()) { TextureListView->RequestListRefresh(); }
 }
 
 FReply SOptimizerPanel::OnSortByPath()
