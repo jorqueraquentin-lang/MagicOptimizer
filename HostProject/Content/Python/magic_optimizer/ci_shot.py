@@ -31,35 +31,54 @@ def main():
 	print("Waiting for UI to render...")
 	time.sleep(4)
 	
+	# Helper: list all existing PNGs under Saved/Screenshots
+	def _list_shots():
+		shots_root = os.path.join(unreal.Paths.project_saved_dir(), "Screenshots")
+		paths = []
+		for root, _dirs, files in os.walk(shots_root):
+			for f in files:
+				if f.lower().endswith('.png'):
+					paths.append(os.path.join(root, f))
+		return set(paths)
+
+	# Helper: from a delta of new files, pick newest and copy as name
+	def _copy_newest(delta_paths, name):
+		if not delta_paths:
+			return False
+		try:
+			cand = max(delta_paths, key=lambda p: os.path.getmtime(p))
+			target = os.path.join(screenshots_dir, name)
+			os.makedirs(os.path.dirname(target), exist_ok=True)
+			unreal.log(f"CI_SHOT: copying {cand} -> {target}")
+			with open(cand, 'rb') as src, open(target, 'wb') as dst:
+				dst.write(src.read())
+			return True
+		except Exception as e:
+			unreal.log_warning(f"CI_SHOT: copy failed: {e}")
+			return False
+
+	# Helper: wait for UE to finish writing the screenshot and then copy
+	def _wait_and_copy(start_set, name, timeout_sec=12.0, poll_sec=0.5):
+		import time as _t
+		deadline = _t.time() + timeout_sec
+		while _t.time() < deadline:
+			now = _list_shots()
+			delta = now - start_set
+			if _copy_newest(delta, name):
+				return True
+			_t.sleep(poll_sec)
+		# final attempt
+		now = _list_shots()
+		delta = now - start_set
+		return _copy_newest(delta, name)
+
 	# Take BEFORE screenshot (initial state) and ensure it ends up in our CI folder
 	before_name = "01_before_test.png"
+	before_files = _list_shots()
 	print(f"Taking BEFORE screenshot: {before_name}")
 	unreal.AutomationLibrary.take_high_res_screenshot(1280, 720, before_name)
-	time.sleep(1)
-	# Resolve actual output location and copy to CI folder
-	def _try_copy_shot(name: str):
-		# Many UE builds place screenshots under Saved/Screenshots/<Platform>
-		shots_root = os.path.join(unreal.Paths.project_saved_dir(), "Screenshots")
-		candidates = []
-		for root, _dirs, files in os.walk(shots_root):
-			if name in files:
-				candidates.append(os.path.join(root, name))
-		# Also consider current working dir
-		if os.path.isfile(name):
-			candidates.append(os.path.abspath(name))
-		# Copy the newest candidate if present
-		if candidates:
-			cand = max(candidates, key=lambda p: os.path.getmtime(p))
-			target = os.path.join(screenshots_dir, name)
-			try:
-				unreal.log(f"CI_SHOT: copying {cand} -> {target}")
-				os.makedirs(os.path.dirname(target), exist_ok=True)
-				with open(cand, 'rb') as src, open(target, 'wb') as dst:
-					dst.write(src.read())
-			except Exception as e:
-				unreal.log_warning(f"CI_SHOT: copy failed: {e}")
-
-	_try_copy_shot(before_name)
+	# Wait and copy once file lands under Saved/Screenshots
+	_wait_and_copy(before_files, before_name)
 	
 	# Step 2: Execute the test (Audit phase)
 	print("Executing MagicOptimizer.Run Audit Textures...")
@@ -71,10 +90,10 @@ def main():
 	
 	# Step 3: Take AFTER screenshot (showing results)
 	after_name = "02_after_test.png"
+	prev = _list_shots()
 	print(f"Taking AFTER screenshot: {after_name}")
 	unreal.AutomationLibrary.take_high_res_screenshot(1280, 720, after_name)
-	time.sleep(1)
-	_try_copy_shot(after_name)
+	_wait_and_copy(prev, after_name)
 	
 	print("Screenshots captured successfully!")
 	print(f"Before: {os.path.join(screenshots_dir, before_name)}")
