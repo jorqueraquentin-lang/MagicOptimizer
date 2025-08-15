@@ -24,6 +24,52 @@ def main():
 		unreal.SystemLibrary.execute_console_command(None, _cmd)
 	except Exception as e:
 		unreal.log_warning(f"CI_SHOT: set ScreenshotSavePath failed: {e}")
+	# Small settle delay so the engine honors the new path before first shot
+	time.sleep(0.5)
+
+	# Wait helpers
+	def _wait_for_file(path: str, timeout_sec: float = 20.0, quiet: bool = False) -> bool:
+		"""Wait until file exists and its size is stable for one poll step."""
+		import time as _t
+		end = _t.time() + timeout_sec
+		last_size = -1
+		while _t.time() < end:
+			if os.path.isfile(path):
+				sz = os.path.getsize(path)
+				if sz > 0 and sz == last_size:
+					return True
+				last_size = sz
+			_t.sleep(0.5)
+		if not quiet:
+			unreal.log_warning(f"CI_SHOT: timeout waiting for file {path}")
+		return False
+
+	def _wait_for_audit(max_wait_sec: float = 120.0) -> None:
+		"""Poll for audit completion by watching Saved/MagicOptimizer artifacts."""
+		mo_dir = os.path.join(saved_root, "MagicOptimizer")
+		audit_dir = os.path.join(mo_dir, "Audit")
+		tex_csv = os.path.join(audit_dir, "textures.csv")
+		runtime_log = os.path.join(mo_dir, "MagicOptimizerRuntime.log")
+		import time as _t
+		deadline = _t.time() + max_wait_sec
+		last_len = -1
+		while _t.time() < deadline:
+			# Prefer CSV existence and growth
+			if os.path.isfile(tex_csv):
+				if _wait_for_file(tex_csv, timeout_sec=2.0, quiet=True):
+					return
+			# Check runtime log for a success marker
+			if os.path.isfile(runtime_log):
+				try:
+					with open(runtime_log, 'rb') as f:
+						f.seek(max(0, os.path.getsize(runtime_log) - 64 * 1024))
+						chunk = f.read().decode(errors='ignore')
+						if '"phase": "Audit"' in chunk and '"success": true' in chunk:
+							return
+				except Exception:
+					pass
+			_t.sleep(0.5)
+		unreal.log_warning("CI_SHOT: audit wait timed out; proceeding to AFTER screenshot anyway")
 	
 	# Set a deterministic resolution
 	try:
@@ -37,7 +83,7 @@ def main():
 	
 	# Wait for UI to render
 	print("Waiting for UI to render...")
-	time.sleep(4)
+	time.sleep(5)
 	
 	# Helper: list all existing PNGs under Saved/Screenshots
 	def _list_shots():
@@ -99,9 +145,9 @@ def main():
 	print("Executing MagicOptimizer.Run Audit Textures...")
 	unreal.SystemLibrary.execute_console_command(None, "MagicOptimizer.Run Audit Textures")
 	
-	# Wait for test to complete and UI to update
-	print("Waiting for test to complete...")
-	time.sleep(8)
+	# Wait for test to complete and UI to update via artifact polling
+	print("Waiting for audit to complete (polling artifacts)...")
+	_wait_for_audit(120.0)
 	
 	# Step 3: Take AFTER screenshot (showing results)
 	after_name = "02_after_test.png"
