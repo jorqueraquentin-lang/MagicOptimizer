@@ -12,7 +12,9 @@ def main():
 		unreal.log_warning(f"CI_SHOT: load_level failed: {e}")
 	
 	# Create screenshots directory
-	screenshots_dir = "Saved/MagicOptimizer/CI"
+	# Use absolute path under the project's Saved dir to ensure files are written where we expect
+	saved_root = unreal.Paths.project_saved_dir()
+	screenshots_dir = os.path.join(saved_root, "MagicOptimizer", "CI")
 	os.makedirs(screenshots_dir, exist_ok=True)
 	
 	# Set a deterministic resolution

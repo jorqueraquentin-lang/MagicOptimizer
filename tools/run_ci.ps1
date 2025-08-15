@@ -156,8 +156,8 @@ $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 $md = @()
 $md += "# MagicOptimizer CI Summary"
 $md += ""
-$md += "- Phase: `$Phase | Profile: `$Profile | Time: $ts"
-$md += "- Artifacts: `$CiOut"
+$md += ("- Phase: {0} | Profile: {1} | Time: {2}" -f $Phase, $Profile, $ts)
+$md += ("- Artifacts: {0}" -f $CiOut)
 $md += ""
 $md += "## CSV"
 $texNote = ""; if (-not (Test-Path $TexturesCsv)) { $texNote = " (missing)" }
