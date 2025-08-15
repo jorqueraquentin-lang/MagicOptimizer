@@ -1701,4 +1701,48 @@ Verification:
 - Docs: Enriched `docs/DEV_README.md` with a Status Dashboard (✅/⏳/⬜) and Long-Term Objectives; kept Architecture/Feature Index/QoL Rollup intact.
 - Docs: Revamped root `README.md` (hero page): concise teaser, updated links to `docs/DEV_README.md` and `docs/DEVELOPMENT_LOG.md`, removed defunct Action Catalogue.
 
+### 2025-08-15 16:42
+- Next implementation steps (Plugin)
+  - Textures – Recommend expansion
+    - Add rules: oversize vs profile target, normal map BC5 + sRGB off, mask BC1/BC4 + sRGB off, streaming vs never stream, LODGroup by usage, VT/NoVT, MaxTextureSize, MipGen settings.
+    - Emit explain-why and actionability (Auto/Semi/External) in CSV.
+  - Textures – Apply (safety-first)
+    - Implement changes for compression, sRGB, LODGroup, VT/Streaming, MaxTextureSize, LODBias, MipGen.
+    - Honor dry-run, max-changes, backups; write `apply_results.csv`.
+    - UI: “Apply Selected” and “Apply All (Dry-Run/Live)” with caps.
+  - Textures – Verify
+    - Re-audit changed assets; compare expected vs actual; budget assertions per profile.
+    - Produce `verify_report.csv` and surface pass/fail in UI.
+  - UI polish
+    - Disable Open if asset missing; tooltip with package/object path.
+    - Row context menu: Copy Path, Open in CB, Open Folder, Copy as JSON/CSV.
+    - Buttons: Open CSV, Open Logs.
+    - Persist table prefs (columns/sort/filters) via `UOptimizerSettings`.
+  - Actionability & External workflow
+    - Add CSV columns: `actionability`, `external_tool_hint`, `howto_url`.
+    - UI badges + filters; export external task list (CSV/MD).
+  - New categories (minimal audit)
+    - Meshes: triangles, Nanite, LODs, material slots → `meshes.csv`.
+    - Materials: instruction count, samplers, instances vs masters → `materials.csv`.
+  - Console commands
+    - Extend `MagicOptimizer.Run` to accept `-Phase`, `-Profile`, `-Include`, `-Exclude`, `-UseSelection`, `-Categories`.
+
+- Next implementation steps (QoL)
+  - CI summary and checks
+    - Generate `docs/ci/<ts>/summary.md` with counts, timings, links, screenshot thumbnails.
+    - Sanity gates: CSV exists, row count ≥ expected, no Python exceptions; nonzero exit on failure.
+    - Expose `-Keep`/`-MaxAgeDays` flags through `run_ci.ps1` (already pruning; add parameters).
+  - Self-learning
+    - Settings toggles (enable/disable, anonymize paths).
+    - Summarizer to `knowledge_summary.md` (top formats/issues/name patterns).
+    - UI “Knowledge” section to preview latest snapshot.
+  - CSV robustness
+    - Central helpers: quoting/escaping, header versioning, tolerant parse with row-level warnings.
+    - UI: display parse-warning banner + row counts.
+  - Supportability
+    - “Create Support Bundle” (zip CI run: logs/CSVs/screenshots + summary.md).
+  - Dev ergonomics
+    - Extract sub-widgets for Texture Audit/Recommend sections.
+    - Table ViewModel for sort/filter/state (shrinks widget, improves testability).
+
 ---

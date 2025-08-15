@@ -4,7 +4,9 @@ param(
   [switch]$WithRHI,
   [switch]$WithScreenshot,
   [int]$Keep = 5,
-  [int]$MaxAgeDays = 7
+  [int]$MaxAgeDays = 7,
+  [switch]$FailOnError,
+  [int]$MinRows = 0
 )
 
 $ErrorActionPreference = "Stop"
@@ -89,6 +91,69 @@ Copy-Item -Recurse -Force (Join-Path $Saved "Logs/*") $CiOut -ErrorAction Silent
 
 Write-Host "CI artifacts written to $CiOut"
 
+# Summary and sanity checks
+$AuditDir = Join-Path $CiOut "Audit"
+$CiShotsDir = Join-Path $CiOut "CI"
+$KnowledgeDir = Join-Path $CiOut "Knowledge"
+$RuntimeLog = Join-Path $CiOut "MagicOptimizerRuntime.log"
+
+$TexturesCsv = Join-Path $AuditDir "textures.csv"
+$RecsCsv = Join-Path $AuditDir "textures_recommend.csv"
+
+$texRows = 0
+if (Test-Path $TexturesCsv) {
+  try { $lines = Get-Content $TexturesCsv -ErrorAction Stop; if ($lines.Count -gt 0) { $texRows = [Math]::Max($lines.Count - 1, 0) } } catch {}
+}
+
+$recRows = 0
+if (Test-Path $RecsCsv) {
+  try { $r = Get-Content $RecsCsv -ErrorAction Stop; if ($r.Count -gt 0) { $recRows = [Math]::Max($r.Count - 1, 0) } } catch {}
+}
+
+$errorsFound = 0
+if (Test-Path $RuntimeLog) {
+  try {
+    $errMatches = Select-String -Path $RuntimeLog -Pattern "Traceback|Error:" -SimpleMatch -ErrorAction SilentlyContinue
+    $errorsFound = if ($null -ne $errMatches) { $errMatches.Count } else { 0 }
+  } catch { $errorsFound = 0 }
+}
+
+$beforePng = Join-Path $CiShotsDir "01_before_test.png"
+$afterPng  = Join-Path $CiShotsDir "02_after_test.png"
+
+$summaryPath = Join-Path $CiOut "summary.md"
+$ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+
+$md = @()
+$md += "# MagicOptimizer CI Summary"
+$md += ""
+$md += "- Phase: `$Phase | Profile: `$Profile | Time: $ts"
+$md += "- Artifacts: `$CiOut"
+$md += ""
+$md += "## CSV"
+$md += "- textures.csv: $texRows rows" + (if(Test-Path $TexturesCsv){""}else{" (missing)"})
+$md += "- textures_recommend.csv: $recRows rows" + (if(Test-Path $RecsCsv){""}else{" (missing)"})
+$md += ""
+$md += "## Screenshots"
+$md += (if(Test-Path $beforePng){"- BEFORE: CI/01_before_test.png"}else{"- BEFORE: (missing)"})
+$md += (if(Test-Path $afterPng){"- AFTER: CI/02_after_test.png"}else{"- AFTER: (missing)"})
+$md += ""
+$md += "## Knowledge"
+$md += (if(Test-Path $KnowledgeDir){ (Get-ChildItem $KnowledgeDir | ForEach-Object { "- Knowledge/" + $_.Name + " (`$([math]::Round($_.Length/1KB,1)) KB)" }) } else { @("- (none)") })
+$md += ""
+$md += "## Logs"
+$md += (if(Test-Path $RuntimeLog){"- MagicOptimizerRuntime.log (errors matched: $errorsFound)"}else{"- MagicOptimizerRuntime.log (missing)"})
+
+Set-Content -Path $summaryPath -Value ($md -join "`r`n") -Encoding UTF8
+
+$shouldFail = $false
+$failReasons = @()
+if ($FailOnError) {
+  if ($Phase -ieq "Audit" -and -not (Test-Path $TexturesCsv)) { $failReasons += "missing textures.csv" }
+  if ($MinRows -gt 0 -and $texRows -lt $MinRows) { $failReasons += "textures.csv rows<$MinRows" }
+  if ($errorsFound -gt 0) { $failReasons += "errors in MagicOptimizerRuntime.log" }
+  if ($failReasons.Count -gt 0) { $shouldFail = $true }
+}
 
 # Prune older CI runs (retention)
 try {
@@ -107,6 +172,11 @@ try {
   }
 } catch {
   Write-Warning ("CI prune failed: {0}" -f $_)
+}
+
+if ($shouldFail) {
+  Write-Host ("CI checks failed: {0}" -f ($failReasons -join ", "))
+  exit 1
 }
 
 
