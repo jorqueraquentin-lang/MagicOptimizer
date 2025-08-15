@@ -8,6 +8,7 @@ param(
   [string]$Profile = "Mobile_Low",
   [switch]$WithRHI,
   [switch]$WithScreenshot,
+  [switch]$OpenExplorer,
   [int]$Keep = 5,
   [int]$MaxAgeDays = 7,
   [switch]$FailOnError,
@@ -101,6 +102,18 @@ $AuditDir = Join-Path $CiOut "Audit"
 $CiShotsDir = Join-Path $CiOut "CI"
 $KnowledgeDir = Join-Path $CiOut "Knowledge"
 $RuntimeLog = Join-Path $CiOut "MagicOptimizerRuntime.log"
+
+# Ensure screenshots are present under the CI/<ts>/CI folder
+$SavedCiDir = Join-Path $MOFolder "CI"
+try {
+  if (Test-Path $SavedCiDir) {
+    New-Item -ItemType Directory -Force -Path $CiShotsDir | Out-Null
+    $srcBefore = Join-Path $SavedCiDir "01_before_test.png"
+    $srcAfter  = Join-Path $SavedCiDir "02_after_test.png"
+    if (Test-Path $srcBefore) { Copy-Item -Force $srcBefore (Join-Path $CiShotsDir "01_before_test.png") }
+    if (Test-Path $srcAfter)  { Copy-Item -Force $srcAfter  (Join-Path $CiShotsDir "02_after_test.png") }
+  }
+} catch {}
 
 $TexturesCsv = Join-Path $AuditDir "textures.csv"
 $RecsCsv = Join-Path $AuditDir "textures_recommend.csv"
@@ -231,5 +244,13 @@ if ($shouldFail) {
   Write-Host ("CI checks failed: {0}" -f ($failReasons -join ", "))
   exit 1
 }
+
+# Optionally open Windows Explorer to the screenshots folder for convenience
+try {
+  if ($OpenExplorer) {
+    $openPath = if (Test-Path $CiShotsDir) { $CiShotsDir } else { $CiOut }
+    Start-Process explorer.exe $openPath | Out-Null
+  }
+} catch {}
 
 
