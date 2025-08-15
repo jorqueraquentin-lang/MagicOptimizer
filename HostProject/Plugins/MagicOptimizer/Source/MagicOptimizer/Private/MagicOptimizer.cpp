@@ -3,6 +3,7 @@
 #include "MagicOptimizer.h"
 #include "Misc/Paths.h"
 #include "Misc/FileHelper.h"
+#include "Styling/SlateBrush.h"
 #include "SOptimizerPanel.h"
 #include "OptimizerSettings.h"
 #include "PythonBridge.h"
@@ -185,6 +186,19 @@ void FMagicOptimizerModule::AddMenuExtension(FMenuBuilder& Builder)
 		FUIAction(FExecuteAction::CreateLambda([this]()
 		{
 			const FString Url = TEXT("https://www.perseusxr.com");
+			// Resolve logo path (prefer compressed)
+			auto ResolveLogoPath = []() -> FString
+			{
+				// Repo root is one level up from ProjectDir in this workspace layout
+				const FString RepoRoot = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("..")));
+				const FString LogoCompressed = FPaths::Combine(RepoRoot, TEXT("PerseusXR/Branding/MagicOptimizer_logo_compressed.png"));
+				const FString Logo = FPaths::Combine(RepoRoot, TEXT("PerseusXR/Branding/MagicOptimizer_logo.png"));
+				if (FPaths::FileExists(LogoCompressed)) { return LogoCompressed; }
+				if (FPaths::FileExists(Logo)) { return Logo; }
+				return FString();
+			};
+
+			const FString LogoPath = ResolveLogoPath();
 			TSharedRef<SWindow> Window = SNew(SWindow)
 				.Title(LOCTEXT("PerseusXRTitle", "About Perseus XR"))
 				.ClientSize(FVector2D(480, 220))
@@ -192,6 +206,34 @@ void FMagicOptimizerModule::AddMenuExtension(FMenuBuilder& Builder)
 				.SupportsMinimize(false);
 
 			TSharedRef<SVerticalBox> VBox = SNew(SVerticalBox)
+			+ SVerticalBox::Slot().AutoHeight().VAlign(VAlign_Center).HAlign(HAlign_Center).Padding(12,8)
+			[
+				SNew(SBox)
+				.HAlign(HAlign_Center)
+				.VAlign(VAlign_Center)
+				.HeightOverride(64)
+				.WidthOverride(256)
+				[
+					SNew(SOverlay)
+					+ SOverlay::Slot()
+					[
+						SNew(SImage)
+						.Image_Lambda([LogoPath]() -> const FSlateBrush*
+						{
+							if (!LogoPath.IsEmpty())
+							{
+								static TSharedPtr<FSlateDynamicImageBrush> Brush;
+								if (!Brush.IsValid() || Brush->GetResourceName().ToString() != LogoPath)
+								{
+									Brush = MakeShareable(new FSlateDynamicImageBrush(FName(*LogoPath), FVector2D(256.f, 64.f)));
+								}
+								return Brush.Get();
+							}
+							return static_cast<const FSlateBrush*>(nullptr);
+						})
+					]
+				]
+			]
 			+ SVerticalBox::Slot().AutoHeight().Padding(12)
 			[
 				SNew(STextBlock)
