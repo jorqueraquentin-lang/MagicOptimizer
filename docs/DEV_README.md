@@ -23,6 +23,45 @@ A comprehensive UE5.6 plugin for automated asset optimization and editor tools, 
 
 ---
 
+## Status Dashboard
+
+Legend: ✅ Finished  ·  ⏳ In progress  ·  ⬜ Not yet
+
+### Core Pipeline
+- Audit (Textures): ✅
+- Recommend (Textures): ⏳ (initial rules + UI; expanding rule packs)
+- Apply (Textures): ⬜ (safety-first implementation pending)
+- Verify (Textures): ⬜ (budget/assertions, CI checks)
+- Audit/Recommend/Apply/Verify (Meshes): ⬜
+- Audit/Recommend/Apply/Verify (Materials): ⬜
+
+### UI & UX
+- Texture Results Table (sort, filter, actions): ✅
+- Recommendations List + Actions (Copy/Open): ✅
+- Clean Python Output + Debug JSON (collapsible): ✅
+- Knowledge Viewer section: ⬜
+- Persisted table prefs (columns/sort/filters): ⏳
+
+### QoL & CI
+- In-editor/Headless CI harness (screenshots, artifacts): ✅
+- CI auto-prune + manual flush: ✅
+- CI markdown summary with thumbnails and self-checks: ⏳
+- "Create Support Bundle" (zip logs/CSVs/screenshots): ⏳
+
+### Architecture
+- Services (CSV IO, Editor actions) + ViewModels: ✅
+- Sub-widgets per section (Textures Audit/Recommend): ⏳
+- Table ViewModel (sort/filter/state): ⏳
+- CSV schema helpers (quote/escape/versioning): ⏳
+
+### Knowledge (Self-learning)
+- Events + aggregates (Textures): ✅
+- Anonymization/opt-out + toggles: ⏳
+- Summarizer (`knowledge_summary.md`): ⏳
+- Mesh/Material coverage: ⏳
+
+---
+
 ## Architecture Overview
 
 - C++ Frontend (Slate UI, UE integration)
@@ -160,8 +199,49 @@ Below, each feature lists: Why it exists, How we implement it (roughly), Current
   - Next: per-branch retention policies.
 
 - Actionability & External Workflow
-  - Status: Planned UX tags (Auto / Semi-auto / External) with badges and Apply gating.
-  - Next: implement tagging, disable Apply for External with tooltip and How-To links; export task list (CSV/MD).
+  - Why: Some fixes are impossible or low-quality if done in-engine; users need clear guidance and task handoff.
+  - Tags: `Auto` (fully in-engine), `Semi` (user confirmation/choice, still in-engine), `External` (out-of-engine).
+  - Examples (External):
+    - Textures: upscale beyond source (re-render/re-bake at higher res), rebake normals/AO/ORM from hi-poly, repack channels, author tileable/trim variants, change authoring format (e.g., EXR for HDR).
+    - Meshes: increase polygon density (retopo/subdivide in DCC), rebake from hi-poly, fix UV unwrap/texel density, correct pivot/orientation, author collisions, hand-authored LODs.
+    - Materials: consolidate via texture atlasing (DCC/Substance), bake procedurals to textures to reduce instructions, re-author master material direction.
+    - Audio: re-record/re-mix, noise reduction, source sample-rate changes.
+    - VFX/Flipbooks: simulate/bake in Houdini/EmberGen, export flipbooks.
+    - Lighting/Env: capture new HDRIs, scan-based textures.
+  - UI/UX plan:
+    - Badge per row (Auto/Semi/External). Filter by actionability.
+    - Disable Apply for `External` with tooltip and a "How-To" link.
+    - "Add to Task List" toggle for External; Export Task List (CSV/MD) grouped by asset/category.
+    - If available, show Import Source and "Reveal Source" (via `AssetImportData.get_first_filename`) and "Open Containing Folder".
+    - Summary counters: Auto/Semi/External at section header.
+  - Data model (CSV): add columns `actionability`, `external_tool_hint`, `howto_url` (optional).
+  - Status: Planned (UX and CSV extensions). Current recs default to Auto unless flagged.
+
+---
+
+## Long-Term Objectives and Future Implementations
+
+### Pipeline depth and coverage
+- Textures: complete Recommend rule packs (profile-aware), Apply with guardrails (dry-run, caps, backups), Verify with budget/assertion framework and CI gates.
+- Meshes: audit topology/LODs/UVs/collisions/pivots; recommendations for Nanite/LODs/collisions; apply fixers where safe; verify triangle/LOD budgets.
+- Materials: audit instruction count/samplers/usage; recommendations for instance reuse/atlasing/bake-down; verification of shader complexity deltas.
+
+### UI & workflow
+- Persist UI preferences; column chooser; per-column filters; multi-select batch actions; open CSV/logs from UI.
+- Actionability badges (Auto/Semi/External) with filters; export external task list (CSV/MD) with How-To links.
+
+### Knowledge system
+- Privacy controls (anonymize project/paths; opt-out); periodic summarization into `knowledge_summary.md` (top issues/patterns); feed summaries into rule tuning.
+
+### CSV and schemas
+- Central CSV helpers (escaping, stable headers, versioning); tolerant parsing with row-level warning collection and UI banner.
+
+### CI & automation
+- Markdown `summary.md` per run with counts, timings, thumbnails, and deep links; self-check assertions (headers/buttons/rows present, error scan).
+- Matrix runs (profiles/categories); per-branch artifact retention; support-bundle zip export.
+
+### Dev ergonomics & hygiene
+- Sub-widgets and view models to keep widgets small and testable; pre-commit checks; PR bots for large files and schema diffs.
 
 ---
 

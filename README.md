@@ -1,37 +1,54 @@
-# MagicOptimizer Plugin
+# MagicOptimizer for Unreal Engine 5.6
 
-**🎯 Status: WORKING PLUGIN SHELL** ✅
+Build once, ship smart. MagicOptimizer audits your project, recommends safe improvements, and helps you apply and verify changes — all inside UE.
 
-A comprehensive UE5.6 plugin for automated asset optimization and editor tools.
+— UE 5.6 — Working Plugin Shell — MIT —
 
-## 📚 **Documentation**
+## Why MagicOptimizer
 
-**All comprehensive documentation is now located in the [`docs/`](docs/) folder:**
+- Fast visibility: one-click Audit for textures (meshes/materials next)
+- Actionable recommendations per target profile
+- Safe-by-default: CSV-first, dry runs, caps, and verification
+- UE-native UX: C++ Slate UI + Python analysis under the hood
 
-- **[📖 Full README](docs/README.md)** - Complete project overview, features, and usage guide
-- **[📋 Development Log](docs/DEVELOPMENT_LOG.md)** - Detailed development progress and technical notes
-- **[📋 Action Catalogue](docs/MUCH_INFO.md)** - Comprehensive feature specifications and implementation details
+## Current status
 
-## 🚀 **Quick Start**
+- ✅ Compiles and loads in UE 5.6; panel opens
+- ✅ Texture Audit CSV and in-UI table (sort/filter), per-row Copy/Open
+- ✅ Include/Exclude path filters wired to Python
+- ✅ Headless CI runner with screenshots and artifacts
+- ✅ Self-learning knowledge logging (textures)
+- ⏳ Recommend → Apply → Verify depth and more categories in progress
 
-1. **Clone** to your UE5.6 project's `Plugins` folder
-2. **Enable** the plugin in project settings
-3. **Restart** the editor
-4. **Access** via Window → Magic Optimizer
+## Try it in 60 seconds
 
-## 🎯 **Current Status**
+1) Copy this repo into your project's `Plugins/` folder
+2) Enable MagicOptimizer in Plugins and restart the editor
+3) Open: Window → MagicOptimizer (or run `MagicOptimizer.Open`)
+4) Click “Run Audit” and inspect the Texture results
 
-- ✅ **Plugin compiles and loads** in UE5.6
-- ✅ **UI panel opens** and displays correctly
-- ⏳ **Core optimization features** - Ready for implementation
+## Feature highlights (teaser)
 
-## 🔧 **Development**
+- Four-phase pipeline: Audit → Recommend → Apply → Verify (CSV-first)
+- Texture table: Path | Width | Height | Format with sort/filter and row actions
+- Filters: include/exclude path CSVs; selection-aware runs
+- Clean Python output + optional raw JSON debug view
+- CI harness: headless or with RHI, before/after screenshots, artifact pruning/flush
+- Self-learning: append-only knowledge events and aggregates (opt-in, textures now)
 
-We follow a **"Baby Steps & Testing"** approach for safe, incremental development.
+## Docs
 
-**For developers**: See [docs/README.md](docs/README.md) for comprehensive development guidelines.
+- Developer Guide: `docs/DEV_README.md`
+- Development Log (append-only): `docs/DEVELOPMENT_LOG.md`
 
----
+## Roadmap (teaser)
 
-*Last Updated: 2025-01-15*
-*UE5.6 Compatibility: ✅ VERIFIED*
+- Complete Texture vertical (deeper Recommend/Apply/Verify)
+- Extend to Meshes and Materials
+- Knowledge summaries → evolving rule packs
+- CI self-checks and markdown reports
+
+—
+
+Last updated: 2025-08-15
+UE5.6 Compatibility: ✅ Verified

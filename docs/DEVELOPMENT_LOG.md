@@ -1674,3 +1674,31 @@ Verification:
   - Ensured previous sections (Overview, Why Audit First, Presets, Install/Usage, Safety, Advanced Options, Performance, Known Issues, Contributing, License, Acknowledgments, Support) are represented in `docs/DEV_README.md` in a developer-centric form.
 
 ---
+
+### 2025-08-15 16:15
+- Docs: Expanded "Actionability & External Workflow" in `docs/DEV_README.md` with concrete examples and UI/UX/data model plans.
+  - Tags: Auto / Semi / External; badges, apply gating, tooltips, How-To links.
+  - External examples: texture up-res/rebake, mesh retopo/UVs, material atlasing/baking, audio re-record, VFX bake, HDRI capture.
+  - CSV extensions proposed: `actionability`, `external_tool_hint`, `howto_url`.
+- Rationale: Some recommendations are inherently out-of-engine; UX must guide and export tasks cleanly.
+
+### 2025-08-15 16:09
+- Note: Manual CI flush performed by user. Confirmed our QoL supports this going forward:
+  - Auto-prune in `tools/run_ci.ps1` with defaults Keep=5 and MaxAgeDays=7 (configurable via flags).
+  - Manual flush script `tools/flush_ci.ps1` available (`-All`, `-Keep`, `-MaxAgeDays`).
+- Action: Continue relying on auto-prune after each CI run; use manual flush as needed during heavy iteration.
+
+### 2025-08-15 16:24
+- QoL backlog (to-do; revisit soon):
+  - CI report: write `summary.md` per run (counts, timings, links, screenshot thumbnails); add sanity checks (CSV presence, row counts, error scan) and fail CI on violations; expose/pass-through `-Keep` and `-MaxAgeDays` flags.
+  - UI polish (Textures): disable Open when asset missing; tooltip with package/object path; row context menu (Copy/Open/Open Folder/Copy as JSON-CSV); persist table prefs (columns, sort, filters) via settings; buttons to open CSV and logs.
+  - Self-learning: settings toggles (enable/disable, anonymize); summarizer to `knowledge_summary.md` (top formats/issues/name patterns); in-UI Knowledge section to preview snapshot.
+  - CSV robustness: shared CSV helpers (quote/escape, header versioning); tolerant parsing with row-level warnings; show parse-warning banner and row count in UI.
+  - Console commands: extend `MagicOptimizer.Run` args (`-Phase`, `-Profile`, `-Include`, `-Exclude`, `-UseSelection`, `-Categories`).
+  - Dev ergonomics: "Create Support Bundle" (zip logs/CSVs/screenshots); status bar progress + elapsed time for phases.
+
+### 2025-08-15 16:36
+- Docs: Enriched `docs/DEV_README.md` with a Status Dashboard (✅/⏳/⬜) and Long-Term Objectives; kept Architecture/Feature Index/QoL Rollup intact.
+- Docs: Revamped root `README.md` (hero page): concise teaser, updated links to `docs/DEV_README.md` and `docs/DEVELOPMENT_LOG.md`, removed defunct Action Catalogue.
+
+---
