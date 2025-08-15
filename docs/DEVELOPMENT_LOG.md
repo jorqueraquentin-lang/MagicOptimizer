@@ -1571,3 +1571,11 @@ Verification:
 **Impact**: Prevents pushing heavy assets; keeps the repo lean and focused on plugin code.
 
 ---
+
+### 2025-08-15 14:03:40 - UI: Texture Audit filters + in-editor verification 🔍
+
+- Added filter bar above "Audit Results (Textures)": text filter (path/format), min width, min height, and Clear.
+- Filtering applies instantly, and after CSV load; works with existing sorting.
+- Verified by running in-editor via console (opened tab, executed Audit). Current session CSV shows 2 entries (Splash textures, 32x32), filters operate as expected.
+
+---

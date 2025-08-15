@@ -423,29 +423,35 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 						.Padding(0,0,0,4)
 						[
 							SNew(SHorizontalBox)
+							// Filter row
+							+ SHorizontalBox::Slot().FillWidth(1.f).Padding(0,0,8,0)
+							[
+								SNew(SEditableTextBox)
+								.HintText(FText::FromString(TEXT("Filter path or format...")))
+								.Text_Lambda([this]() { return FText::FromString(TextureFilterText); })
+								.OnTextChanged(this, &SOptimizerPanel::OnFilterTextChanged)
+							]
+							+ SHorizontalBox::Slot().AutoWidth().Padding(0,0,4,0)
+							[
+								SNew(SEditableTextBox)
+								.MinDesiredWidth(70)
+								.HintText(FText::FromString(TEXT("Min W")))
+								.Text(FText::FromString(TEXT("")))
+								.OnTextChanged(this, &SOptimizerPanel::OnMinWidthChanged)
+							]
+							+ SHorizontalBox::Slot().AutoWidth().Padding(0,0,4,0)
+							[
+								SNew(SEditableTextBox)
+								.MinDesiredWidth(70)
+								.HintText(FText::FromString(TEXT("Min H")))
+								.Text(FText::FromString(TEXT("")))
+								.OnTextChanged(this, &SOptimizerPanel::OnMinHeightChanged)
+							]
 							+ SHorizontalBox::Slot().AutoWidth()
 							[
 								SNew(SButton)
-								.Text(FText::FromString(TEXT("Path")))
-								.OnClicked(this, &SOptimizerPanel::OnSortByPath)
-							]
-							+ SHorizontalBox::Slot().AutoWidth().Padding(4,0)
-							[
-								SNew(SButton)
-								.Text(FText::FromString(TEXT("Width")))
-								.OnClicked(this, &SOptimizerPanel::OnSortByWidth)
-							]
-							+ SHorizontalBox::Slot().AutoWidth().Padding(4,0)
-							[
-								SNew(SButton)
-								.Text(FText::FromString(TEXT("Height")))
-								.OnClicked(this, &SOptimizerPanel::OnSortByHeight)
-							]
-							+ SHorizontalBox::Slot().AutoWidth().Padding(4,0)
-							[
-								SNew(SButton)
-								.Text(FText::FromString(TEXT("Format")))
-								.OnClicked(this, &SOptimizerPanel::OnSortByFormat)
+								.Text(FText::FromString(TEXT("Clear")))
+								.OnClicked(this, &SOptimizerPanel::OnClearTextureFilters)
 							]
 						]
 						+ SVerticalBox::Slot()
@@ -627,7 +633,7 @@ FOptimizerRunParams SOptimizerPanel::BuildRunParams(const FString& Phase) const
 
 void SOptimizerPanel::LoadTextureAuditCsv()
 {
-	TextureRows.Empty();
+	AllTextureRows.Empty();
 	FString SavedDir = FPaths::ProjectSavedDir();
 	FString SubDir = OptimizerSettings ? OptimizerSettings->OutputDirectory : TEXT("Saved/MagicOptimizer");
 	FString FullDir = SavedDir / SubDir;
@@ -679,14 +685,14 @@ void SOptimizerPanel::LoadTextureAuditCsv()
 				Row->Width = Cells.Num() > 1 ? FCString::Atoi(*TrimCell(Cells[1])) : 0;
 				Row->Height = Cells.Num() > 2 ? FCString::Atoi(*TrimCell(Cells[2])) : 0;
 				Row->Format = Cells.Num() > 3 ? TrimCell(Cells[3]) : TEXT("");
-				TextureRows.Add(Row);
+				AllTextureRows.Add(Row);
 			}
 		}
 
-		MagicOptimizerLog::AppendLine(FString::Printf(TEXT("UI: Loaded %d texture rows (lines=%d)"), TextureRows.Num(), Lines.Num()));
+		MagicOptimizerLog::AppendLine(FString::Printf(TEXT("UI: Loaded %d texture rows (lines=%d)"), AllTextureRows.Num(), Lines.Num()));
 
-		// Apply current sort
-		SortTextureRows();
+		// Apply current sort and filter
+		ApplyTextureFilterAndSort();
 	}
 	else
 	{
@@ -752,6 +758,57 @@ FReply SOptimizerPanel::OnSortByFormat()
 	if (CurrentSortColumn == ETextureSortColumn::Format) { bSortAscending = !bSortAscending; } else { CurrentSortColumn = ETextureSortColumn::Format; bSortAscending = true; }
 	SortTextureRows();
 	if (TextureListView.IsValid()) { TextureListView->RequestListRefresh(); }
+	return FReply::Handled();
+}
+
+void SOptimizerPanel::ApplyTextureFilterAndSort()
+{
+	TextureRows.Reset();
+	const FString Needle = TextureFilterText.TrimStartAndEnd().ToLower();
+	for (const FTextureAuditRowPtr& Row : AllTextureRows)
+	{
+		if (!Row.IsValid()) { continue; }
+		if (Row->Width < FilterMinWidth || Row->Height < FilterMinHeight) { continue; }
+		bool bMatches = true;
+		if (!Needle.IsEmpty())
+		{
+			const FString PathLower = Row->Path.ToLower();
+			const FString FormatLower = Row->Format.ToLower();
+			bMatches = PathLower.Contains(Needle) || FormatLower.Contains(Needle);
+		}
+		if (bMatches)
+		{
+			TextureRows.Add(Row);
+		}
+	}
+	SortTextureRows();
+	if (TextureListView.IsValid()) { TextureListView->RequestListRefresh(); }
+}
+
+void SOptimizerPanel::OnFilterTextChanged(const FText& NewText)
+{
+	TextureFilterText = NewText.ToString();
+	ApplyTextureFilterAndSort();
+}
+
+void SOptimizerPanel::OnMinWidthChanged(const FText& NewText)
+{
+	FilterMinWidth = FCString::Atoi(*NewText.ToString());
+	ApplyTextureFilterAndSort();
+}
+
+void SOptimizerPanel::OnMinHeightChanged(const FText& NewText)
+{
+	FilterMinHeight = FCString::Atoi(*NewText.ToString());
+	ApplyTextureFilterAndSort();
+}
+
+FReply SOptimizerPanel::OnClearTextureFilters()
+{
+	TextureFilterText.Reset();
+	FilterMinWidth = 0;
+	FilterMinHeight = 0;
+	ApplyTextureFilterAndSort();
 	return FReply::Handled();
 }
 

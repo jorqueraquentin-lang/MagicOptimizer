@@ -55,6 +55,7 @@ protected:
 
 	// Audit results data
 	TArray<FTextureAuditRowPtr> TextureRows;
+	TArray<FTextureAuditRowPtr> AllTextureRows;
 	TSharedPtr<class SListView<FTextureAuditRowPtr>> TextureListView;
 
 	// Sorting state for texture results
@@ -137,6 +138,16 @@ protected:
 	FReply OnSortByWidth();
 	FReply OnSortByHeight();
 	FReply OnSortByFormat();
+
+	// Filters for texture results
+	FString TextureFilterText;
+	int32 FilterMinWidth = 0;
+	int32 FilterMinHeight = 0;
+	void ApplyTextureFilterAndSort();
+	void OnFilterTextChanged(const FText& NewText);
+	void OnMinWidthChanged(const FText& NewText);
+	void OnMinHeightChanged(const FText& NewText);
+	FReply OnClearTextureFilters();
 
 	// UI refresh
 	void RefreshUI();
