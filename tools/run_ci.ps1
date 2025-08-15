@@ -9,6 +9,7 @@ param(
   [switch]$WithRHI,
   [switch]$WithScreenshot,
   [switch]$OpenExplorer,
+  [switch]$WinDesktopShot,
   [int]$Keep = 5,
   [int]$MaxAgeDays = 7,
   [switch]$FailOnError,
@@ -106,22 +107,44 @@ $RuntimeLog = Join-Path $CiOut "MagicOptimizerRuntime.log"
 # Ensure screenshots are present under the CI/<ts>/CI folder
 $SavedCiDir = Join-Path $MOFolder "CI"
 try {
+  New-Item -ItemType Directory -Force -Path $CiShotsDir | Out-Null
+  # 1) Copy from MagicOptimizer/CI if present
   if (Test-Path $SavedCiDir) {
-    New-Item -ItemType Directory -Force -Path $CiShotsDir | Out-Null
-    $srcBefore = Join-Path $SavedCiDir "01_before_test.png"
-    $srcAfter  = Join-Path $SavedCiDir "02_after_test.png"
-    if (Test-Path $srcBefore) { Copy-Item -Force $srcBefore (Join-Path $CiShotsDir "01_before_test.png") }
-    if (Test-Path $srcAfter)  { Copy-Item -Force $srcAfter  (Join-Path $CiShotsDir "02_after_test.png") }
+    @("01_before_test.png","02_after_test.png") | ForEach-Object {
+      $src = Join-Path $SavedCiDir $_
+      if (Test-Path $src) { Copy-Item -Force $src (Join-Path $CiShotsDir $_) }
+    }
   }
-  # Fallback: search Saved/Screenshots recursively (UE default) and copy the newest matches
+  # 2) Fallback: copy newest matching files from Saved/Screenshots
   $ScreensRoot = Join-Path $Saved "Screenshots"
   if (Test-Path $ScreensRoot) {
-    $matchBefore = Get-ChildItem -Recurse -File -ErrorAction SilentlyContinue $ScreensRoot -Filter "01_before_test.png" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-    $matchAfter  = Get-ChildItem -Recurse -File -ErrorAction SilentlyContinue $ScreensRoot -Filter "02_after_test.png" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-    if ($matchBefore) { New-Item -ItemType Directory -Force -Path $CiShotsDir | Out-Null; Copy-Item -Force $matchBefore.FullName (Join-Path $CiShotsDir "01_before_test.png") }
-    if ($matchAfter)  { New-Item -ItemType Directory -Force -Path $CiShotsDir | Out-Null; Copy-Item -Force $matchAfter.FullName  (Join-Path $CiShotsDir "02_after_test.png") }
+    $pairs = @(
+      @{Name="01_before_test.png"; Pattern="01_before_test.png"},
+      @{Name="02_after_test.png"; Pattern="02_after_test.png"}
+    )
+    foreach ($p in $pairs) {
+      $dst = Join-Path $CiShotsDir $p.Name
+      if (-not (Test-Path $dst)) {
+        $match = Get-ChildItem -Recurse -File -ErrorAction SilentlyContinue $ScreensRoot -Filter $p.Pattern | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        if ($match) { Copy-Item -Force $match.FullName $dst }
+      }
+    }
   }
-} catch {}
+  # 3) Windows desktop fallback capture if still missing
+  if ($WinDesktopShot) {
+    $cap = Join-Path $RepoRoot "tools/windows_capture.ps1"
+    if (Test-Path $cap) {
+      if (-not (Test-Path (Join-Path $CiShotsDir "01_before_test.png"))) {
+        powershell -ExecutionPolicy Bypass -File $cap -OutPath (Join-Path $CiShotsDir "01_before_test.png") -DelayMs 500 | Write-Host
+      }
+      if (-not (Test-Path (Join-Path $CiShotsDir "02_after_test.png"))) {
+        powershell -ExecutionPolicy Bypass -File $cap -OutPath (Join-Path $CiShotsDir "02_after_test.png") -DelayMs 500 | Write-Host
+      }
+    }
+  }
+} catch {
+  Write-Warning ("Screenshot copy step failed: {0}" -f $_)
+}
 
 $TexturesCsv = Join-Path $AuditDir "textures.csv"
 $RecsCsv = Join-Path $AuditDir "textures_recommend.csv"
