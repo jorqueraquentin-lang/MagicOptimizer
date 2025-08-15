@@ -28,4 +28,5 @@ private:
 	void ConsoleRun(const TArray<FString>& Args);
 
 	struct IConsoleCommand* ConsoleRunCommand = nullptr;
+	struct IConsoleCommand* ConsoleOpenCommand = nullptr;
 };

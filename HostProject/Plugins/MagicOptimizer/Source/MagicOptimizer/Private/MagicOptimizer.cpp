@@ -191,6 +191,15 @@ void FMagicOptimizerModule::RegisterConsoleCommands()
 			FConsoleCommandWithArgsDelegate::CreateRaw(this, &FMagicOptimizerModule::ConsoleRun),
 			ECVF_Default);
 	}
+
+	if (ConsoleOpenCommand == nullptr)
+	{
+		ConsoleOpenCommand = IConsoleManager::Get().RegisterConsoleCommand(
+			TEXT("MagicOptimizer.Open"),
+			TEXT("Open MagicOptimizer tab"),
+			FConsoleCommandDelegate::CreateRaw(this, &FMagicOptimizerModule::OpenOptimizerPanel),
+			ECVF_Default);
+	}
 }
 
 void FMagicOptimizerModule::UnregisterConsoleCommands()
@@ -199,6 +208,12 @@ void FMagicOptimizerModule::UnregisterConsoleCommands()
 	{
 		IConsoleManager::Get().UnregisterConsoleObject(ConsoleRunCommand);
 		ConsoleRunCommand = nullptr;
+	}
+
+	if (ConsoleOpenCommand)
+	{
+		IConsoleManager::Get().UnregisterConsoleObject(ConsoleOpenCommand);
+		ConsoleOpenCommand = nullptr;
 	}
 }
 

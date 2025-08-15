@@ -12,6 +12,13 @@ HostProject/Plugins/**/Binaries/
 HostProject/Plugins/**/Intermediate/
 HostProject/Plugins/**/DerivedDataCache/
 HostProject/Plugins/**/Saved/
+HostProject/Plugins/**/DerivedDataCache/
+HostProject/Plugins/**/Intermediate/
+HostProject/Plugins/**/Binaries/
+
+# Visual Studio generated solution artifacts (keep only source)
+*.user
+*.sln.docstates
 
 # Visual Studio / IDE
 .vs/
@@ -41,5 +48,6 @@ Thumbs.db
 # CI artifacts (ephemeral)
 docs/ci/
 
-# Optional: ignore large project assets (uncomment if desired)
-# HostProject/Content/**
+# Project assets (ignore all content except Python scripts used by the plugin/CI)
+HostProject/Content/**
+!HostProject/Content/Python/**

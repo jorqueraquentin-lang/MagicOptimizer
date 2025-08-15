@@ -1559,3 +1559,15 @@ Verification:
 **Impact**: CI artifacts are ephemeral; workspace stays clean automatically.
 
 ---
+
+### 2025-08-15 09:29:10 - Repo hygiene tightened (sources-only) 🔒
+
+**Change**: Ensure only necessary plugin code and CI scripts are tracked.
+
+**Details**:
+- `.gitignore`: ignore `HostProject/Content/**` except `HostProject/Content/Python/**`; ignore plugin build caches and binaries
+- `.gitattributes`: mark common binary asset types as non-mergeable; normalize EOLs
+
+**Impact**: Prevents pushing heavy assets; keeps the repo lean and focused on plugin code.
+
+---

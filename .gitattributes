@@ -1,0 +1,24 @@
+# Prevent accidentally committing large binary assets; ensure LFS not required
+*.umap -diff -merge
+*.uasset -diff -merge
+*.utx -diff -merge
+*.wav -diff -merge
+*.png -diff -merge
+*.jpg -diff -merge
+*.jpeg -diff -merge
+*.tga -diff -merge
+*.psd -diff -merge
+*.fbx -diff -merge
+*.mp4 -diff -merge
+*.mov -diff -merge
+
+# Text defaults
+*.cpp text eol=crlf
+*.h text eol=crlf
+*.cs text eol=crlf
+*.uproject text eol=crlf
+*.uplugin text eol=crlf
+*.py text eol=lf
+*.ps1 text eol=crlf
+*.md text eol=lf
+
