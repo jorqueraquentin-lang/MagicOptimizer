@@ -1746,3 +1746,19 @@ Verification:
     - Table ViewModel for sort/filter/state (shrinks widget, improves testability).
 
 ---
+
+### 2025-08-15 16:52
+- QoL: Enhanced CI runner `tools/run_ci.ps1` with summary and checks
+  - Generates `summary.md` per run (CSV row counts, screenshots presence, knowledge files, error matches).
+  - New flags: `-FailOnError` (gate on errors/row counts) and `-MinRows` (expected minimum rows).
+  - Kept pruning with configurable `-Keep` / `-MaxAgeDays`.
+- QoL: Added `tools/make_support_bundle.ps1` to zip a full CI run (includes `summary.md` and logs/CSVs/screenshots) for quick sharing.
+
+### 2025-08-15 16:58
+- Branding & metadata pass (Perseus XR PTY LTD):
+  - Updated copyright headers across plugin sources/headers/scripts where applicable.
+  - `MagicOptimizer.uplugin`: set Category "Perseus XR"; set CreatedBy/URLs; SupportURL/DocsURL; description notes Perseus XR.
+  - README: added copyrighted notice, website, and contact email.
+  - Added lightweight About dialog (menu entry "About Perseus XR…"): opens window with website/contact actions (LaunchURL, mailto).
+  - Added top comments to config/scripts to reflect branding; created `LICENSE` (proprietary notice).
+  - Ensured no third-party/Epic files altered; public APIs intact.
