@@ -1579,3 +1579,44 @@ Verification:
 - Verified by running in-editor via console (opened tab, executed Audit). Current session CSV shows 2 entries (Splash textures, 32x32), filters operate as expected.
 
 ---
+
+### 2025-08-15 14:06:30 - Planning checkpoint: macro/micro objectives ✅
+
+**Current status**
+- Plugin loads in UE5.6; Python bridge stable; Audit (Textures) generates CSV with path/width/height/format
+- UI: Python Output tidy; Raw JSON collapsible; Texture results list with sorting and new filters (text/min W/min H)
+- CSV pipeline hardened; dimensions populated; .gitignore/.gitattributes updated; repo history cleaned
+- CI: headless runner with before/after screenshots; artifacts retention/flush; logs and CSV collected
+- In-editor console commands: `MagicOptimizer.Open`, `MagicOptimizer.Run` working
+
+**Long-term (macro) objectives**
+- One-click optimization workflow: Audit → Recommend → Apply with safety (dry-run/backups) and diffs
+- CSV-first, reproducible pipeline across profiles; large-data capable UI (virtualized) with filtering/sorting
+- Multi-category coverage: Textures → Meshes → Materials → Audio/Levels (incremental)
+- Reliable CI: headless validation, screenshot-based sanity, summarized artifacts
+- Robust logging/telemetry to diagnose runs (user-facing + private backlog)
+
+**Mid-term (next 1–3 weeks)**
+- Complete Textures vertical: implement Recommend + Apply with guardrails and backups
+- Columnar UI for Texture results with proper headers, per-column sort, filter summary, copy/open actions
+- Enrich CSV: mips count, LODGroup, sRGB, NeverStream, NumUses (approx), size on disk estimate
+- Rules engine for recommendations (PNG/uncompressed, too large, wrong compression for target profile)
+- Apply path filters/selection end-to-end (UI → Python → CSV)
+- CI summary artifact: small markdown + thumbnails showing pass/fail counts
+
+**Short-term (next few days)**
+- Texture table: switch to columns (`SHeaderRow`) with Path | Width | Height | Format; row count and "Filtered N/M"
+- Row actions: Copy Path; Open in Content Browser
+- CSV loader: more robust quoting/commas; safe parsing
+- Python: write `textures_recommendations.csv` (path, issue, suggested_fix) for UI consumption
+- UI: add "Recommendations (Textures)" expandable with its own table
+
+**Next baby steps (immediate)**
+1) Columnized Texture table with `SHeaderRow` and per-column sort; show "Filtered N/M" summary
+   - AC: Columns render; clicking header toggles sort; summary reflects filters
+2) Row utilities: buttons to Copy Path and Open in CB
+   - AC: Buttons visible per row and work on click
+3) Python: skeleton recommendations for obvious cases (PNG/uncompressed; oversized > 2k on Mobile_Low)
+   - AC: `textures_recommendations.csv` written; at least 2 rule hits in sample project
+
+---
