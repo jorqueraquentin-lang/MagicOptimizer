@@ -4,6 +4,10 @@ Build once, ship smart. MagicOptimizer audits your project, recommends safe impr
 
 — UE 5.6 — Working Plugin Shell — MIT —
 
+This plugin is a copyrighted product of Perseus XR PTY LTD.
+
+Website: https://www.perseusxr.com — Contact: info@perseusxr.com
+
 ## Why MagicOptimizer
 
 - Fast visibility: one-click Audit for textures (meshes/materials next)

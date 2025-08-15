@@ -1,3 +1,20 @@
+/*
+  OptimizerLogging.h
+  Part of the MagicOptimizer Unreal Engine plugin.
+  Copyright (c) 2025 Perseus XR PTY LTD. All rights reserved.
+*/
+#pragma once
+
+#include "CoreMinimal.h"
+
+namespace MagicOptimizerLog
+{
+	FString GetLogFilePath();
+	FString GetBacklogFilePath();
+	void AppendLine(const FString& Line);
+	void AppendBacklog(const FString& Line);
+}
+
 #pragma once
 
 #include "CoreMinimal.h"

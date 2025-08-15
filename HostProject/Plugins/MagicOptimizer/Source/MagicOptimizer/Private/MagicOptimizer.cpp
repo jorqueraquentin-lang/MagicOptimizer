@@ -1,6 +1,8 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright (c) 2025 Perseus XR PTY LTD. All rights reserved.
 
 #include "MagicOptimizer.h"
+#include "Misc/Paths.h"
+#include "Misc/FileHelper.h"
 #include "SOptimizerPanel.h"
 #include "OptimizerSettings.h"
 #include "PythonBridge.h"
@@ -174,6 +176,56 @@ void FMagicOptimizerModule::AddMenuExtension(FMenuBuilder& Builder)
 
 	// Add a separator for better visibility
 	Builder.AddSeparator();
+
+	// About Perseus XR… entry
+	Builder.AddMenuEntry(
+		LOCTEXT("MagicOptimizerAbout", "About Perseus XR…"),
+		LOCTEXT("MagicOptimizerAboutTooltip", "Open Perseus XR information"),
+		FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Help"),
+		FUIAction(FExecuteAction::CreateLambda([this]()
+		{
+			const FString Url = TEXT("https://www.perseusxr.com");
+			TSharedRef<SWindow> Window = SNew(SWindow)
+				.Title(LOCTEXT("PerseusXRTitle", "About Perseus XR"))
+				.ClientSize(FVector2D(480, 220))
+				.SupportsMaximize(false)
+				.SupportsMinimize(false);
+
+			TSharedRef<SVerticalBox> VBox = SNew(SVerticalBox)
+			+ SVerticalBox::Slot().AutoHeight().Padding(12)
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("PerseusXRLine", "Perseus XR PTY LTD — www.perseusxr.com"))
+			]
+			+ SVerticalBox::Slot().AutoHeight().Padding(12,6)
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot().AutoWidth().Padding(0,0,8,0)
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("PerseusXRContact", "Contact"))
+					.OnClicked_Lambda([]()
+					{
+						FPlatformProcess::LaunchURL(TEXT("mailto:info@perseusxr.com"), nullptr, nullptr);
+						return FReply::Handled();
+					})
+				]
+				+ SHorizontalBox::Slot().AutoWidth()
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("PerseusXROpenWebsite", "Open Website"))
+					.OnClicked_Lambda([Url]()
+					{
+						FPlatformProcess::LaunchURL(*Url, nullptr, nullptr);
+						return FReply::Handled();
+					})
+				]
+			];
+
+			Window->SetContent(VBox);
+			FSlateApplication::Get().AddWindow(Window);
+		}))
+	);
 }
 
 void FMagicOptimizerModule::OpenOptimizerPanel()

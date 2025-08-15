@@ -1,3 +1,8 @@
+/*
+  OptimizerLogging.cpp
+  Part of the MagicOptimizer Unreal Engine plugin.
+  Copyright (c) 2025 Perseus XR PTY LTD. All rights reserved.
+*/
 #include "OptimizerLogging.h"
 #include "Misc/Paths.h"
 #include "Misc/FileHelper.h"

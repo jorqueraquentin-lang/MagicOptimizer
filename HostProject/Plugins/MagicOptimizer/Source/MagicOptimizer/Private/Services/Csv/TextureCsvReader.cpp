@@ -1,3 +1,8 @@
+/*
+  TextureCsvReader.cpp
+  Part of the MagicOptimizer Unreal Engine plugin.
+  Copyright (c) 2025 Perseus XR PTY LTD. All rights reserved.
+*/
 #include "TextureCsvReader.h"
 #include "OptimizerSettings.h"
 #include "Misc/FileHelper.h"

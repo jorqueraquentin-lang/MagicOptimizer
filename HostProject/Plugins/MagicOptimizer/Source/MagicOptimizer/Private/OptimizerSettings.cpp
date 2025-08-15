@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright (c) 2025 Perseus XR PTY LTD. All rights reserved.
 
 #include "OptimizerSettings.h"
 #include "HAL/PlatformFilemanager.h"

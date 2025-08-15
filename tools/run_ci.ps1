@@ -1,3 +1,8 @@
+<#
+  run_ci.ps1
+  Part of the MagicOptimizer Unreal Engine plugin.
+  Copyright (c) 2025 Perseus XR PTY LTD. All rights reserved.
+#>
 param(
   [string]$Phase = "Audit",
   [string]$Profile = "Mobile_Low",

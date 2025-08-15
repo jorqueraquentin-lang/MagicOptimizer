@@ -1,5 +1,10 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright (c) 2025 Perseus XR PTY LTD. All rights reserved.
 
+/*
+  TextureCsvReader.h
+  Part of the MagicOptimizer Unreal Engine plugin.
+  Copyright (c) 2025 Perseus XR PTY LTD. All rights reserved.
+*/
 #pragma once
 
 #include "CoreMinimal.h"
