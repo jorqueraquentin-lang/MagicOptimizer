@@ -160,22 +160,42 @@ $md += "- Phase: `$Phase | Profile: `$Profile | Time: $ts"
 $md += "- Artifacts: `$CiOut"
 $md += ""
 $md += "## CSV"
-$md += "- textures.csv: $texRows rows" + (if(Test-Path $TexturesCsv){""}else{" (missing)"})
-$md += "- textures_recommend.csv: $recRows rows" + (if(Test-Path $RecsCsv){""}else{" (missing)"})
+$texNote = ""; if (-not (Test-Path $TexturesCsv)) { $texNote = " (missing)" }
+$recNote = ""; if (-not (Test-Path $RecsCsv))     { $recNote = " (missing)" }
+$md += "- textures.csv: $texRows rows$texNote"
+$md += "- textures_recommend.csv: $recRows rows$recNote"
 $md += ""
 $md += "## Screenshots"
-$md += (if(Test-Path $beforePng){"- BEFORE: CI/01_before_test.png"}else{"- BEFORE: (missing)"})
-$md += (if(Test-Path $afterPng){"- AFTER: CI/02_after_test.png"}else{"- AFTER: (missing)"})
+$beforeLine = "- BEFORE: (missing)"; $afterLine = "- AFTER: (missing)"
+try {
+  Add-Type -AssemblyName System.Drawing -ErrorAction SilentlyContinue | Out-Null
+  if (Test-Path $beforePng) {
+    $imgB = [System.Drawing.Image]::FromFile($beforePng)
+    $beforeLine = "- BEFORE: CI/01_before_test.png (${($imgB.Width)}x${($imgB.Height)})"
+    $imgB.Dispose()
+  }
+  if (Test-Path $afterPng) {
+    $imgA = [System.Drawing.Image]::FromFile($afterPng)
+    $afterLine = "- AFTER: CI/02_after_test.png (${($imgA.Width)}x${($imgA.Height)})"
+    $imgA.Dispose()
+  }
+} catch { }
+$md += $beforeLine
+$md += $afterLine
 $md += ""
 $md += "### Thumbnails"
-$md += (if(Test-Path $thumbBefore){"![before](CI/thumb_before.png)"}else{"(no before thumbnail)"})
-$md += (if(Test-Path $thumbAfter){"![after](CI/thumb_after.png)"}else{"(no after thumbnail)"})
+if (Test-Path $thumbBefore) { $md += "![before](CI/thumb_before.png)" } else { $md += "(no before thumbnail)" }
+if (Test-Path $thumbAfter)  { $md += "![after](CI/thumb_after.png)" }  else { $md += "(no after thumbnail)" }
 $md += ""
 $md += "## Knowledge"
-$md += (if(Test-Path $KnowledgeDir){ (Get-ChildItem $KnowledgeDir | ForEach-Object { "- Knowledge/" + $_.Name + " (`$([math]::Round($_.Length/1KB,1)) KB)" }) } else { @("- (none)") })
+if (Test-Path $KnowledgeDir) {
+  (Get-ChildItem $KnowledgeDir) | ForEach-Object { $md += ("- Knowledge/{0} ({1} KB)" -f $_.Name, [math]::Round($_.Length/1KB,1)) }
+} else {
+  $md += "- (none)"
+}
 $md += ""
 $md += "## Logs"
-$md += (if(Test-Path $RuntimeLog){"- MagicOptimizerRuntime.log (errors matched: $errorsFound)"}else{"- MagicOptimizerRuntime.log (missing)"})
+if (Test-Path $RuntimeLog) { $md += "- MagicOptimizerRuntime.log (errors matched: $errorsFound)" } else { $md += "- MagicOptimizerRuntime.log (missing)" }
 
 Set-Content -Path $summaryPath -Value ($md -join "`r`n") -Encoding UTF8
 
