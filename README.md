@@ -2,7 +2,7 @@
 
 Build once, ship smart. MagicOptimizer audits your project, recommends safe improvements, and helps you apply and verify changes — all inside UE.
 
-— UE 5.6 — Working Plugin Shell — MIT —
+— UE 5.6 — Working Plugin Shell —
 
 This plugin is a copyrighted product of Perseus XR PTY LTD.
 
