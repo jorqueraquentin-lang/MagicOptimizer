@@ -16,6 +16,12 @@ def main():
 	saved_root = unreal.Paths.project_saved_dir()
 	screenshots_dir = os.path.join(saved_root, "MagicOptimizer", "CI")
 	os.makedirs(screenshots_dir, exist_ok=True)
+
+	# Direct screenshots to our CI folder
+	try:
+		unreal.SystemLibrary.execute_console_command(None, f'r.ScreenshotSavePath "{screenshots_dir.replace("\\","/")}"')
+	except Exception as e:
+		unreal.log_warning(f"CI_SHOT: set ScreenshotSavePath failed: {e}")
 	
 	# Set a deterministic resolution
 	try:
@@ -76,9 +82,16 @@ def main():
 	before_name = "01_before_test.png"
 	before_files = _list_shots()
 	print(f"Taking BEFORE screenshot: {before_name}")
-	unreal.AutomationLibrary.take_high_res_screenshot(1280, 720, before_name)
-	# Wait and copy once file lands under Saved/Screenshots
-	_wait_and_copy(before_files, before_name)
+	# First try console command to force exact name into our folder
+	try:
+		unreal.SystemLibrary.execute_console_command(None, f'HighResShot 1280x720 {before_name}')
+	except Exception as e:
+		unreal.log_warning(f"CI_SHOT: HighResShot BEFORE failed: {e}")
+	time.sleep(2)
+	if not os.path.isfile(os.path.join(screenshots_dir, before_name)):
+		# Fallback to automation API and delta copy
+		unreal.AutomationLibrary.take_high_res_screenshot(1280, 720, before_name)
+		_wait_and_copy(before_files, before_name)
 	
 	# Step 2: Execute the test (Audit phase)
 	print("Executing MagicOptimizer.Run Audit Textures...")
@@ -92,8 +105,14 @@ def main():
 	after_name = "02_after_test.png"
 	prev = _list_shots()
 	print(f"Taking AFTER screenshot: {after_name}")
-	unreal.AutomationLibrary.take_high_res_screenshot(1280, 720, after_name)
-	_wait_and_copy(prev, after_name)
+	try:
+		unreal.SystemLibrary.execute_console_command(None, f'HighResShot 1280x720 {after_name}')
+	except Exception as e:
+		unreal.log_warning(f"CI_SHOT: HighResShot AFTER failed: {e}")
+	time.sleep(2)
+	if not os.path.isfile(os.path.join(screenshots_dir, after_name)):
+		unreal.AutomationLibrary.take_high_res_screenshot(1280, 720, after_name)
+		_wait_and_copy(prev, after_name)
 	
 	print("Screenshots captured successfully!")
 	print(f"Before: {os.path.join(screenshots_dir, before_name)}")
