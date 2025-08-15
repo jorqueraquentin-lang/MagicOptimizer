@@ -113,6 +113,14 @@ try {
     if (Test-Path $srcBefore) { Copy-Item -Force $srcBefore (Join-Path $CiShotsDir "01_before_test.png") }
     if (Test-Path $srcAfter)  { Copy-Item -Force $srcAfter  (Join-Path $CiShotsDir "02_after_test.png") }
   }
+  # Fallback: search Saved/Screenshots recursively (UE default) and copy the newest matches
+  $ScreensRoot = Join-Path $Saved "Screenshots"
+  if (Test-Path $ScreensRoot) {
+    $matchBefore = Get-ChildItem -Recurse -File -ErrorAction SilentlyContinue $ScreensRoot -Filter "01_before_test.png" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    $matchAfter  = Get-ChildItem -Recurse -File -ErrorAction SilentlyContinue $ScreensRoot -Filter "02_after_test.png" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if ($matchBefore) { New-Item -ItemType Directory -Force -Path $CiShotsDir | Out-Null; Copy-Item -Force $matchBefore.FullName (Join-Path $CiShotsDir "01_before_test.png") }
+    if ($matchAfter)  { New-Item -ItemType Directory -Force -Path $CiShotsDir | Out-Null; Copy-Item -Force $matchAfter.FullName  (Join-Path $CiShotsDir "02_after_test.png") }
+  }
 } catch {}
 
 $TexturesCsv = Join-Path $AuditDir "textures.csv"
