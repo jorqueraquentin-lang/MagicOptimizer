@@ -125,6 +125,30 @@ if (Test-Path $RuntimeLog) {
 
 $beforePng = Join-Path $CiShotsDir "01_before_test.png"
 $afterPng  = Join-Path $CiShotsDir "02_after_test.png"
+ 
+# Try to generate thumbnails for easier preview in editors
+function New-Thumbnail($src, $dst, $maxW, $maxH) {
+  try {
+    Add-Type -AssemblyName System.Drawing -ErrorAction SilentlyContinue | Out-Null
+    if (!(Test-Path $src)) { return }
+    $img = [System.Drawing.Image]::FromFile($src)
+    $w = [double]$img.Width; $h = [double]$img.Height
+    if ($w -le 0 -or $h -le 0) { $img.Dispose(); return }
+    $scale = [Math]::Min($maxW / $w, $maxH / $h)
+    $nw = [int]([Math]::Round($w * $scale)); $nh = [int]([Math]::Round($h * $scale))
+    $thumb = New-Object System.Drawing.Bitmap($nw, $nh)
+    $g = [System.Drawing.Graphics]::FromImage($thumb)
+    $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+    $g.DrawImage($img, 0, 0, $nw, $nh)
+    $thumb.Save($dst, [System.Drawing.Imaging.ImageFormat]::Png)
+    $g.Dispose(); $thumb.Dispose(); $img.Dispose()
+  } catch { }
+}
+
+$thumbBefore = Join-Path $CiShotsDir "thumb_before.png"
+$thumbAfter  = Join-Path $CiShotsDir "thumb_after.png"
+if (Test-Path $beforePng) { New-Thumbnail -src $beforePng -dst $thumbBefore -maxW 480 -maxH 270 }
+if (Test-Path $afterPng)  { New-Thumbnail -src $afterPng  -dst $thumbAfter  -maxW 480 -maxH 270 }
 
 $summaryPath = Join-Path $CiOut "summary.md"
 $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
@@ -142,6 +166,10 @@ $md += ""
 $md += "## Screenshots"
 $md += (if(Test-Path $beforePng){"- BEFORE: CI/01_before_test.png"}else{"- BEFORE: (missing)"})
 $md += (if(Test-Path $afterPng){"- AFTER: CI/02_after_test.png"}else{"- AFTER: (missing)"})
+$md += ""
+$md += "### Thumbnails"
+$md += (if(Test-Path $thumbBefore){"![before](CI/thumb_before.png)"}else{"(no before thumbnail)"})
+$md += (if(Test-Path $thumbAfter){"![after](CI/thumb_after.png)"}else{"(no after thumbnail)"})
 $md += ""
 $md += "## Knowledge"
 $md += (if(Test-Path $KnowledgeDir){ (Get-ChildItem $KnowledgeDir | ForEach-Object { "- Knowledge/" + $_.Name + " (`$([math]::Round($_.Length/1KB,1)) KB)" }) } else { @("- (none)") })
