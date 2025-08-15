@@ -19,7 +19,9 @@ def main():
 
 	# Direct screenshots to our CI folder
 	try:
-		unreal.SystemLibrary.execute_console_command(None, f'r.ScreenshotSavePath "{screenshots_dir.replace("\\","/")}"')
+		_path_cmd = screenshots_dir.replace("\\", "/")
+		_cmd = 'r.ScreenshotSavePath "{0}"'.format(_path_cmd)
+		unreal.SystemLibrary.execute_console_command(None, _cmd)
 	except Exception as e:
 		unreal.log_warning(f"CI_SHOT: set ScreenshotSavePath failed: {e}")
 	
