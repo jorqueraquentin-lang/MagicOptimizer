@@ -18,11 +18,22 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Tuple, Iterable, Set, Optional
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+def detect_repo_root() -> Path:
+    # Prefer git rev-parse --show-toplevel
+    try:
+        top = subprocess.check_output(['git', 'rev-parse', '--show-toplevel'], text=True, cwd=Path(__file__).resolve().parents[2]).strip()
+        if top and Path(top).is_dir():
+            return Path(top)
+    except Exception:
+        pass
+    # Fallback: two levels up from Tools/Audit
+    return Path(__file__).resolve().parents[2]
+
+REPO_ROOT = detect_repo_root()
 REPORTS_ROOT = REPO_ROOT / 'Reports'
 
 EXCLUDE_DIRS = {
-    '.git', '.vs', '.idea', 'node_modules',
+    '.git', '.cursor', '.vs', '.idea', 'node_modules',
     'Artifacts', 'Binaries', 'Intermediate', 'DerivedDataCache', 'Saved',
 }
 
@@ -46,7 +57,7 @@ def is_excluded(path: Path) -> bool:
 
 
 def walk_files(root: Path) -> Iterable[Path]:
-    for dirpath, dirnames, filenames in os.walk(root):
+    for dirpath, dirnames, filenames in os.walk(root, topdown=True):
         # prune excluded dirs in-place
         dirnames[:] = [d for d in dirnames if d not in EXCLUDE_DIRS]
         for name in filenames:
@@ -56,6 +67,8 @@ def walk_files(root: Path) -> Iterable[Path]:
 
 def file_hash_sha256(path: Path) -> Optional[str]:
     try:
+        if path.suffix.lower() in {'.uasset', '.umap'}:
+            return None
         if path.stat().st_size > HASH_MAX_BYTES:
             return None
         h = hashlib.sha256()
@@ -159,13 +172,35 @@ def grep_name_based_heuristics(root: Path) -> List[Dict[str, object]]:
 def try_dry_build() -> Tuple[int, List[str]]:
     """Run a dry editor build to capture warnings. Return (exitcode, warnings)."""
     warnings: List[str] = []
-    uproject = next(REPO_ROOT.glob('HostProject/*.uproject'), None)
+    # Find .uproject nearest to Plugins/MagicOptimizer
+    plugin_dir = REPO_ROOT / 'HostProject' / 'Plugins' / 'MagicOptimizer'
+    search_dirs: List[Path] = []
+    if plugin_dir.exists():
+        search_dirs = [plugin_dir] + list(plugin_dir.parents)
+    else:
+        search_dirs = [REPO_ROOT]
+    uproject: Optional[Path] = None
+    for d in search_dirs:
+        found = list(d.glob('*.uproject'))
+        if found:
+            uproject = found[0]
+            break
+    if not uproject:
+        return (0, ["No .uproject found for build warning capture"])
     if not uproject:
         return (0, warnings)
     ubt = Path(os.environ.get('UE_UBT', r'C:\Program Files\Epic Games\UE_5.6\Engine\Binaries\DotNET\UnrealBuildTool\UnrealBuildTool.exe'))
     if not ubt.exists():
-        return (0, warnings)
-    cmd = [str(ubt), '-mode=Build', f'-project={str(uproject)}', '-target=HostProjectEditor Win64 Development', '-progress']
+        return (0, ["UnrealBuildTool not found; set UE_UBT env var to its path"])
+    # Non-unity editor build (basic capture); use default Editor target per instructions
+    cmd = [
+        str(ubt),
+        f'-Project={str(uproject)}',
+        '-Target=Editor',
+        '-Mode=Build',
+        '-Configuration=Development',
+        '-Progress'
+    ]
     try:
         proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8')
         out = proc.stdout
@@ -246,6 +281,7 @@ def collect_scripts_and_tests(repo_root: Path) -> Dict[str, List[str]]:
 
 
 def main() -> int:
+    verbose = '--verbose' in sys.argv
     ts = datetime.now().strftime('%Y%m%d_%H%M%S')
     out_dir = REPORTS_ROOT / f'Audit_{ts}'
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -253,6 +289,12 @@ def main() -> int:
     # Inventory
     file_info: List[Tuple[str, int, Optional[str]]] = []
     largest: List[Tuple[int, str]] = []
+    # Debug: top-level entries
+    top_entries = sorted([e.name for e in REPO_ROOT.iterdir()])
+    print(f"Repo root={REPO_ROOT}")
+    print(f"Excluded dirs={sorted(EXCLUDE_DIRS)}")
+    print(f"Top-level entries ({len(top_entries)}): {top_entries}")
+
     for p in walk_files(REPO_ROOT):
         rel = str(p.relative_to(REPO_ROOT)).replace('\\', '/')
         try:
@@ -265,6 +307,9 @@ def main() -> int:
         if size > 0:
             largest.append((size, rel))
     total_size = sum(sz for _, sz, _ in file_info)
+    if verbose:
+        sample = [fi[0] for fi in file_info[:50]]
+        print(f"First {len(sample)} files: {sample}")
     largest.sort(reverse=True)
     largest_top = largest[:20]
 
@@ -304,6 +349,7 @@ def main() -> int:
         "dead_symlinks": len(deadlinks),
     }
 
+    file_info.sort(key=lambda t: t[0])
     duplicates = detect_duplicates(file_info)
     summary["duplicates_count"] = len(duplicates)
 
@@ -351,6 +397,12 @@ def main() -> int:
     if duplicates:
         recs.append({"severity": "Low", "item": "Duplicate files", "detail": "Remove duplicated blobs to reduce repo size."})
     audit['recommendations'] = recs
+
+    # Sanity check
+    if len(file_info) < 20 or total_size == 0:
+        first15 = [fi[0] for fi in file_info[:15]]
+        print(f"Audit detected an invalid root or over-eager exclusions. Root={REPO_ROOT}, First 15 files={first15}")
+        return 2
 
     # Write JSON
     json_path = out_dir / 'audit.json'
