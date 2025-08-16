@@ -8,6 +8,11 @@
 #include "OptimizerSettings.h"
 #include "PythonBridge.h"
 #include "ViewModels/TextureModels.h"
+#include "ViewModels/TextureTableViewModel.h"
+
+// Forward declarations for new section widgets
+class STextureAuditSection;
+class STextureRecommendSection;
 
 class SCheckBox;
 class SButton;
@@ -16,8 +21,6 @@ class SScrollBox;
 class SNotificationList;
 class SListViewBase;
 
-// Moved row models to ViewModels/TextureModels.h
-
 class SOptimizerPanel : public SCompoundWidget
 {
 public:
@@ -25,6 +28,7 @@ public:
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs);
+	~SOptimizerPanel();
 
 protected:
 	// Settings reference
@@ -50,22 +54,18 @@ protected:
 	int32 LastAssetsProcessed = 0;
 	int32 LastAssetsModified = 0;
 
-	// Audit results data
+	// Section widgets
+	TSharedPtr<STextureAuditSection> TextureAuditSection;
+	TSharedPtr<STextureRecommendSection> TextureRecommendSection;
+
+	// ViewModel for texture table state
+	TSharedPtr<FTextureTableViewModel> TextureTableViewModel;
+
+	// Legacy data storage (will be removed after refactoring)
 	TArray<FTextureAuditRowPtr> TextureRows;
 	TArray<FTextureAuditRowPtr> AllTextureRows;
-	TSharedPtr<class SListView<FTextureAuditRowPtr>> TextureListView;
-	TSharedPtr<SHeaderRow> TextureHeaderRow;
-
-	// Recommendations data
 	TArray<FTextureRecRowPtr> TextureRecRows;
 	TArray<FTextureRecRowPtr> AllTextureRecRows;
-	TSharedPtr<class SListView<FTextureRecRowPtr>> TextureRecListView;
-	TSharedPtr<SHeaderRow> TextureRecHeaderRow;
-
-	// Sorting state for texture results
-	enum class ETextureSortColumn { Path, Width, Height, Format };
-	ETextureSortColumn CurrentSortColumn = ETextureSortColumn::Path;
-	bool bSortAscending = true;
 
 	// UI event handlers
 	FReply OnAuditClicked();
@@ -143,6 +143,7 @@ protected:
 	FText GetAuditSummaryText() const;
 	EVisibility GetAuditSummaryVisibility() const;
 
+	// Legacy sort methods (will be removed after refactoring)
 	void SortTextureRows();
 	FReply OnSortByPath();
 	FReply OnSortByWidth();
@@ -151,15 +152,10 @@ protected:
 	EColumnSortMode::Type GetSortModeForColumn(ETextureSortColumn Column) const;
 	void OnHeaderColumnSort(const EColumnSortPriority::Type SortPriority, const FName& ColumnId, const EColumnSortMode::Type NewSortMode);
 
-	// Filters for texture results
+	// Legacy filter state (will be removed after refactoring)
 	FString TextureFilterText;
 	int32 FilterMinWidth = 0;
 	int32 FilterMinHeight = 0;
-	void ApplyTextureFilterAndSort();
-	void OnFilterTextChanged(const FText& NewText);
-	void OnMinWidthChanged(const FText& NewText);
-	void OnMinHeightChanged(const FText& NewText);
-	FReply OnClearTextureFilters();
 
 	// UI refresh
 	void RefreshUI();

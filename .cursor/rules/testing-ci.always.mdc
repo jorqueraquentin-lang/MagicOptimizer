@@ -1,0 +1,95 @@
+---
+name: Testing and CI - Always Apply
+description:
+globs:
+alwaysApply: true
+---
+
+# Testing and CI - Always Apply
+
+## 🧪 **MANDATORY: Use Built-in CI System**
+
+### **ALWAYS Prefer Automation Over Manual Testing**
+```bash
+# ✅ CORRECT: Use automated testing
+tools/run_ci.ps1 -Phase Audit -FailOnError -MinRows 1
+
+# ❌ WRONG: Manual testing only
+# Manual testing is error-prone and inconsistent
+```
+
+### **CI System Benefits**
+- **Consistent results** across different environments
+- **Comprehensive logging** with before/after states
+- **Screenshot capture** for visual verification
+- **Regression testing** after implementing fixes
+- **Eliminates human error** in testing
+
+## 📊 **MANDATORY: Log Analysis After Every Change**
+
+### **Immediate Log Check Required**
+After ANY fix or change:
+1. **Check generated log files** immediately
+2. **Compare before/after log states** to verify the fix worked
+3. **Look for error patterns** that might indicate new issues
+4. **Document the log analysis** in responses
+5. **Logs contain the truth** about what's happening
+
+### **Log Analysis Commands**
+```bash
+# Check CI logs
+Get-Content "Reports/ci_*.log" | Select-String "ERROR\|WARNING\|FAILED"
+
+# Compare before/after states
+Get-ChildItem "Reports/" | Sort-Object LastWriteTime -Descending | Select-Object -First 5
+```
+
+## 🔍 **Testing Validation Steps**
+
+### **Before Testing**
+- ✅ **All plugin DLLs rebuilt** together
+- ✅ **Build timestamps match** across modules
+- ✅ **Project files regenerated** if needed
+
+### **During Testing**
+- ✅ **Use CI system** when possible
+- ✅ **Capture screenshots** for verification
+- ✅ **Monitor log output** in real-time
+
+### **After Testing**
+- ✅ **Check generated logs** immediately
+- ✅ **Analyze error patterns** if any
+- ✅ **Update development log** with results
+- ✅ **Verify fix actually worked** through logs
+
+## ⚠️ **Common Testing Mistakes**
+
+### **Ghost Code Trap**
+```cpp
+// ❌ SYMPTOM: Old code still runs after "fixes"
+// ❌ CAUSE: Partial rebuilds, mismatched DLL timestamps
+// ✅ SOLUTION: Rebuild ALL plugin DLLs together
+```
+
+### **Log Ignorance**
+```cpp
+// ❌ SYMPTOM: "Fix didn't work" without log analysis
+// ❌ CAUSE: Not checking logs after changes
+// ✅ SOLUTION: ALWAYS check logs immediately after changes
+```
+
+### **Manual Testing Only**
+```cpp
+// ❌ SYMPTOM: Inconsistent test results
+// ❌ CAUSE: Relying only on manual testing
+// ✅ SOLUTION: Use CI system for consistent, reproducible results
+```
+
+## 🎯 **Success Metrics**
+
+- ✅ **CI system used** for testing when possible
+- ✅ **Logs analyzed** after every change
+- ✅ **Before/after states** compared and documented
+- ✅ **Error patterns** identified and addressed
+- ✅ **Development log updated** with test results
+- ✅ **Fix effectiveness** verified through log analysis

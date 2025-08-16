@@ -1,0 +1,152 @@
+---
+description: "Development workflow and documentation requirements for MagicOptimizer plugin development"
+alwaysApply: true
+---
+
+# Development Workflow - Always Apply
+
+## 🔄 **MANDATORY: Incremental Development**
+
+### **One Change at a Time**
+```cpp
+// ✅ CORRECT: Make one focused change, test, then continue
+void MyFunction() {
+    // Add one feature
+    // Test it works
+    // Add next feature
+    // Test again
+}
+
+// ❌ WRONG: Multiple changes without testing
+void MyFunction() {
+    // Add feature 1
+    // Add feature 2  
+    // Add feature 3
+    // Hope it all works together
+}
+```
+
+### **Development Cycle**
+1. **Plan** the next small step
+2. **Implement** the change
+3. **Compile** to catch syntax errors
+4. **Test** using CI system when possible
+5. **Verify** the result works
+6. **Document** in development log
+7. **Repeat** for next step
+
+## 📝 **MANDATORY: Development Log Updates**
+
+### **After Every Task**
+- **Append timestamped entry** to `docs/DEVELOPMENT_LOG.md`
+- **Document what was implemented**
+- **Record any issues encountered**
+- **Note next steps**
+- **Include file paths and line numbers** for significant changes
+
+### **Log Entry Format**
+```markdown
+### 2025-08-17 HH:MM — TASK DESCRIPTION
+
+**STATUS**: ✅ COMPLETED / 🔄 IN PROGRESS / ❌ FAILED
+
+**SUMMARY**: Brief description of what was accomplished
+
+**FILES MODIFIED**:
+- `path/to/file.cpp` - Description of changes
+- `path/to/file.h` - Description of changes
+
+**NEXT STEPS**: What should be done next
+```
+
+## 🏗️ **Repository Structure Rules**
+
+### **Working Directory**
+- **Primary work area**: `HostProject/Plugins/MagicOptimizer/**`
+- **Documentation**: `docs/` directory
+- **Development tools**: `tools/` directory
+- **Generated reports**: `Reports/` directory
+
+### **File Organization**
+```
+MagicOptimizer/                    # Repo root
+├── .cursor/rules/                # Project rules
+├── docs/                         # Documentation
+├── tools/                        # Development tools
+├── Reports/                      # Generated reports
+└── HostProject/                  # UE project
+    └── Plugins/MagicOptimizer/   # SINGLE SOURCE OF TRUTH
+```
+
+**NEVER** keep duplicate plugin code at repo root.
+
+## 🔧 **Module Boundary Rules**
+
+### **Runtime vs Editor Code**
+```cpp
+// ✅ CORRECT: Runtime module (HostProject/Plugins/MagicOptimizer/Source/MagicOptimizer/)
+#include "CoreMinimal.h"
+#include "Engine/Engine.h"
+
+// ✅ CORRECT: Editor module (HostProject/Plugins/MagicOptimizer/Source/MagicOptimizerEditor/)
+#include "EditorStyle/Public/EditorStyleSet.h"
+#include "UnrealEd/Public/Editor.h"
+
+// ❌ WRONG: Editor code in runtime module
+#include "EditorStyle/Public/EditorStyleSet.h" // In runtime module!
+```
+
+### **WITH_EDITOR Guards**
+```cpp
+// ✅ CORRECT: Use WITH_EDITOR guards for editor-only code
+#if WITH_EDITOR
+    // Editor-specific functionality
+#endif
+
+// ❌ WRONG: No guards around editor code
+// Editor-specific functionality // Will cause runtime errors!
+```
+
+## 📚 **Documentation Requirements**
+
+### **Code Documentation**
+- **Header files**: Document public API with clear descriptions
+- **Complex functions**: Add inline comments explaining logic
+- **API changes**: Update header documentation immediately
+
+### **Process Documentation**
+- **Development log**: Updated after every task
+- **README files**: Keep current and accurate
+- **API documentation**: Maintain for public interfaces
+
+## 🚫 **Development Restrictions**
+
+### **What NOT to Do**
+- ❌ **Don't touch Engine source** code
+- ❌ **Don't change engine version** (UE 5.6.1 only)
+- ❌ **Don't add third-party dependencies** without asking
+- ❌ **Don't violate module boundaries**
+- ❌ **Don't skip testing** after changes
+- ❌ **Don't forget to update** development log
+
+### **What to ALWAYS Do**
+- ✅ **Follow existing naming conventions**
+- ✅ **Preserve working behavior**
+- ✅ **Test after every change**
+- ✅ **Update development log**
+- ✅ **Use CI system** when possible
+- ✅ **Check logs** after testing
+
+## 🎯 **Success Metrics**
+
+- ✅ **One change at a time** implemented and tested
+- ✅ **Development log updated** after every task
+- ✅ **Module boundaries preserved**
+- ✅ **Existing code style maintained**
+- ✅ **Working behavior preserved**
+- ✅ **All changes tested** before continuing
+- ✅ **Documentation kept current**
+description:
+globs:
+alwaysApply: false
+---

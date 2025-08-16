@@ -39,7 +39,7 @@ namespace ContentBrowserActions
 	{
 		const FString ObjectPath = EnsureObjectPath(InPath);
 		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-		const FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FName(*ObjectPath));
+		const FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FSoftObjectPath(*ObjectPath));
 		if (!AssetData.IsValid())
 		{
 			return false;

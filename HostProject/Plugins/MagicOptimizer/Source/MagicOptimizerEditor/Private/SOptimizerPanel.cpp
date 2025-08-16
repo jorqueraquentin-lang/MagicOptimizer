@@ -31,6 +31,8 @@
 #include "Modules/ModuleManager.h"
 #include "Services/Csv/TextureCsvReader.h"
 #include "ContentBrowserActions.h"
+#include "STextureAuditSection.h"
+#include "STextureRecommendSection.h"
 
 void SOptimizerPanel::Construct(const FArguments& InArgs)
 {
@@ -48,6 +50,37 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 
 	// Preload latest CSV if present
 	LoadTextureAuditCsv();
+	
+	// Wire up the new section widgets
+	if (TextureAuditSection.IsValid())
+	{
+		TextureAuditSection->OnCopyPath.BindLambda([this](const FString& Path)
+		{
+			ContentBrowserActions::CopyPathToClipboard(Path);
+			ShowNotification(FString::Printf(TEXT("Copied path to clipboard: %s"), *Path));
+		});
+		
+		TextureAuditSection->OnOpenInContentBrowser.BindLambda([this](const FString& Path)
+		{
+			const bool bOk = ContentBrowserActions::SyncToAssetPath(Path);
+			ShowNotification(bOk ? TEXT("Opened in Content Browser") : FString::Printf(TEXT("Asset not found: %s"), *Path), bOk);
+		});
+	}
+	
+	if (TextureRecommendSection.IsValid())
+	{
+		TextureRecommendSection->OnCopyPath.BindLambda([this](const FString& Path)
+		{
+			ContentBrowserActions::CopyPathToClipboard(Path);
+			ShowNotification(FString::Printf(TEXT("Copied path to clipboard: %s"), *Path));
+		});
+		
+		TextureRecommendSection->OnOpenInContentBrowser.BindLambda([this](const FString& Path)
+		{
+			const bool bOk = ContentBrowserActions::SyncToAssetPath(Path);
+			ShowNotification(bOk ? TEXT("Opened in Content Browser") : FString::Printf(TEXT("Asset not found: %s"), *Path), bOk);
+		});
+	}
 
 	// Restore persisted settings into UI
     if (OptimizerSettings)
@@ -294,7 +327,7 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 								SNew(SCheckBox)
 								.IsChecked(this, &SOptimizerPanel::IsDryRunChecked)
 								.OnCheckStateChanged(this, &SOptimizerPanel::OnDryRunChanged)
-								.Content()[ SNew(STextBlock).Text(FText::FromString(TEXT("Dry Run"))) ]
+								.Content() [ SNew(STextBlock).Text(FText::FromString(TEXT("Dry Run"))) ]
 							]
 							+ SGridPanel::Slot(1, 0)
 							.Padding(2.0f)
@@ -302,7 +335,7 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 								SNew(SCheckBox)
 								.IsChecked(this, &SOptimizerPanel::IsCreateBackupsChecked)
 								.OnCheckStateChanged(this, &SOptimizerPanel::OnCreateBackupsChanged)
-								.Content()[ SNew(STextBlock).Text(FText::FromString(TEXT("Create Backups"))) ]
+								.Content() [ SNew(STextBlock).Text(FText::FromString(TEXT("Create Backups"))) ]
 							]
 						]
 
@@ -356,7 +389,7 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 							SNew(SCheckBox)
 							.IsChecked(this, &SOptimizerPanel::IsPythonLoggingChecked)
 							.OnCheckStateChanged(this, &SOptimizerPanel::OnPythonLoggingChanged)
-							.Content()[ SNew(STextBlock).Text(FText::FromString(TEXT("Enable Python Logging"))) ]
+															.Content() [ SNew(STextBlock).Text(FText::FromString(TEXT("Enable Python Logging"))) ]
 						]
 					]
 				]
@@ -419,72 +452,7 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 				.ColumnSpan(2)
 				.Padding(4.0f)
 				[
-					SNew(SExpandableArea)
-					.AreaTitle(FText::FromString(TEXT("Audit Results (Textures)")))
-					.InitiallyCollapsed(false)
-					.BodyContent()
-					[
-						SNew(SVerticalBox)
-						+ SVerticalBox::Slot()
-						.AutoHeight()
-						.Padding(0,0,0,4)
-						[
-							SNew(SHorizontalBox)
-							// Filter row
-							+ SHorizontalBox::Slot().FillWidth(1.f).Padding(0,0,8,0)
-							[
-								SNew(SEditableTextBox)
-								.HintText(FText::FromString(TEXT("Filter path or format...")))
-								.Text_Lambda([this]() { return FText::FromString(TextureFilterText); })
-								.OnTextChanged(this, &SOptimizerPanel::OnFilterTextChanged)
-							]
-							+ SHorizontalBox::Slot().AutoWidth().Padding(0,0,4,0)
-							[
-								SNew(SEditableTextBox)
-								.MinDesiredWidth(70)
-								.HintText(FText::FromString(TEXT("Min W")))
-								.Text(FText::FromString(TEXT("")))
-								.OnTextChanged(this, &SOptimizerPanel::OnMinWidthChanged)
-							]
-							+ SHorizontalBox::Slot().AutoWidth().Padding(0,0,4,0)
-							[
-								SNew(SEditableTextBox)
-								.MinDesiredWidth(70)
-								.HintText(FText::FromString(TEXT("Min H")))
-								.Text(FText::FromString(TEXT("")))
-								.OnTextChanged(this, &SOptimizerPanel::OnMinHeightChanged)
-							]
-							+ SHorizontalBox::Slot().AutoWidth()
-							[
-								SNew(SButton)
-								.Text(FText::FromString(TEXT("Clear")))
-								.OnClicked(this, &SOptimizerPanel::OnClearTextureFilters)
-							]
-						]
-						+ SVerticalBox::Slot()
-						.AutoHeight()
-						.Padding(0,0,0,2)
-						[
-							SNew(STextBlock)
-							.Text_Lambda([this]() { return FText::FromString(FString::Printf(TEXT("Filtered %d / %d"), TextureRows.Num(), AllTextureRows.Num())); })
-						]
-						+ SVerticalBox::Slot()
-						.FillHeight(1.f)
-						[
-							SAssignNew(TextureListView, SListView<FTextureAuditRowPtr>)
-							.ItemHeight(20)
-							.ListItemsSource(&TextureRows)
-							.OnGenerateRow(this, &SOptimizerPanel::OnGenerateTextureRow)
-							.HeaderRow(
-								SAssignNew(TextureHeaderRow, SHeaderRow)
-								+ SHeaderRow::Column(FName(TEXT("Path"))).DefaultLabel(FText::FromString(TEXT("Path"))).HAlignCell(HAlign_Left).OnSort(this, &SOptimizerPanel::OnHeaderColumnSort)
-								+ SHeaderRow::Column(FName(TEXT("Width"))).DefaultLabel(FText::FromString(TEXT("Width"))).HAlignCell(HAlign_Right).OnSort(this, &SOptimizerPanel::OnHeaderColumnSort)
-								+ SHeaderRow::Column(FName(TEXT("Height"))).DefaultLabel(FText::FromString(TEXT("Height"))).HAlignCell(HAlign_Right).OnSort(this, &SOptimizerPanel::OnHeaderColumnSort)
-								+ SHeaderRow::Column(FName(TEXT("Format"))).DefaultLabel(FText::FromString(TEXT("Format"))).HAlignCell(HAlign_Left).OnSort(this, &SOptimizerPanel::OnHeaderColumnSort)
-								+ SHeaderRow::Column(FName(TEXT("Actions"))).DefaultLabel(FText::FromString(TEXT("Actions"))).HAlignCell(HAlign_Center)
-							)
-						]
-					]
+					SAssignNew(TextureAuditSection, STextureAuditSection)
 				]
 
 				// Recommendations
@@ -492,30 +460,35 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 				.ColumnSpan(2)
 				.Padding(4.0f)
 				[
-					SNew(SExpandableArea)
-					.AreaTitle(FText::FromString(TEXT("Texture Recommendations")))
-					.InitiallyCollapsed(false)
-					.BodyContent()
-					[
-						SAssignNew(TextureRecListView, SListView<FTextureRecRowPtr>)
-						.ItemHeight(20)
-						.ListItemsSource(&TextureRecRows)
-						.OnGenerateRow(this, &SOptimizerPanel::OnGenerateTextureRecRow)
-						.HeaderRow(
-							SAssignNew(TextureRecHeaderRow, SHeaderRow)
-							+ SHeaderRow::Column(FName(TEXT("Path"))).DefaultLabel(FText::FromString(TEXT("Path"))).HAlignCell(HAlign_Left)
-							+ SHeaderRow::Column(FName(TEXT("Width"))).DefaultLabel(FText::FromString(TEXT("Width"))).HAlignCell(HAlign_Right)
-							+ SHeaderRow::Column(FName(TEXT("Height"))).DefaultLabel(FText::FromString(TEXT("Height"))).HAlignCell(HAlign_Right)
-							+ SHeaderRow::Column(FName(TEXT("Format"))).DefaultLabel(FText::FromString(TEXT("Format"))).HAlignCell(HAlign_Left)
-							+ SHeaderRow::Column(FName(TEXT("Issues"))).DefaultLabel(FText::FromString(TEXT("Issues"))).HAlignCell(HAlign_Left)
-							+ SHeaderRow::Column(FName(TEXT("Recommendations"))).DefaultLabel(FText::FromString(TEXT("Recommendations"))).HAlignCell(HAlign_Left)
-							+ SHeaderRow::Column(FName(TEXT("Actions"))).DefaultLabel(FText::FromString(TEXT("Actions"))).HAlignCell(HAlign_Center)
-						)
-					]
+					SAssignNew(TextureRecommendSection, STextureRecommendSection)
 				]
 			]
 		]
 	];
+
+	// Wire up ViewModel to UI widgets after creation
+	if (TextureAuditSection.IsValid() && TextureTableViewModel.IsValid())
+	{
+		TextureAuditSection->SetViewModel(TextureTableViewModel);
+		
+		// Wire up automatic settings saving
+		TextureAuditSection->OnSettingsChanged.BindLambda([this]()
+		{
+			if (TextureTableViewModel.IsValid() && OptimizerSettings)
+			{
+				TextureTableViewModel->SaveSettingsToConfig(OptimizerSettings);
+			}
+		});
+	}
+}
+
+// Save ViewModel settings when panel is destroyed
+SOptimizerPanel::~SOptimizerPanel()
+{
+	if (TextureTableViewModel.IsValid() && OptimizerSettings)
+	{
+		TextureTableViewModel->SaveSettingsToConfig(OptimizerSettings);
+	}
 }
 
 // Initialize UI state
@@ -536,6 +509,15 @@ void SOptimizerPanel::InitializeUI()
 	
     // Set defaults
     CurrentProfile = TEXT("PC_Balanced");
+
+	// Initialize ViewModel
+	TextureTableViewModel = MakeShareable(new FTextureTableViewModel());
+	
+	// Load settings into ViewModel
+	if (OptimizerSettings)
+	{
+		TextureTableViewModel->LoadSettingsFromConfig(OptimizerSettings);
+	}
 }
 
 // Button event handlers
@@ -697,11 +679,23 @@ void SOptimizerPanel::LoadTextureAuditCsv()
 	{
 		MagicOptimizerLog::AppendLine(TEXT("UI: Texture audit CSV not found or unreadable"));
 		TextureRows.Empty();
-		if (TextureListView.IsValid()) { TextureListView->RequestListRefresh(); }
 		return;
 	}
 	AllTextureRows = MoveTemp(Parsed);
 	MagicOptimizerLog::AppendLine(FString::Printf(TEXT("UI: Loaded %d texture rows"), AllTextureRows.Num()));
+	
+	// Update the new widgets and ViewModel
+	if (TextureTableViewModel.IsValid())
+	{
+		TextureTableViewModel->SetSourceData(AllTextureRows);
+	}
+	
+	if (TextureAuditSection.IsValid())
+	{
+		TextureAuditSection->SetTextureRows(AllTextureRows);
+	}
+	
+	// Legacy: Apply current filters and sorting
 	ApplyTextureFilterAndSort();
 }
 
@@ -771,12 +765,17 @@ void SOptimizerPanel::LoadTextureRecommendationsCsv()
 	{
 		MagicOptimizerLog::AppendLine(TEXT("UI: Texture recommendations CSV not found or unreadable"));
 		TextureRecRows.Empty();
-		if (TextureRecListView.IsValid()) { TextureRecListView->RequestListRefresh(); }
 		return;
 	}
 	AllTextureRecRows = MoveTemp(Parsed);
 	TextureRecRows = AllTextureRecRows;
-	if (TextureRecListView.IsValid()) { TextureRecListView->RequestListRefresh(); }
+	
+	// Update the new widget
+	if (TextureRecommendSection.IsValid())
+	{
+		TextureRecommendSection->SetRecommendationRows(AllTextureRecRows);
+	}
+	
 	MagicOptimizerLog::AppendLine(FString::Printf(TEXT("UI: Loaded %d recommendation rows"), TextureRecRows.Num()));
 }
 

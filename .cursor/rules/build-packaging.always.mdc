@@ -1,0 +1,143 @@
+---
+description: "Build and packaging requirements for MagicOptimizer plugin development"
+alwaysApply: true
+---
+
+# Build and Packaging - Always Apply
+
+## 🔨 **CRITICAL: Multi-DLL Plugin Architecture**
+
+### **UE5 Plugin Reality**
+UE5 plugins often have multiple DLLs that MUST be rebuilt together:
+
+```cpp
+// ❌ WRONG: Partial rebuilds cause "ghost" behavior
+// Old code still runs, debugging becomes impossible
+
+// ✅ CORRECT: Rebuild ALL plugin DLLs together
+// Check build timestamps match across all plugin DLLs
+```
+
+### **Required Build Steps**
+1. **Clean plugin Binaries and Intermediate** before building
+2. **Rebuild ALL plugin modules** together
+3. **Verify build timestamps match** across all plugin DLLs
+4. **Check file sizes** to ensure complete rebuilds
+
+## 🏗️ **Build Configuration**
+
+### **Module Dependencies**
+```cpp
+// ✅ CORRECT: Runtime module dependencies
+PublicDependencyModuleNames.AddRange({
+    "Core",
+    "CoreUObject", 
+    "Engine"
+});
+
+// ✅ CORRECT: Editor module dependencies (Private only)
+PrivateDependencyModuleNames.AddRange({
+    "EditorStyle",
+    "UnrealEd"
+});
+```
+
+### **PCH Usage**
+```cpp
+// ✅ CORRECT: Use explicit or shared PCHs
+PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+
+// ❌ WRONG: Default PCH usage
+PCHUsage = PCHUsageMode.Default;
+```
+
+## 📦 **Packaging Requirements**
+
+### **Canonical Entry Point**
+```bash
+# ✅ CORRECT: Use the official packaging script
+Scripts/PackagePlugin.ps1
+
+# ❌ WRONG: Manual packaging commands
+RunUAT BuildPlugin -Plugin="..." -Package="..."
+```
+
+### **Windows Packaging**
+```bash
+# ✅ CORRECT: Avoid host rules scans
+Scripts/PackagePlugin.ps1 -NoHostPlatform
+
+# ❌ WRONG: Default packaging on Windows
+Scripts/PackagePlugin.ps1
+```
+
+### **Pre-Packaging Checklist**
+- ✅ **Clean Binaries/Intermediate** directories
+- ✅ **Regenerate project files** if modules changed
+- ✅ **Verify plugin descriptor** is correct
+- ✅ **Check FilterPlugin.ini** excludes dev content
+
+## 🔍 **Build Validation**
+
+### **Post-Build Verification**
+1. **Check all plugin DLLs** were rebuilt
+2. **Verify build timestamps** match across modules
+3. **Test plugin loads** in editor
+4. **Check for UHT/UBT warnings** (treat as errors)
+
+### **Common Build Issues**
+```cpp
+// ❌ SYMPTOM: "Plugin not found" errors
+// ❌ CAUSE: Missing or incorrect .uplugin file
+// ✅ SOLUTION: Verify plugin descriptor and module paths
+
+// ❌ SYMPTOM: Linker errors
+// ❌ CAUSE: Missing dependencies or incorrect module names
+// ✅ SOLUTION: Check PublicDependencyModuleNames and PrivateDependencyModuleNames
+```
+
+## 📁 **Output Management**
+
+### **Package Output Location**
+```
+HostProject/Artifacts/                    # Package output directory
+├── MagicOptimizer-v1.0.0.zip            # Packaged plugin
+├── MagicOptimector-v1.0.0/              # Extracted package
+└── BuildLogs/                            # Build artifacts
+```
+
+### **Version Management**
+- **Update CHANGELOG** before packaging
+- **Bump Version fields** in plugin descriptor
+- **Tag releases** in git after successful packaging
+- **Store packaged output** under Artifacts directory
+
+## ⚠️ **Build Pitfalls**
+
+### **Ghost Code Trap**
+```cpp
+// ❌ SYMPTOM: Old code still runs after "fixes"
+// ❌ CAUSE: Partial rebuilds, mismatched DLL timestamps
+// ✅ SOLUTION: Rebuild ALL plugin DLLs together
+```
+
+### **Module Boundary Violations**
+```cpp
+// ❌ SYMPTOM: Editor code in runtime module
+// ❌ CAUSE: Missing WITH_EDITOR guards
+// ✅ SOLUTION: Use WITH_EDITOR guards for editor-only code
+```
+
+## 🎯 **Success Metrics**
+
+- ✅ **All plugin DLLs rebuilt** together
+- ✅ **Build timestamps match** across modules
+- ✅ **No UHT/UBT warnings** (clean build)
+- ✅ **Plugin loads successfully** in editor
+- ✅ **Packaging completes** without errors
+- ✅ **Version fields updated** before packaging
+- ✅ **Artifacts stored** in correct location
+description:
+globs:
+alwaysApply: false
+---

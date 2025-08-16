@@ -1,75 +1,151 @@
-# Cursor Rule • UE 5.6.1 Plugin Builder
+---
+title: UE 5.6.1 Plugin Builder - Core Rules
+---
 
-Scope
-1. Target Unreal Engine 5.6.1 plugin work only
-2. Do not change the engine version and do not touch Engine source
-3. Keep edits inside Plugins/MagicOptimizer
+# UE 5.6.1 Plugin Builder - Core Rules
 
-Modules for this repo
-• MagicOptimizer Runtime module
-• MagicOptimizerEditor Editor module
+## 🎯 **Scope and Boundaries**
 
-Repository and files
-1. All code edits live under HostProject/Plugins/MagicOptimizer/** (single source of truth)
-2. Do not keep a duplicate plugin at the repo root; the repo root is for docs/, tools/, Reports/, and CI only
-3. Layout is Plugins/MagicOptimizer/Source/<ModuleName> with Public and Private folders
-4. MagicOptimizer.uplugin declares both modules and EngineAssociation 5.6.1
+**CRITICAL**: This rule applies to ALL MagicOptimizer plugin development work.
 
-Build rules
-1. Use RunUAT BuildPlugin to package and validate before a pull request
-2. Regenerate project files when the descriptor or modules change
-3. Windows toolchain baseline is Visual Studio 2022 with the current Windows SDK
-4. When packaging on Windows, prefer -NoHostPlatform to avoid host rules scans
-5. Use Scripts/PackagePlugin.ps1 as the canonical entrypoint
+### **Target Environment**
+- **Engine Version**: Unreal Engine 5.6.1 ONLY
+- **Work Area**: Keep edits inside `HostProject/Plugins/MagicOptimizer/**`
+- **Engine Source**: NEVER touch Engine source code
+- **Single Source**: All code edits live under `HostProject/Plugins/MagicOptimizer/**`
 
-Module configuration
-1. In each Build.cs set PCHUsage to UseExplicitOrSharedPCHs
-2. Runtime Public dependencies are Core, CoreUObject, Engine
-3. Editor dependencies are only in MagicOptimizerEditor and kept in Private
+### **Module Architecture**
+- **MagicOptimizer**: Runtime module (Core, CoreUObject, Engine dependencies)
+- **MagicOptimizerEditor**: Editor module (Editor dependencies in Private only)
+- **Module Boundaries**: Keep headers minimal, prefer forward declarations
 
-Coding standards and API surface
-1. Use MAGICOPTIMIZER_API for exported runtime symbols
-2. Keep headers minimal and prefer forward declarations
-3. Follow existing naming conventions; existing code style takes precedence
-4. Prefer minimal edits; preserve working behavior and module boundaries
+## 🏗️ **Repository Structure**
 
-Asset classification
-Never infer types from names. Inspect properties such as CompressionSettings, LODGroup, PowerOfTwoMode, dimensions, LOD count, lightmap UV presence, and Nanite state
+```
+MagicOptimizer/                    # Repo root (docs/, tools/, CI only)
+├── .cursor/rules/                # Project rules (this file)
+├── docs/                         # Documentation
+├── tools/                        # Development tools
+├── Reports/                      # Generated reports
+└── HostProject/                  # UE project
+    └── Plugins/MagicOptimizer/   # SINGLE SOURCE OF TRUTH
+        ├── Source/
+        │   ├── MagicOptimizer/   # Runtime module
+        │   └── MagicOptimizerEditor/ # Editor module
+        ├── Content/Python/        # Plugin-shipped Python
+        └── MagicOptimizer.uplugin # Plugin descriptor
+```
 
-Python packaging and scripts
-1. Default Python package is plugin-shipped at <PluginContent>/Python/magic_optimizer
-2. Resolve default path via IPluginManager; allow user override in Project Settings
-3. Avoid using HostProject/Content/Python/magic_optimizer except for local dev; do not ship it
-4. Avoid engine-path hardcoding; keep Python modules self-contained
+**NEVER** keep a duplicate plugin at the repo root.
 
-Logging, tests, validation
-1. Use LogMagicOptimizer for messages
-2. Add at least one automation test that loads the runtime module
-3. Treat UHT and UBT warnings as errors during development
+## 🔨 **Build Architecture - CRITICAL**
 
-Packaging checklist
-1. Clean plugin Binaries and Intermediate
-2. Run Scripts/PackagePlugin.ps1
-3. Enable the packaged plugin in a blank C++ project for a smoke test
-4. Update CHANGELOG and bump Version fields in the descriptor
-5. Store packaged output under HostProject/Artifacts
-6. Ensure FilterPlugin.ini excludes dev-only content (docs/, Reports/, tools/) from packages
+### **Multi-DLL Plugin Reality**
+UE5 plugins often have multiple DLLs that MUST be rebuilt together:
 
-Cursor behavior here
-1. Plan in short steps, compile after each step
-2. Ask before adding third party dependencies or new UE modules
-3. Keep module boundaries clean and prefer cpp level WITH_EDITOR guards
-4. After each significant change, verify the result (build/package/test) and record a timestamped entry in docs/DEVELOPMENT_LOG.md
-5. Use root .cursor/rules; do not create per-subfolder rules unless scoping a separate workspace
+```cpp
+// ❌ WRONG: Partial rebuilds cause "ghost" behavior
+// Old code still runs, debugging becomes impossible
 
-Docs and process
-1. Root README is a concise hero page; detailed developer docs under docs/DEV_README.md
-2. After each task, append a timestamped entry to docs/DEVELOPMENT_LOG.md (append-only)
-3. Use tools/git_commit_push.ps1 for commits/pushes; push after major milestones or when explicitly approved
-4. Keep a separate backlog log for AI debugging; developers use DEVELOPMENT_LOG.md
+// ✅ CORRECT: Rebuild ALL plugin DLLs together
+// Check build timestamps match across all plugin DLLs
+```
 
-CI/Terminal (workspace)
-1. Prefer the 'ci' wrapper (or 'cilog') for commands; ensure non-interactive flags; pipe output with 2>&1 | Out-String -Width 4096
-2. If 'ci' is missing, source $PROFILE.CurrentUserAllHosts and retry
-3. On non-zero exits, rerun with 'cilog' and review the log
+### **Build Rules**
+1. **Use `Scripts/PackagePlugin.ps1`** as canonical entrypoint
+2. **Regenerate project files** when descriptor or modules change
+3. **Windows baseline**: Visual Studio 2022 + current Windows SDK
+4. **Package with `-NoHostPlatform`** to avoid host rules scans
+5. **Clean Binaries/Intermediate** before packaging
+
+## 📝 **Coding Standards**
+
+### **API Surface**
+```cpp
+// ✅ CORRECT: Use proper API macros
+MAGICOPTIMIZER_API void MyFunction();
+
+// ❌ WRONG: Missing API macro
+void MyFunction(); // Won't export properly
+```
+
+### **Naming Conventions**
+- **Existing code style takes precedence** over new conventions
+- **Follow established patterns** in the codebase
+- **Preserve working behavior** and module boundaries
+
+## 🧪 **Testing and Validation - CRITICAL**
+
+### **ALWAYS Use Built-in CI System**
+```bash
+# ✅ CORRECT: Use automated testing
+tools/run_ci.ps1 -Phase Audit -FailOnError
+
+# ❌ WRONG: Manual testing only
+# Manual testing is error-prone and inconsistent
+```
+
+### **Log Analysis is Mandatory**
+After ANY fix or change:
+1. **Check generated log files** immediately
+2. **Compare before/after log states**
+3. **Look for error patterns**
+4. **Document log analysis** in responses
+5. **Logs contain the truth** about what's happening
+
+## 📦 **Python and Assets**
+
+### **Python Packaging**
+```python
+# ✅ CORRECT: Plugin-shipped Python
+<PluginContent>/Python/magic_optimizer
+
+# ❌ WRONG: Local dev path in packages
+HostProject/Content/Python/magic_optimizer
+```
+
+### **Asset Classification**
+**NEVER infer types from names**. Inspect actual properties:
+- CompressionSettings, LODGroup, PowerOfTwoMode
+- Dimensions, LOD count, lightmap UV presence
+- Nanite state
+
+## 🔄 **Development Workflow**
+
+### **Incremental Development**
+1. **Plan in short steps**
+2. **Compile after each step**
+3. **Verify result** (build/package/test)
+4. **Record timestamped entry** in `docs/DEVELOPMENT_LOG.md`
+
+### **Documentation Requirements**
+- **Append-only** development log updates
+- **Use `tools/git_commit_push.ps1`** for commits
+- **Push after major milestones** or when approved
+
+## ⚠️ **Common Pitfalls**
+
+### **Ghost Code Trap**
+```cpp
+// ❌ SYMPTOM: Old code still runs after "fixes"
+// ❌ CAUSE: Partial rebuilds, mismatched DLL timestamps
+// ✅ SOLUTION: Rebuild ALL plugin DLLs together
+```
+
+### **Log Ignorance**
+```cpp
+// ❌ SYMPTOM: "Fix didn't work" without log analysis
+// ❌ CAUSE: Not checking logs after changes
+// ✅ SOLUTION: ALWAYS check logs immediately after changes
+```
+
+## 🎯 **Success Metrics**
+
+- ✅ **All plugin DLLs rebuilt** together
+- ✅ **Build timestamps match** across modules
+- ✅ **Logs analyzed** after every change
+- ✅ **CI system used** for testing
+- ✅ **Development log updated** after each task
+- ✅ **Module boundaries preserved**
+- ✅ **Existing code style maintained**
 

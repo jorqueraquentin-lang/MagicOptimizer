@@ -40,6 +40,14 @@ UOptimizerSettings::UOptimizerSettings()
 
 	// Initialize with default presets
 	CustomPresets.Empty();
+
+	// UI Settings - Filter and Sort Preferences (defaults)
+	TextureFilterText = TEXT("");
+	TextureFilterMinWidth = 0;
+	TextureFilterMinHeight = 0;
+	TextureFormatFilter = TEXT("");
+	TextureSortColumn = TEXT("Path");
+	bTextureSortAscending = true;
 }
 
 UOptimizerSettings* UOptimizerSettings::Get()
@@ -166,4 +174,12 @@ void UOptimizerSettings::SetToDefaults()
 	bUserConsent = true;  // Enabled by default with user consent
 
 	CustomPresets.Empty();
+
+	// UI Settings - Filter and Sort Preferences (defaults)
+	TextureFilterText = TEXT("");
+	TextureFilterMinWidth = 0;
+	TextureFilterMinHeight = 0;
+	TextureFormatFilter = TEXT("");
+	TextureSortColumn = TEXT("Path");
+	bTextureSortAscending = true;
 }

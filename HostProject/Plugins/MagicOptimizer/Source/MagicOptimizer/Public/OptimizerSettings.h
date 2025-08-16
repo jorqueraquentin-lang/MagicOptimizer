@@ -158,6 +158,25 @@ public:
 	UPROPERTY(config, EditAnywhere, BlueprintReadWrite, Category = "Presets")
 	TArray<FOptimizerPreset> CustomPresets;
 
+	// UI Settings - Filter and Sort Preferences
+	UPROPERTY(config, EditAnywhere, BlueprintReadWrite, Category = "UI Settings")
+	FString TextureFilterText;
+
+	UPROPERTY(config, EditAnywhere, BlueprintReadWrite, Category = "UI Settings")
+	int32 TextureFilterMinWidth;
+
+	UPROPERTY(config, EditAnywhere, BlueprintReadWrite, Category = "UI Settings")
+	int32 TextureFilterMinHeight;
+
+	UPROPERTY(config, EditAnywhere, BlueprintReadWrite, Category = "UI Settings")
+	FString TextureFormatFilter;
+
+	UPROPERTY(config, EditAnywhere, BlueprintReadWrite, Category = "UI Settings")
+	FString TextureSortColumn;
+
+	UPROPERTY(config, EditAnywhere, BlueprintReadWrite, Category = "UI Settings")
+	bool bTextureSortAscending;
+
 	// Get singleton instance
 	static UOptimizerSettings* Get();
 
