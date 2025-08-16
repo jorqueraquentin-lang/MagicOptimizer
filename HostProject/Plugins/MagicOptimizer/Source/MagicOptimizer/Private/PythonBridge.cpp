@@ -21,6 +21,7 @@
 #include "JsonObjectConverter.h"
 #include "OptimizerLogging.h"
 #include "MagicOptimizerLogging.h"
+#include "Interfaces/IPluginManager.h"
 
 UPythonBridge::UPythonBridge()
 {
@@ -191,13 +192,45 @@ FOptimizerResult UPythonBridge::RunPhase(const FString& Phase, const TArray<FStr
 
 FString UPythonBridge::GetPythonScriptPath() const
 {
-    FString Path = OptimizerSettings ? OptimizerSettings->PythonScriptPath : PythonScriptPath;
-    if (FPaths::IsRelative(Path))
+    const FString ConfiguredPath = OptimizerSettings ? OptimizerSettings->PythonScriptPath : PythonScriptPath;
+
+    // Compute plugin-shipped Python path (preferred default)
+    FString PluginPythonDir;
+    if (IPluginManager::Get().FindPlugin(TEXT("MagicOptimizer")).IsValid())
     {
-        // Resolve relative to project directory so "Content/..." works
-        return FPaths::ConvertRelativePathToFull(FPaths::ProjectDir() / Path);
+        const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(TEXT("MagicOptimizer"));
+        if (Plugin.IsValid())
+        {
+            // Plugin content dir points to .../Plugins/MagicOptimizer/Content
+            PluginPythonDir = Plugin->GetContentDir() / TEXT("Python/magic_optimizer");
+        }
     }
-    return Path;
+
+    // If no setting specified, use the plugin Python package by default
+    if (ConfiguredPath.IsEmpty())
+    {
+        if (!PluginPythonDir.IsEmpty())
+        {
+            return PluginPythonDir;
+        }
+        // Fallback to project Content path if plugin content not found
+        return FPaths::ConvertRelativePathToFull(FPaths::ProjectDir() / TEXT("Content/Python/magic_optimizer"));
+    }
+
+    // If user configured a relative path, resolve relative to project
+    if (FPaths::IsRelative(ConfiguredPath))
+    {
+        // Encourage plugin path when users left historical default "Content/Python/magic_optimizer"
+        const FString Normalized = ConfiguredPath.Replace(TEXT("\\"), TEXT("/"));
+        if (Normalized.StartsWith(TEXT("Content/Python/")) && !PluginPythonDir.IsEmpty())
+        {
+            return PluginPythonDir;
+        }
+        return FPaths::ConvertRelativePathToFull(FPaths::ProjectDir() / ConfiguredPath);
+    }
+
+    // Absolute custom path
+    return ConfiguredPath;
 }
 
 void UPythonBridge::SetPythonScriptPath(const FString& NewPath)

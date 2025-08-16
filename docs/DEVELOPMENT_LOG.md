@@ -2746,3 +2746,42 @@ Impact:
 
 **Impact**:
 - Better insight during Verify without relying on name patterns.
+
+
+
+## 2025-08-16 23:50:19 - UE plugin repo layout best practices clarified
+
+- Decision: Keep the canonical plugin only under HostProject/Plugins/MagicOptimizer during development; treat HostProject as the test project; the repo root remains a workspace for docs/, tools/, CI, and reports.
+- Distribution: Package using HostProject/Scripts/PackagePlugin.ps1 (RunUAT BuildPlugin) into HostProject/Artifacts/; do not keep a duplicate plugin at the repo root.
+- Layout rules:
+  - Runtime module: Source/MagicOptimizer (Type Runtime). Editor module: Source/MagicOptimizerEditor (Type Editor). Export public symbols with MAGICOPTIMIZER_API.
+  - Public vs Private headers respected; use DeveloperSettings for Project Settings exposure.
+  - Example/test assets live in HostProject/Content; shipping assets (if any) live in plugin Content/ and are filtered by Config/FilterPlugin.ini.
+  - Python utilities live under Plugins/MagicOptimizer/Content/Python.
+  - Avoid engine-path hardcoding; use plugin-relative paths and module deps in .Build.cs.
+- Follow-ups: Audit for any stray plugin files at repo root; ensure FilterPlugin.ini excludes Reports/, PerseusXR/, and docs/ from packaging.
+
+
+## 2025-08-17 00:00:04 - Cursor rules mirrored to root for detection
+
+- Mirrored HostProject/.cursor/rules/ue561-plugin-builder.mdc to .cursor/rules/ at repo root to ensure Cursor detects rules when opening the repo root workspace.
+- Verified presence by listing and reading the file head. Recommend reloading the window to ensure rules are reloaded.
+
+
+- Default PythonScriptPath now resolves to plugin content via IPluginManager; project override left empty in DefaultEditor.ini.
+- Migrated knowledge modules (pattern_analyzer.py, insights_generator.py) into plugin package and removed project-level duplicates.
+- Ran tools/cleanup_workspace.ps1 to remove Binaries, Intermediate, DDC, Saved caches, and HostProject/.cursor.
+
+
+## 2025-08-17 00:31:30 - Consolidated Python to plugin; workspace cleanup
+
+- Default PythonScriptPath now resolves to plugin content via IPluginManager; project override left empty in DefaultEditor.ini.
+- Migrated knowledge modules (pattern_analyzer.py, insights_generator.py) into plugin package and removed project-level duplicates.
+- Ran tools/cleanup_workspace.ps1 to remove Binaries, Intermediate, DDC, Saved caches, and HostProject/.cursor.
+
+
+## 2025-08-17 00:42:20 - Git: main fast-forward with consolidation
+
+- Verified branches and history: main matches origin/main with prior merges of chore/apply-ue561-rules and chore/audit-only.
+- Committing current workspace changes (rules update, Python consolidation, cleanup script).
+
