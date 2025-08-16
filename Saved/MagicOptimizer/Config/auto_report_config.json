@@ -1,0 +1,15 @@
+{
+  "enabled": true,
+  "worker_url": "https://steep-frog-b764.summer-hall-9089.workers.dev",
+  "include_logs": true,
+  "include_knowledge": true,
+  "max_log_lines": 1000,
+  "report_errors": true,
+  "report_optimizations": true,
+  "report_sessions": false,
+  "anonymize_data": true,
+  "rate_limit": {
+    "max_reports_per_hour": 10,
+    "max_reports_per_day": 50
+  }
+}

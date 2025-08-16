@@ -6,6 +6,22 @@ except Exception:
 
 from datetime import datetime
 
+# Import self-learning knowledge system
+try:
+    from .knowledge.event_logger import EventLogger
+    from .knowledge.insights_generator import InsightsGenerator
+    KNOWLEDGE_AVAILABLE = True
+except ImportError:
+    KNOWLEDGE_AVAILABLE = False
+
+# Import auto-report system
+try:
+    from .auto_report import send_error_report, send_optimization_report
+    from .auto_report_config import is_auto_reporting_enabled, should_report_errors, should_report_optimizations
+    AUTO_REPORT_AVAILABLE = True
+except ImportError:
+    AUTO_REPORT_AVAILABLE = False
+
 
 def _to_bool(s: str) -> bool:
     return str(s).strip().lower() == 'true'
@@ -45,6 +61,16 @@ def _kb_get_dir():
 
 
 _KB_RUN_ID = datetime.now().strftime('%Y%m%d_%H%M%S')
+
+# Initialize event logger for self-learning
+_event_logger = None
+if KNOWLEDGE_AVAILABLE:
+    try:
+        saved_dir = _kb_get_dir()
+        if saved_dir:
+            _event_logger = EventLogger(saved_dir)
+    except Exception:
+        pass
 
 
 def _kb_write_jsonl(event: dict):
@@ -211,6 +237,23 @@ includes = _parse_csv_list(include)
 excludes = _parse_csv_list(exclude)
 
 _append_log(f"entry.py start phase={phase} profile={profile} dry={dry_run} max={max_changes} useSel={use_sel} include='{include}' exclude='{exclude}' cats='{categories}'")
+
+# Log user action for self-learning
+if _event_logger:
+    try:
+        _event_logger.log_user_action(
+            action=phase,
+            phase=phase,
+            profile=profile,
+            include_paths=includes,
+            exclude_paths=excludes,
+            use_selection=use_sel,
+            dry_run=dry_run,
+            max_changes=max_changes,
+            categories=categories
+        )
+    except Exception:
+        pass  # Don't break plugin functionality if logging fails
 
 # Selection sets
 selected_pkg_set = set()
@@ -518,11 +561,29 @@ if p == 'audit':
                 
                 loaded_tex_count += 1
                 _append_log(f"Successfully processed texture {path}: {width}x{height} format={fmt}")
+                
                 # Self-learning: record observed texture info
                 try:
                     _kb_emit_texture_observed(path, width, height, fmt, profile)
                 except Exception:
                     pass
+                
+                # Log asset pattern for self-learning
+                if _event_logger:
+                    try:
+                        _event_logger.log_asset_pattern(
+                            asset_type="Texture2D",
+                            asset_path=path,
+                            properties={
+                                "width": width,
+                                "height": height,
+                                "format": fmt,
+                                "profile": profile
+                            },
+                            profile=profile
+                        )
+                    except Exception:
+                        pass  # Don't break plugin functionality if logging fails
                 
             except Exception as e:
                 _append_log(f"Exception processing texture {path}: {e}")
@@ -645,6 +706,22 @@ elif p == 'recommend':
             _append_log(f"Recommendations CSV written: {out_csv} rows={len(rec_rows)} with_issues={issues_count} of total={total}")
     except Exception as e:
         _append_log(f"Recommend failed: {e}")
+        
+        # Send error report if auto-reporting is available
+        if AUTO_REPORT_AVAILABLE:
+            try:
+                if is_auto_reporting_enabled() and should_report_errors():
+                    success, report_message, issue_url = send_error_report(
+                        error_type="RecommendPhaseFailed",
+                        error_message=str(e),
+                        context=f"Phase: {phase}, Profile: {profile}, Assets: {total}"
+                    )
+                    if success and issue_url:
+                        _append_log(f"Error report sent: {issue_url}")
+                    else:
+                        _append_log(f"Error reporting failed: {report_message}")
+            except Exception as report_error:
+                _append_log(f"Error reporting failed: {report_error}")
 
     assets_processed = total
     assets_modified = 0
@@ -657,6 +734,42 @@ elif p == 'verify':
     assets_processed = 42
     assets_modified = 0
     msg = f"Verification passed for {profile}"
+
+# Log optimization result for self-learning
+if _event_logger:
+    try:
+        processing_time = 0  # Could be enhanced to track actual processing time
+        _event_logger.log_optimization_result(
+            phase=phase,
+            profile=profile,
+            assets_processed=assets_processed,
+            assets_modified=assets_modified,
+            success=True,
+            message=msg,
+            processing_time=processing_time
+        )
+    except Exception:
+        pass  # Don't break plugin functionality if logging fails
+
+# Send optimization report if auto-reporting is available
+if AUTO_REPORT_AVAILABLE:
+    try:
+        if is_auto_reporting_enabled() and should_report_optimizations():
+            success, report_message, issue_url = send_optimization_report(
+                phase=phase,
+                profile=profile,
+                assets_processed=assets_processed,
+                assets_modified=assets_modified,
+                success=True,
+                duration_seconds=processing_time,
+                context=f"Phase completed successfully"
+            )
+            if success and issue_url:
+                _append_log(f"Optimization report sent: {issue_url}")
+            else:
+                _append_log(f"Optimization reporting failed: {report_message}")
+    except Exception as report_error:
+        _append_log(f"Optimization reporting failed: {report_error}")
 
 result = {
     "success": True,
@@ -684,3 +797,30 @@ else:
     print(payload)
 
 _append_log(f"entry.py done success={True} msg='{msg}' processed={assets_processed} modified={assets_modified}")
+
+# Log session end for self-learning
+if _event_logger:
+    try:
+        _event_logger.log_session_end()
+    except Exception:
+        pass  # Don't break plugin functionality if logging fails
+
+# Send session report if auto-reporting is available
+if AUTO_REPORT_AVAILABLE:
+    try:
+        if is_auto_reporting_enabled():
+            success, report_message, issue_url = send_optimization_report(
+                phase="SessionEnd",
+                profile=profile,
+                assets_processed=assets_processed,
+                assets_modified=assets_modified,
+                success=True,
+                duration_seconds=0,  # Session duration not tracked yet
+                context=f"Session completed successfully"
+            )
+            if success and issue_url:
+                _append_log(f"Session report sent: {issue_url}")
+            else:
+                _append_log(f"Session reporting failed: {report_message}")
+    except Exception as report_error:
+        _append_log(f"Session reporting failed: {report_error}")

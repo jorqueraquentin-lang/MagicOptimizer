@@ -345,7 +345,7 @@ Processing speed goals:
 - Keep services/viewmodels separated; avoid monolith widgets
 - Update `docs/DEVELOPMENT_LOG.md` after changes
 
-License: MIT (see `LICENSE`)
+(see `LICENSE`)
 
 Acknowledgments: Unreal Engine Team, Python Community, Open Source contributors
 
