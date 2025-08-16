@@ -219,7 +219,7 @@ class MagicOptimizer:
             }
         }
         
-        # Save summary to file
+        # Save summary to file (schema_version for durability)
         self._save_summary(phase, summary_result)
         
         logger.info(f"{phase} phase completed. Scanned: {total_scanned}, Changed: {total_changed}, Errors: {total_errors}")
