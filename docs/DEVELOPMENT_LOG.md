@@ -2718,3 +2718,13 @@ Impact:
 **Notes**:
 - Using `-NoHostPlatform` avoided the rules scan crash seen in earlier attempt.
 - Next: smoke test in a fresh 5.6.1 C++ project by enabling the packaged plugin.
+
+## 2025-08-16 21:55 - Property-based texture LOD recommendations; CSV field fix
+
+**Changes**:
+- Switched LOD group recommendation in `Content/Python/magic_optimizer/textures/recommend.py` to inspect properties (sRGB, compression, streaming) instead of name heuristics.
+- Fixed `current_mipmaps` key mismatch in recommendation output (`current_mips` -> `current_mipmaps`).
+
+**Impact**:
+- Aligns with rule: inspect UObject properties, not names.
+- Prevents misclassification; improves downstream Apply/Verify consistency.

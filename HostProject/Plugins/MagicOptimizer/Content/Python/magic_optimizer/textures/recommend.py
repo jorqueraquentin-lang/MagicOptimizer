@@ -155,7 +155,7 @@ class TextureRecommender:
                 "current_size": audit_result.get('current_size', ''),
                 "current_compression": audit_result.get('current_compression', ''),
                 "current_srgb": audit_result.get('current_srgb', ''),
-                "current_mipmaps": audit_result.get('current_mips', ''),
+                "current_mipmaps": audit_result.get('current_mipmaps', ''),
                 "current_lod_group": audit_result.get('current_lod_group', ''),
                 "current_virtual_texture": audit_result.get('current_virtual_texture', ''),
                 "current_streaming": audit_result.get('current_streaming', ''),
@@ -246,25 +246,32 @@ class TextureRecommender:
         return [], [], "0MB"
     
     def _recommend_lod_group_optimization(self, audit_result: Dict[str, str]) -> tuple:
-        """Recommend LOD group optimization"""
+        """Recommend LOD group optimization using properties, not names"""
         current_lod_group = audit_result.get('current_lod_group', '')
-        
-        # Suggest standard LOD group based on texture type
-        if 'normal' in audit_result.get('asset_name', '').lower():
+        current_compression = audit_result.get('current_compression', '')
+        current_srgb = audit_result.get('current_srgb', True)
+        current_streaming = audit_result.get('current_streaming', True)
+
+        # Property-based heuristic:
+        # - Normal maps: typically sRGB False and BC5
+        # - LUT/Mask: typically sRGB False and BC4
+        # - UI: usually non-streaming
+        # - Otherwise: World
+        if (not current_srgb) and current_compression.upper() == 'BC5':
             recommended = 'Normal'
-        elif 'lut' in audit_result.get('asset_name', '').lower():
+        elif (not current_srgb) and current_compression.upper() == 'BC4':
             recommended = 'LUT'
-        elif 'ui' in audit_result.get('asset_name', '').lower():
+        elif not current_streaming:
             recommended = 'UI'
         else:
             recommended = 'World'
-        
+
         if current_lod_group != recommended:
             recommendation = f"Change LOD group from {current_lod_group} to {recommended}"
             change = f"LOD Group: {current_lod_group} -> {recommended}"
             savings = "1MB"  # Rough estimate
             return [recommendation], [change], savings
-        
+
         return [], [], "0MB"
     
     def _recommend_virtual_texture_optimization(self, audit_result: Dict[str, str]) -> tuple:
