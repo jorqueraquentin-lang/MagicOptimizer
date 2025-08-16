@@ -1,0 +1,49 @@
+# Cursor Rule • UE 5.6.1 Plugin Builder
+
+Scope
+1. Target Unreal Engine 5.6.1 plugin work only
+2. Do not change the engine version and do not touch Engine source
+3. Keep edits inside Plugins/MagicOptimizer
+
+Modules for this repo
+• MagicOptimizer Runtime module
+• MagicOptimizerEditor Editor module
+
+Repository and files
+1. Layout is Plugins/MagicOptimizer/Source/<ModuleName> with Public and Private folders
+2. MagicOptimizer.uplugin declares both modules and EngineAssociation 5.6.1
+
+Build rules
+1. Use RunUAT BuildPlugin to package and validate before a pull request
+2. Regenerate project files when the descriptor or modules change
+3. Windows toolchain baseline is Visual Studio 2022 with the current Windows SDK
+
+Module configuration
+1. In each Build.cs set PCHUsage to UseExplicitOrSharedPCHs
+2. Runtime Public dependencies are Core, CoreUObject, Engine
+3. Editor dependencies are only in MagicOptimizerEditor and kept in Private
+
+Coding standards and API surface
+1. Use MAGICOPTIMIZER_API for exported runtime symbols
+2. Keep headers minimal and prefer forward declarations
+
+Asset classification
+Never infer types from names. Inspect properties such as CompressionSettings, LODGroup, PowerOfTwoMode, dimensions, LOD count, lightmap UV presence, and Nanite state
+
+Logging, tests, validation
+1. Use LogMagicOptimizer for messages
+2. Add at least one automation test that loads the runtime module
+3. Treat UHT and UBT warnings as errors during development
+
+Packaging checklist
+1. Clean plugin Binaries and Intermediate
+2. Run Scripts/PackagePlugin.ps1
+3. Enable the packaged plugin in a blank C++ project for a smoke test
+4. Update CHANGELOG and bump Version fields in the descriptor
+5. Store packaged output under Artifacts at repo root
+
+Cursor behavior here
+1. Plan in short steps, compile after each step
+2. Ask before adding third party dependencies or new UE modules
+3. Keep module boundaries clean and prefer cpp level WITH_EDITOR guards
+

@@ -16,6 +16,7 @@
 #include "EditorStyleSet.h"
 #include "ISettingsModule.h"
 #include "Misc/ConfigCacheIni.h"
+#include "MagicOptimizerLogging.h"
 #include "OptimizerLogging.h"
 #include "OptimizerSettings.h"
 #include "PythonBridge.h"
@@ -29,7 +30,7 @@
 #include "IContentBrowserSingleton.h"
 #include "Modules/ModuleManager.h"
 #include "Services/Csv/TextureCsvReader.h"
-#include "Services/Editor/ContentBrowserActions.h"
+#include "ContentBrowserActions.h"
 
 void SOptimizerPanel::Construct(const FArguments& InArgs)
 {

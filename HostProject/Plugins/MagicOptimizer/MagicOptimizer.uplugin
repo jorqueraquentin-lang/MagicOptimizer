@@ -10,6 +10,7 @@
 	"DocsURL": "https://www.perseusxr.com",
 	"MarketplaceURL": "",
 	"SupportURL": "https://www.perseusxr.com",
+	"EngineAssociation": "5.6.1",
 	"CanContainContent": true,
 	"IsBetaVersion": false,
 	"IsExperimentalVersion": false,
@@ -23,8 +24,13 @@
 	"Modules": [
 		{
 			"Name": "MagicOptimizer",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "MagicOptimizerEditor",
 			"Type": "Editor",
-			"LoadingPhase": "PostEngineInit"
+			"LoadingPhase": "Default"
 		}
 	]
 }
