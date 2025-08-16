@@ -2738,3 +2738,11 @@ Impact:
 **Impact**:
 - Consistent logging category for diagnostics.
 - More resilient CSV read/write flows for audit/recommend/apply/verify artifacts.
+
+## 2025-08-16 22:20 - Verification adds property consistency warnings
+
+**Change**:
+- `textures/verify.py`: emits heuristic warnings when properties conflict with typical presets (e.g., Normal maps with sRGB Enabled, UI textures with Streaming/VT Enabled).
+
+**Impact**:
+- Better insight during Verify without relying on name patterns.
