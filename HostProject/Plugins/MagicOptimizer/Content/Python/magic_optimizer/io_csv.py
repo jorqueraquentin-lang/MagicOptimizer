@@ -6,6 +6,7 @@ import csv
 import os
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Union
+import tempfile
 import logging
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,25 @@ def read_csv(file_path: str, encoding: str = 'utf-8') -> List[Dict[str, str]]:
     
     return data
 
-def write_csv(file_path: str, fieldnames: List[str], rows: List[Dict[str, str]], 
+def _superset_fieldnames(preferred: List[str], rows: List[Dict[str, str]]) -> List[str]:
+    """
+    Build a stable superset of fieldnames, preserving the provided order and
+    appending any extra keys found in rows at the end.
+    """
+    preferred_set = set(preferred)
+    extras: List[str] = []
+    for r in rows:
+        for k in r.keys():
+            if k not in preferred_set and k not in extras:
+                extras.append(k)
+    return list(preferred) + extras
+
+
+def _normalize_row(row: Dict[str, str], fieldnames: List[str]) -> Dict[str, str]:
+    return {k: row.get(k, "") for k in fieldnames}
+
+
+def write_csv(file_path: str, fieldnames: List[str], rows: List[Dict[str, str]],
               encoding: str = 'utf-8') -> bool:
     """
     Write data to CSV file
@@ -55,11 +74,18 @@ def write_csv(file_path: str, fieldnames: List[str], rows: List[Dict[str, str]],
     try:
         # Ensure directory exists
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        
-        with open(file_path, 'w', newline='', encoding=encoding) as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+        # Tolerant header: include any unexpected keys present in rows
+        effective_fieldnames = _superset_fieldnames(fieldnames, rows)
+        normalized_rows = [_normalize_row(r, effective_fieldnames) for r in rows]
+
+        # Atomic write via temp file then replace
+        tmp_path = file_path + '.tmp'
+        with open(tmp_path, 'w', newline='', encoding=encoding) as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=effective_fieldnames, dialect='excel', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
             writer.writeheader()
-            writer.writerows(rows)
+            writer.writerows(normalized_rows)
+        os.replace(tmp_path, file_path)
         
         logger.info(f"Successfully wrote {len(rows)} rows to {file_path}")
         return True
@@ -104,7 +130,7 @@ def get_csv_field_value(row: Dict[str, str], field_name: str, default: str = "")
     """
     return row.get(field_name, default)
 
-def append_to_csv(file_path: str, fieldnames: List[str], new_rows: List[Dict[str, str]], 
+def append_to_csv(file_path: str, fieldnames: List[str], new_rows: List[Dict[str, str]],
                   encoding: str = 'utf-8') -> bool:
     """
     Append new rows to existing CSV file
@@ -121,18 +147,59 @@ def append_to_csv(file_path: str, fieldnames: List[str], new_rows: List[Dict[str
     try:
         # Ensure directory exists
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        
-        # Check if file exists and has correct header
-        file_exists = os.path.exists(file_path)
-        
-        with open(file_path, 'a', newline='', encoding=encoding) as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            
-            # Write header only if file is new
-            if not file_exists:
+
+        # Determine existing header if file exists
+        existing_header: Optional[List[str]] = None
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, 'r', newline='', encoding=encoding) as csvfile_r:
+                    reader = csv.reader(csvfile_r)
+                    existing_header = next(reader, None)
+            except Exception as e:
+                logger.warning(f"Could not read existing CSV header {file_path}: {e}")
+
+        # Compute effective header as superset of provided + new row keys + existing header
+        effective = list(fieldnames)
+        if existing_header:
+            for h in existing_header:
+                if h not in effective:
+                    effective.append(h)
+        effective = _superset_fieldnames(effective, new_rows)
+        normalized_new = [_normalize_row(r, effective) for r in new_rows]
+
+        if existing_header is None:
+            # New file: write header + rows
+            tmp_path = file_path + '.tmp'
+            with open(tmp_path, 'w', newline='', encoding=encoding) as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=effective, dialect='excel', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
                 writer.writeheader()
-            
-            writer.writerows(new_rows)
+                writer.writerows(normalized_new)
+            os.replace(tmp_path, file_path)
+        else:
+            # Existing file. If headers match (set-wise), append safely; otherwise rewrite with unified header
+            if set(existing_header) == set(effective):
+                with open(file_path, 'a', newline='', encoding=encoding) as csvfile:
+                    writer = csv.DictWriter(csvfile, fieldnames=effective, dialect='excel', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+                    writer.writerows(normalized_new)
+            else:
+                # Rewrite: read all old rows then write with new unified header
+                try:
+                    old_rows: List[Dict[str, str]] = []
+                    with open(file_path, 'r', newline='', encoding=encoding) as csvfile_r:
+                        reader = csv.DictReader(csvfile_r)
+                        for row in reader:
+                            old_rows.append(row)
+                    normalized_old = [_normalize_row(r, effective) for r in old_rows]
+                    tmp_path = file_path + '.tmp'
+                    with open(tmp_path, 'w', newline='', encoding=encoding) as csvfile_w:
+                        writer = csv.DictWriter(csvfile_w, fieldnames=effective, dialect='excel', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+                        writer.writeheader()
+                        writer.writerows(normalized_old)
+                        writer.writerows(normalized_new)
+                    os.replace(tmp_path, file_path)
+                except Exception as e:
+                    logger.error(f"Error rewriting CSV with unified header {file_path}: {e}")
+                    return False
         
         logger.info(f"Successfully appended {len(new_rows)} rows to {file_path}")
         return True

@@ -18,7 +18,7 @@ class SListViewBase;
 
 // Moved row models to ViewModels/TextureModels.h
 
-class MAGICOPTIMIZER_API SOptimizerPanel : public SCompoundWidget
+class SOptimizerPanel : public SCompoundWidget
 {
 public:
 	SLATE_BEGIN_ARGS(SOptimizerPanel) {}
@@ -38,6 +38,10 @@ protected:
 	// UI state
 	TArray<TSharedPtr<FString>> TargetProfiles;
 	FString CurrentProfile;
+
+	// Step navigation for streamlined UX
+	enum class EOptimizerStep : uint8 { Audit, Apply, Verify };
+	EOptimizerStep CurrentStep = EOptimizerStep::Audit;
 
 	// Output log buffer
 	FString LastStdOut;
@@ -69,6 +73,17 @@ protected:
 	FReply OnApplyClicked();
 	FReply OnVerifyClicked();
 	FReply OnSettingsClicked();
+
+	// Step controls
+	FReply OnStepAudit();
+	FReply OnStepApply();
+	FReply OnStepVerify();
+	bool IsAuditStepEnabled() const;
+	bool IsApplyStepEnabled() const;
+	bool IsVerifyStepEnabled() const;
+	EVisibility GetAuditVisibility() const;
+	EVisibility GetApplyVisibility() const;
+	EVisibility GetVerifyVisibility() const;
 
 	// Checkbox state handlers
 	ECheckBoxState IsTexturesChecked() const;
@@ -104,7 +119,6 @@ protected:
 	void OnProfileSelected(TSharedPtr<FString> SelectedItem, ESelectInfo::Type SelectInfo);
 	FText GetCurrentProfileText() const;
 
-
 	// Max changes input
 	FString GetMaxChanges() const;
 	void OnMaxChangesChanged(const FText& NewText);
@@ -119,22 +133,15 @@ protected:
 	ECheckBoxState IsPythonLoggingChecked() const;
 	void OnPythonLoggingChanged(ECheckBoxState NewState);
 
-	// Utility functions
-	void InitializeUI();
-	void UpdateUI();
-	void ShowNotification(const FString& Message, bool bIsSuccess = true);
-	void LogMessage(const FString& Message, bool bIsError = false);
-
-	// Run optimization
-	void RunOptimizationPhase(const FString& Phase);
-	TArray<FString> GetSelectedCategories() const;
-	FOptimizerRunParams BuildRunParams(const FString& Phase) const;
-
 	// Results loading
 	void LoadTextureAuditCsv();
 	TSharedRef<class ITableRow> OnGenerateTextureRow(FTextureAuditRowPtr Item, const TSharedRef<class STableViewBase>& OwnerTable);
 	void LoadTextureRecommendationsCsv();
 	TSharedRef<class ITableRow> OnGenerateTextureRecRow(FTextureRecRowPtr Item, const TSharedRef<class STableViewBase>& OwnerTable);
+
+	// Simple computed summaries
+	FText GetAuditSummaryText() const;
+	EVisibility GetAuditSummaryVisibility() const;
 
 	void SortTextureRows();
 	FReply OnSortByPath();
@@ -156,4 +163,19 @@ protected:
 
 	// UI refresh
 	void RefreshUI();
+
+	// Internal helpers
+	void InitializeUI();
+	void RunOptimizationPhase(const FString& Phase);
+	TArray<FString> GetSelectedCategories() const;
+	FOptimizerRunParams BuildRunParams(const FString& Phase) const;
+	void ShowNotification(const FString& Message, bool bIsSuccess = true);
+	void LogMessage(const FString& Message, bool bIsError = false);
+	void UpdateUI();
+
+	/** Show first-time consent dialog if needed */
+	void ShowFirstTimeConsentDialog();
+
+	/** Check if first-time consent dialog has been shown */
+	bool HasShownFirstTimeConsent() const;
 };

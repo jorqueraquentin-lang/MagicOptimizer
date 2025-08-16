@@ -130,6 +130,9 @@ class TextureVerifier:
                     all_passed = False
             
             # Create verification result
+            # Additional property consistency warnings (heuristic, property-based)
+            consistency_warnings = self._property_consistency_warnings(current_state)
+
             verification_result = {
                 "asset_path": asset_path,
                 "asset_name": applied_asset.get('asset_name', ''),
@@ -141,6 +144,8 @@ class TextureVerifier:
                 "estimated_memory_savings": applied_asset.get('estimated_memory_savings', '0MB'),
                 "dry_run": applied_asset.get('dry_run', True)
             }
+            if consistency_warnings:
+                verification_result["consistency_warnings"] = '; '.join(consistency_warnings)
             
             return verification_result
             
@@ -228,6 +233,34 @@ class TextureVerifier:
                 "passed": False,
                 "status": f"Error: {str(e)}"
             }
+
+    def _property_consistency_warnings(self, state: Dict[str, Any]) -> List[str]:
+        """Heuristic property-based consistency checks independent of requested changes."""
+        warnings: List[str] = []
+        lod = (state.get('lod_group') or '').strip()
+        compression = (state.get('compression') or '').upper().strip()
+        srgb = bool(state.get('srgb', True))
+        streaming = bool(state.get('streaming', True))
+        vt = bool(state.get('virtual_texture', False))
+
+        if lod == 'Normal':
+            if srgb:
+                warnings.append('SRGB should be Disabled for Normal maps')
+            if compression != 'BC5':
+                warnings.append('Compression should be BC5 for Normal maps')
+        elif lod == 'LUT':
+            if srgb:
+                warnings.append('SRGB should be Disabled for LUT/Mask textures')
+            if compression != 'BC4':
+                warnings.append('Compression should be BC4 for LUT/Mask textures')
+        elif lod == 'UI':
+            if streaming:
+                warnings.append('Streaming should be Disabled for UI textures')
+            if vt:
+                warnings.append('Virtual Texture should be Disabled for UI textures')
+        # World: no strict checks here
+
+        return warnings
     
     def _verify_size_change(self, change: str, current_state: Dict[str, Any]) -> tuple:
         """Verify size change was applied"""

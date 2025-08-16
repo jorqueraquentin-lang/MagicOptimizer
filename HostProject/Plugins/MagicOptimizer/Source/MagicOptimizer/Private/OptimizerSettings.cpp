@@ -26,6 +26,18 @@ UOptimizerSettings::UOptimizerSettings()
 	PythonScriptPath = TEXT("Content/Python/magic_optimizer");
 	bEnablePythonLogging = true;
 
+	// Auto-report settings (enabled by default with user consent)
+	bEnableAutoReporting = true;
+	AutoReportWorkerUrl = TEXT("https://steep-frog-b764.summer-hall-9089.workers.dev");  // Pre-configured
+	bIncludeLogsInReports = true;
+	bIncludeKnowledgeInReports = true;
+	bReportErrors = true;
+	bReportOptimizations = true;
+	bReportSessions = true;  // Enable session reporting for better insights
+	bAnonymizeData = true;
+	MaxLogLines = 2000;  // Increased for better diagnostics
+	bUserConsent = true;  // Enabled by default with user consent
+
 	// Initialize with default presets
 	CustomPresets.Empty();
 }
@@ -140,5 +152,18 @@ void UOptimizerSettings::SetToDefaults()
 	bGenerateReports = true;
 	PythonScriptPath = TEXT("Content/Python/magic_optimizer");
 	bEnablePythonLogging = true;
+
+	// Auto-report settings (enabled by default with user consent)
+	bEnableAutoReporting = true;
+	AutoReportWorkerUrl = TEXT("https://steep-frog-b764.summer-hall-9089.workers.dev");  // Pre-configured
+	bIncludeLogsInReports = true;
+	bIncludeKnowledgeInReports = true;
+	bReportErrors = true;
+	bReportOptimizations = true;
+	bReportSessions = true;  // Enable session reporting for better insights
+	bAnonymizeData = true;
+	MaxLogLines = 2000;  // Increased for better diagnostics
+	bUserConsent = true;  // Enabled by default with user consent
+
 	CustomPresets.Empty();
 }

@@ -122,6 +122,38 @@ public:
 	UPROPERTY(config, EditAnywhere, BlueprintReadWrite, Category = "Python")
 	bool bEnablePythonLogging;
 
+	// Auto-report settings
+	UPROPERTY(config, EditAnywhere, BlueprintReadWrite, Category = "Auto-Reporting", meta = (DisplayName = "Enable Auto-Reporting"))
+	bool bEnableAutoReporting;
+
+	UPROPERTY(config, BlueprintReadWrite, Category = "Auto-Reporting", meta = (DisplayName = "Cloudflare Worker URL"))
+	FString AutoReportWorkerUrl;
+
+	UPROPERTY(config, BlueprintReadWrite, Category = "Auto-Reporting", meta = (DisplayName = "Include Logs in Reports"))
+	bool bIncludeLogsInReports;
+
+	UPROPERTY(config, BlueprintReadWrite, Category = "Auto-Reporting", meta = (DisplayName = "Include Knowledge Data in Reports"))
+	bool bIncludeKnowledgeInReports;
+
+	UPROPERTY(config, BlueprintReadWrite, Category = "Auto-Reporting", meta = (DisplayName = "Report Errors"))
+	bool bReportErrors;
+
+	UPROPERTY(config, BlueprintReadWrite, Category = "Auto-Reporting", meta = (DisplayName = "Report Optimizations"))
+	bool bReportOptimizations;
+
+	UPROPERTY(config, BlueprintReadWrite, Category = "Auto-Reporting", meta = (DisplayName = "Report Sessions"))
+	bool bReportSessions;
+
+	UPROPERTY(config, BlueprintReadWrite, Category = "Auto-Reporting", meta = (DisplayName = "Anonymize Data"))
+	bool bAnonymizeData;
+
+	UPROPERTY(config, BlueprintReadWrite, Category = "Auto-Reporting", meta = (DisplayName = "Max Log Lines"))
+	int32 MaxLogLines;
+
+	// User consent for auto-reporting
+	UPROPERTY(config, BlueprintReadWrite, Category = "Auto-Reporting", meta = (DisplayName = "User Consent"))
+	bool bUserConsent;
+
 	// Preset management
 	UPROPERTY(config, EditAnywhere, BlueprintReadWrite, Category = "Presets")
 	TArray<FOptimizerPreset> CustomPresets;
