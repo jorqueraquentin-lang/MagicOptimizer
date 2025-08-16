@@ -24,6 +24,20 @@ from .textures import verify as textures_verify
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Optional knowledge and auto-report (now shipped with plugin)
+try:
+    from .knowledge.event_logger import EventLogger
+    KNOWLEDGE_AVAILABLE = True
+except Exception:
+    KNOWLEDGE_AVAILABLE = False
+
+try:
+    from .auto_report import AutoReporter
+    from .auto_report_config import is_auto_reporting_enabled, should_report_errors, should_report_optimizations
+    AUTO_REPORT_AVAILABLE = True
+except Exception:
+    AUTO_REPORT_AVAILABLE = False
+
 class MagicOptimizer:
     """Main orchestrator for optimization workflows"""
     
@@ -135,6 +149,10 @@ class MagicOptimizer:
         total_skipped = 0
         total_errors = 0
         
+        # Initialize optional systems
+        reporter = AutoReporter() if AUTO_REPORT_AVAILABLE and is_auto_reporting_enabled() else None
+        event_logger = EventLogger(Path(self.output_dir).parent.parent.as_posix()) if KNOWLEDGE_AVAILABLE else None
+
         # Process each category
         for category in categories:
             try:
@@ -175,6 +193,8 @@ class MagicOptimizer:
                 
             except Exception as e:
                 logger.error(f"Error processing {category} in {phase} phase: {e}")
+                if reporter and should_report_errors():
+                    reporter.send_error_report("phase_error", str(e), context=f"phase={phase} category={category}")
                 result = self._create_error_result(phase, category, str(e))
                 results[category] = result
                 total_errors += 1
@@ -199,10 +219,24 @@ class MagicOptimizer:
             }
         }
         
-        # Save summary to file
+        # Save summary to file (schema_version for durability)
         self._save_summary(phase, summary_result)
         
         logger.info(f"{phase} phase completed. Scanned: {total_scanned}, Changed: {total_changed}, Errors: {total_errors}")
+        # Report optimization summary
+        if reporter and should_report_optimizations():
+            try:
+                reporter.send_optimization_report(
+                    phase=phase,
+                    profile=self.config.get('target_profile', ''),
+                    assets_processed=total_scanned,
+                    assets_modified=total_changed,
+                    success=(total_errors == 0),
+                    duration_seconds=0.0,
+                    context=f"categories={','.join(categories)}"
+                )
+            except Exception:
+                pass
         
         return summary_result
     

@@ -76,8 +76,11 @@ def write_csv(file_path: str, fieldnames: List[str], rows: List[Dict[str, str]],
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
         # Tolerant header: include any unexpected keys present in rows
-        effective_fieldnames = _superset_fieldnames(fieldnames, rows)
+        effective_fieldnames = _superset_fieldnames(['schema_version'] + fieldnames, rows)
         normalized_rows = [_normalize_row(r, effective_fieldnames) for r in rows]
+        # Ensure schema_version is present
+        for r in normalized_rows:
+            r.setdefault('schema_version', '1')
 
         # Atomic write via temp file then replace
         tmp_path = file_path + '.tmp'
@@ -159,13 +162,15 @@ def append_to_csv(file_path: str, fieldnames: List[str], new_rows: List[Dict[str
                 logger.warning(f"Could not read existing CSV header {file_path}: {e}")
 
         # Compute effective header as superset of provided + new row keys + existing header
-        effective = list(fieldnames)
+        effective = ['schema_version'] + list(fieldnames)
         if existing_header:
             for h in existing_header:
                 if h not in effective:
                     effective.append(h)
         effective = _superset_fieldnames(effective, new_rows)
         normalized_new = [_normalize_row(r, effective) for r in new_rows]
+        for r in normalized_new:
+            r.setdefault('schema_version', '1')
 
         if existing_header is None:
             # New file: write header + rows

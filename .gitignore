@@ -45,8 +45,9 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# CI artifacts (ephemeral)
-docs/ci/
+# CI artifacts (ephemeral). Keep only curated examples under docs/ci/example
+docs/ci/**
+!docs/ci/example/**
 
 # Project assets (ignore all content except Python scripts used by the plugin/CI)
 HostProject/Content/**
