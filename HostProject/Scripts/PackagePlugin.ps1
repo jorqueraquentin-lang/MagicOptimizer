@@ -3,7 +3,8 @@ param(
   [string]$PluginName = "MagicOptimizer",
   [string]$TargetPlatforms = "Win64",
   [switch]$Clean,
-  [switch]$BumpPatch
+  [switch]$BumpPatch,
+  [switch]$NoHostPlatform
 )
 $ErrorActionPreference = 'Stop'
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
@@ -42,6 +43,7 @@ $packageDir = Join-Path $artifactsRoot ("{0}_{1}" -f $PluginName,$stamp)
 New-Item -ItemType Directory -Path $packageDir | Out-Null
 Write-Host "Packaging to" $packageDir
 $args = @('BuildPlugin', "-plugin=$uplugin", "-package=$packageDir", "-TargetPlatforms=$TargetPlatforms", '-VS2022')
+if ($NoHostPlatform) { $args += '-NoHostPlatform' }
 $psi = New-Object System.Diagnostics.ProcessStartInfo
 $psi.FileName = $uat
 $psi.WorkingDirectory = $EngineRoot

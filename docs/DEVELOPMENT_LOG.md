@@ -2700,3 +2700,21 @@ Impact:
 **Notes**:
 - Followed majority/working-code-first rule; minimal edits per iteration.
 - Next: run minimal automation test, then package plugin; start IWYU and asset property-based classification.
+
+## 2025-08-16 21:43 - Packaging succeeded with -NoHostPlatform
+
+**Task**: Package MagicOptimizer plugin for UE 5.6.1.
+
+**Actions**:
+- Updated `HostProject/Scripts/PackagePlugin.ps1` to accept `-NoHostPlatform` and forward it to `BuildPlugin`.
+- Ran packaging:
+  - EngineRoot: `C:\Program Files\Epic Games\UE_5.6`
+  - Command: `BuildPlugin -plugin=<descriptor> -package=<Artifacts> -TargetPlatforms=Win64 -VS2022 -NoHostPlatform`
+
+**Result**:
+- ✅ BuildPlugin completed successfully.
+- 📦 Output: `HostProject/Artifacts/MagicOptimizer_20250816_214341`
+
+**Notes**:
+- Using `-NoHostPlatform` avoided the rules scan crash seen in earlier attempt.
+- Next: smoke test in a fresh 5.6.1 C++ project by enabling the packaged plugin.
