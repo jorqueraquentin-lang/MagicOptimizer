@@ -2728,3 +2728,13 @@ Impact:
 **Impact**:
 - Aligns with rule: inspect UObject properties, not names.
 - Prevents misclassification; improves downstream Apply/Verify consistency.
+
+## 2025-08-16 22:14 - Runtime logs unified; CSV I/O hardened
+
+**Changes**:
+- Switched runtime logs to `LogMagicOptimizer` in `OptimizerRun.cpp` and `PythonBridge.cpp`; included `MagicOptimizerLogging.h` where needed.
+- CSV helpers now tolerate header diffs and extra fields, write atomically, and append safely with unified headers.
+
+**Impact**:
+- Consistent logging category for diagnostics.
+- More resilient CSV read/write flows for audit/recommend/apply/verify artifacts.

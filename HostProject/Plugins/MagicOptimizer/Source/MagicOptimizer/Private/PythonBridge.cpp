@@ -20,6 +20,7 @@
 #include "Serialization/JsonReader.h"
 #include "JsonObjectConverter.h"
 #include "OptimizerLogging.h"
+#include "MagicOptimizerLogging.h"
 
 UPythonBridge::UPythonBridge()
 {
@@ -40,7 +41,7 @@ bool UPythonBridge::Initialize()
 	OptimizerSettings = UOptimizerSettings::Get();
 	if (!OptimizerSettings)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to get OptimizerSettings"));
+		UE_LOG(LogMagicOptimizer, Error, TEXT("Failed to get OptimizerSettings"));
 		MagicOptimizerLog::AppendLine(TEXT("PythonBridge: Failed to get OptimizerSettings"));
 		MagicOptimizerLog::AppendBacklog(TEXT("PythonBridge.Initialize: Get UOptimizerSettings FAILED"));
 		return false;
@@ -49,14 +50,14 @@ bool UPythonBridge::Initialize()
 	// Initialize Python environment
 	if (!InitializePythonEnvironment())
 	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to initialize Python environment"));
+		UE_LOG(LogMagicOptimizer, Error, TEXT("Failed to initialize Python environment"));
 		MagicOptimizerLog::AppendLine(TEXT("PythonBridge: Failed to initialize Python environment"));
 		MagicOptimizerLog::AppendBacklog(TEXT("PythonBridge.Initialize: InitializePythonEnvironment FAILED"));
 		return false;
 	}
 
 	bPythonInitialized = true;
-	UE_LOG(LogTemp, Log, TEXT("PythonBridge initialized successfully (Version: %s)"), *PythonVersion);
+	UE_LOG(LogMagicOptimizer, Log, TEXT("PythonBridge initialized successfully (Version: %s)"), *PythonVersion);
 	MagicOptimizerLog::AppendLine(FString::Printf(TEXT("PythonBridge: Initialized (Version=%s)"), *PythonVersion));
 	MagicOptimizerLog::AppendBacklog(FString::Printf(TEXT("PythonBridge.Initialize: OK Version=%s"), *PythonVersion));
 	return true;
@@ -125,7 +126,7 @@ FOptimizerResult UPythonBridge::RunOptimization(const FOptimizerRunParams& Param
     const FString ScriptPath = BasePath / TEXT("entry.py");
     {
         const bool bExists = FPlatformFileManager::Get().GetPlatformFile().FileExists(*ScriptPath);
-        UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Resolved Python path: %s (entry: %s) Exists=%s"), *BasePath, *ScriptPath, bExists ? TEXT("true") : TEXT("false"));
+        UE_LOG(LogMagicOptimizer, Log, TEXT("MagicOptimizer: Resolved Python path: %s (entry: %s) Exists=%s"), *BasePath, *ScriptPath, bExists ? TEXT("true") : TEXT("false"));
 		MagicOptimizerLog::AppendLine(FString::Printf(TEXT("PythonBridge: ScriptPath=%s Exists=%s"), *ScriptPath, bExists ? TEXT("true") : TEXT("false")));
 		MagicOptimizerLog::AppendBacklog(FString::Printf(TEXT("ScriptPath=%s Base=%s Exists=%s"), *ScriptPath, *BasePath, bExists ? TEXT("true") : TEXT("false")));
     }
@@ -135,7 +136,7 @@ FOptimizerResult UPythonBridge::RunOptimization(const FOptimizerRunParams& Param
 
 	if (bHasScript)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Running system Python script: %s"), *ScriptPath);
+		UE_LOG(LogMagicOptimizer, Log, TEXT("Running system Python script: %s"), *ScriptPath);
 		MagicOptimizerLog::AppendLine(FString::Printf(TEXT("PythonBridge: Exec system Python: %s"), *ScriptPath));
 		MagicOptimizerLog::AppendBacklog(FString::Printf(TEXT("SystemPython Exec: %s Args=[%s]"), *ScriptPath, *FString::Join(Arguments, TEXT(","))));
 		bRan = ExecutePythonScript(ScriptPath, Arguments, Output, Error);
@@ -259,19 +260,19 @@ bool UPythonBridge::InitializePythonEnvironment()
 	FString Output, Error;
 	if (!ExecutePythonCommand(TEXT("python --version"), Output, Error))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Python not found in system PATH"));
+		UE_LOG(LogMagicOptimizer, Warning, TEXT("Python not found in system PATH"));
 		return false;
 	}
 
 	PythonVersion = Output.TrimStartAndEnd();
-	UE_LOG(LogTemp, Log, TEXT("Found Python: %s"), *PythonVersion);
+	UE_LOG(LogMagicOptimizer, Log, TEXT("Found Python: %s"), *PythonVersion);
 
 	TArray<FString> RequiredModules = { TEXT("json"), TEXT("csv"), TEXT("os"), TEXT("sys"), TEXT("pathlib") };
 	for (const FString& Module : RequiredModules)
 	{
 		if (!IsPythonModuleAvailable(Module))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Required Python module not available: %s"), *Module);
+			UE_LOG(LogMagicOptimizer, Warning, TEXT("Required Python module not available: %s"), *Module);
 			return false;
 		}
 	}
@@ -279,7 +280,7 @@ bool UPythonBridge::InitializePythonEnvironment()
 	FString OutputDir = OptimizerSettings ? OptimizerSettings->OutputDirectory : TEXT("Saved/MagicOptimizer");
 	if (!CreateOutputDirectory(OutputDir))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Failed to create output directory: %s"), *OutputDir);
+		UE_LOG(LogMagicOptimizer, Warning, TEXT("Failed to create output directory: %s"), *OutputDir);
 	}
 
 	return true;
@@ -294,10 +295,10 @@ bool UPythonBridge::ExecutePythonCommand(const FString& Command, FString& Output
 	Error = StdErr;
 	if (!bSuccess || ReturnCode != 0)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Python command failed: %s (Return code: %d)"), *Command, ReturnCode);
+		UE_LOG(LogMagicOptimizer, Error, TEXT("Python command failed: %s (Return code: %d)"), *Command, ReturnCode);
 		if (!Error.IsEmpty())
 		{
-			UE_LOG(LogTemp, Error, TEXT("Error: %s"), *Error);
+			UE_LOG(LogMagicOptimizer, Error, TEXT("Error: %s"), *Error);
 		}
 		return false;
 	}

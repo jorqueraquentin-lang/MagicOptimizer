@@ -3,6 +3,7 @@
 #include "OptimizerRun.h"
 #include "OptimizerSettings.h"
 #include "PythonBridge.h"
+#include "MagicOptimizerLogging.h"
 #include "HAL/PlatformTime.h"
 #include "Misc/DateTime.h"
 #include "Engine/Engine.h"
@@ -30,7 +31,7 @@ void UOptimizerRun::Run(const FString& Phase, const TArray<FString>& Categories)
 {
 	if (Status == EOptimizerRunStatus::Running)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("OptimizerRun: Already running, cannot start new run"));
+		UE_LOG(LogMagicOptimizer, Warning, TEXT("OptimizerRun: Already running, cannot start new run"));
 		return;
 	}
 
@@ -49,7 +50,7 @@ void UOptimizerRun::Run(const FString& Phase, const TArray<FString>& Categories)
 	// Set status to running
 	SetStatus(EOptimizerRunStatus::Running);
 
-	UE_LOG(LogTemp, Log, TEXT("OptimizerRun: Starting %s phase for categories: %s"), *Phase, *FString::Join(Categories, TEXT(", ")));
+	UE_LOG(LogMagicOptimizer, Log, TEXT("OptimizerRun: Starting %s phase for categories: %s"), *Phase, *FString::Join(Categories, TEXT(", ")));
 
 	// Run optimization asynchronously
 	Async(EAsyncExecution::TaskGraphMainThread, [this, Phase, Categories]()
@@ -66,7 +67,7 @@ void UOptimizerRun::Run(const FString& Phase, const TArray<FString>& Categories)
 		// Check if Python bridge is available
 		if (!PythonBridge || !PythonBridge->IsPythonAvailable())
 		{
-			UE_LOG(LogTemp, Error, TEXT("OptimizerRun: Python bridge not available"));
+			UE_LOG(LogMagicOptimizer, Error, TEXT("OptimizerRun: Python bridge not available"));
 			CompleteRun(false);
 			return;
 		}
@@ -93,7 +94,7 @@ void UOptimizerRun::Cancel()
 	if (Status == EOptimizerRunStatus::Running)
 	{
 		bCancelled = true;
-		UE_LOG(LogTemp, Log, TEXT("OptimizerRun: Cancellation requested"));
+		UE_LOG(LogMagicOptimizer, Log, TEXT("OptimizerRun: Cancellation requested"));
 	}
 }
 
@@ -129,13 +130,13 @@ void UOptimizerRun::UpdateProgress(float NewProgress, const FString& Phase, cons
 	// Broadcast progress event
 	OnProgress.Broadcast(Progress);
 
-	UE_LOG(LogTemp, Log, TEXT("OptimizerRun: Progress %.1f%% - %s"), Progress.Progress, *Progress.StatusMessage);
+	UE_LOG(LogMagicOptimizer, Log, TEXT("OptimizerRun: Progress %.1f%% - %s"), Progress.Progress, *Progress.StatusMessage);
 }
 
 void UOptimizerRun::SetStatus(EOptimizerRunStatus NewStatus)
 {
 	Status = NewStatus;
-	UE_LOG(LogTemp, Log, TEXT("OptimizerRun: Status changed to %d"), (int32)Status);
+	UE_LOG(LogMagicOptimizer, Log, TEXT("OptimizerRun: Status changed to %d"), (int32)Status);
 }
 
 void UOptimizerRun::CompleteRun(bool bSuccess)
@@ -145,12 +146,12 @@ void UOptimizerRun::CompleteRun(bool bSuccess)
 	if (bSuccess)
 	{
 		SetStatus(EOptimizerRunStatus::Completed);
-		UE_LOG(LogTemp, Log, TEXT("OptimizerRun: Run completed successfully in %s"), *GetDuration().ToString());
+		UE_LOG(LogMagicOptimizer, Log, TEXT("OptimizerRun: Run completed successfully in %s"), *GetDuration().ToString());
 	}
 	else
 	{
 		SetStatus(EOptimizerRunStatus::Failed);
-		UE_LOG(LogTemp, Error, TEXT("OptimizerRun: Run failed after %s"), *GetDuration().ToString());
+		UE_LOG(LogMagicOptimizer, Error, TEXT("OptimizerRun: Run failed after %s"), *GetDuration().ToString());
 	}
 
 	// Broadcast completion event
@@ -162,7 +163,7 @@ void UOptimizerRun::CancelRun()
 	EndTime = FDateTime::Now();
 	SetStatus(EOptimizerRunStatus::Cancelled);
 	
-	UE_LOG(LogTemp, Log, TEXT("OptimizerRun: Run cancelled after %s"), *GetDuration().ToString());
+	UE_LOG(LogMagicOptimizer, Log, TEXT("OptimizerRun: Run cancelled after %s"), *GetDuration().ToString());
 
 	// Broadcast cancellation event
 	OnCancelled.Broadcast(true);
