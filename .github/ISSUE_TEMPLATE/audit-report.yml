@@ -1,0 +1,49 @@
+﻿name: "Audit Report"
+description: "Manually file an audit/bug report. (Auto-reports from the plugin skip this form.)"
+title: "[Audit] <short summary>"
+labels: ["auto-report","from-plugin"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ⚡ If this is an automatic report from the UE plugin, this form is not used.
+        For manual reports, please fill what you can.
+
+  - type: input
+    id: build
+    attributes:
+      label: Build
+      description: Plugin or app build version
+    validations:
+      required: false
+
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      placeholder: "Windows-11 / macOS-14 / etc."
+    validations:
+      required: false
+
+  - type: input
+    id: ue_version
+    attributes:
+      label: Unreal Engine Version
+      placeholder: "5.3.2 / 5.4 / 5.6"
+    validations:
+      required: false
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Repro steps
+      description: Steps or context
+      placeholder: "Open Scene A → press Play → crash after 30s"
+    validations:
+      required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Anything else
