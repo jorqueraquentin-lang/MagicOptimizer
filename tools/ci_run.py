@@ -25,7 +25,7 @@ sys.argv = [
 ]
 
 # entry.py is in the plugin's Python directory, not in tools/
-entry_path = os.path.join(os.path.dirname(__file__), '..', 'HostProject', 'Content', 'Python', 'magic_optimizer', 'entry.py')
+entry_path = os.path.join(os.path.dirname(__file__), '..', 'HostProject', 'Plugins', 'MagicOptimizer', 'Content', 'Python', 'magic_optimizer', 'entry.py')
 runpy.run_path(entry_path, run_name='__main__')
 
 

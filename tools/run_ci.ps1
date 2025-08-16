@@ -42,10 +42,49 @@ if ($FreshAudit) {
 }
 
 # Build (fast incremental)
-$ms = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe"
-if (!(Test-Path $ms)) { $ms = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Professional\\MSBuild\\Current\\Bin\\MSBuild.exe" }
-if (!(Test-Path $ms)) { $ms = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\MSBuild\\Current\\Bin\\MSBuild.exe" }
-if (!(Test-Path $ms)) { $ms = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe" }
+# Try to find MSBuild in common Visual Studio locations
+$ms = $null
+$vsPaths = @(
+    "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe",
+    "C:\Program Files\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe",
+    "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe",
+    "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe",
+    "C:\Program Files\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe",
+    "C:\Program Files\Microsoft Visual Studio\2019\Professional\MSBuild\Current\Bin\MSBuild.exe",
+    "C:\Program Files\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe",
+    "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\MSBuild.exe"
+)
+
+foreach ($path in $vsPaths) {
+    if (Test-Path $path) {
+        $ms = $path
+        break
+    }
+}
+
+if (!$ms) {
+    # Try to find MSBuild via vswhere if available
+    try {
+        $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+        if (Test-Path $vswhere) {
+            $vsPath = & $vswhere -latest -products * -requires Microsoft.Component.MSBuild -property installationPath
+            if ($vsPath) {
+                $ms = Join-Path $vsPath "MSBuild\Current\Bin\MSBuild.exe"
+                if (!(Test-Path $ms)) {
+                    $ms = Join-Path $vsPath "MSBuild\15.0\Bin\MSBuild.exe"
+                }
+            }
+        }
+    } catch {
+        Write-Warning "vswhere detection failed: $_"
+    }
+}
+
+if (!$ms) {
+    throw "MSBuild not found. Please install Visual Studio or Build Tools."
+}
+
+Write-Host "Using MSBuild: $ms"
 
 & $ms $Sln /p:Configuration="Development Editor" /p:Platform=Win64 /m | Write-Host
 
@@ -65,8 +104,42 @@ $env:MAGICOPTIMIZER_LOG = Join-Path $MOFolder "MagicOptimizerRuntime.log"
 # Structured result file for diagnostics
 $env:MAGICOPTIMIZER_OUTPUT = Join-Path $CiOut "result.json"
 
-$UE = "C:\\Program Files\\Epic Games\\UE_5.6\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe"
-if (!(Test-Path $UE)) { throw "UnrealEditor-Cmd.exe not found at $UE" }
+# Try to find UE editor in common locations
+$UE = $null
+$uePaths = @(
+    "C:\Program Files\Epic Games\UE_5.6\Engine\Binaries\Win64\UnrealEditor-Cmd.exe",
+    "C:\Program Files\Epic Games\UE_5.5\Engine\Binaries\Win64\UnrealEditor-Cmd.exe",
+    "C:\Program Files\Epic Games\UE_5.4\Engine\Binaries\Win64\UnrealEditor-Cmd.exe",
+    "C:\Program Files\Epic Games\UE_5.3\Engine\Binaries\Win64\UnrealEditor-Cmd.exe",
+    "C:\Program Files\Epic Games\UE_5.2\Engine\Binaries\Win64\UnrealEditor-Cmd.exe",
+    "C:\Program Files\Epic Games\UE_5.1\Engine\Binaries\Win64\UnrealEditor-Cmd.exe",
+    "C:\Program Files\Epic Games\UE_5.0\Engine\Binaries\Win64\UnrealEditor-Cmd.exe"
+)
+
+foreach ($path in $uePaths) {
+    if (Test-Path $path) {
+        $UE = $path
+        break
+    }
+}
+
+if (!$UE) {
+    # Try to find UE via registry or environment
+    try {
+        $uePath = Get-ItemProperty -Path "HKLM:\SOFTWARE\EpicGames\Unreal Engine\*" -Name "InstalledDirectory" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty "InstalledDirectory"
+        if ($uePath) {
+            $UE = Join-Path $uePath "Engine\Binaries\Win64\UnrealEditor-Cmd.exe"
+        }
+    } catch {
+        Write-Warning "Registry detection failed: $_"
+    }
+}
+
+if (!$UE) {
+    throw "UnrealEditor-Cmd.exe not found. Please install Unreal Engine or check the path."
+}
+
+Write-Host "Using UE Editor: $UE"
 
 # Clear editor layout/state that can cause headless tab restore crashes (e.g., Fab browser)
 $ProjSavedConfigWin = Join-Path $RepoRoot "HostProject/Saved/Config/Windows"

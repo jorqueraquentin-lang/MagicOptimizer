@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
 #include "Widgets/Views/SHeaderRow.h"
+#include "Widgets/Views/STabView.h"
+#include "Widgets/Views/STabPanel.h"
 #include "OptimizerSettings.h"
 #include "PythonBridge.h"
 #include "ViewModels/TextureModels.h"
@@ -14,12 +16,27 @@
 class STextureAuditSection;
 class STextureRecommendSection;
 
+// Forward declarations for new tab widgets
+class STexturesTab;
+class SMeshesTab;
+class SMaterialsTab;
+class SOptimizationTab;
+
 class SCheckBox;
 class SButton;
 class SEditableTextBox;
 class SScrollBox;
 class SNotificationList;
 class SListViewBase;
+
+// Tab identifiers for the multi-tab interface
+enum class EOptimizerTab : uint8
+{
+	Textures,
+	Meshes,
+	Materials,
+	Optimization
+};
 
 class SOptimizerPanel : public SCompoundWidget
 {
@@ -47,6 +64,17 @@ protected:
 	enum class EOptimizerStep : uint8 { Audit, Apply, Verify };
 	EOptimizerStep CurrentStep = EOptimizerStep::Audit;
 
+	// Tab management
+	EOptimizerTab CurrentTab = EOptimizerTab::Textures;
+	TSharedPtr<STabView<EOptimizerTab>> TabView;
+	TSharedPtr<STabPanel<EOptimizerTab>> TabPanel;
+
+	// Tab widgets
+	TSharedPtr<STexturesTab> TexturesTab;
+	TSharedPtr<SMeshesTab> MeshesTab;
+	TSharedPtr<SMaterialsTab> MaterialsTab;
+	TSharedPtr<SOptimizationTab> OptimizationTab;
+
 	// Output log buffer
 	FString LastStdOut;
 	FString LastStdErr;
@@ -54,7 +82,7 @@ protected:
 	int32 LastAssetsProcessed = 0;
 	int32 LastAssetsModified = 0;
 
-	// Section widgets
+	// Section widgets (legacy - will be replaced by tab widgets)
 	TSharedPtr<STextureAuditSection> TextureAuditSection;
 	TSharedPtr<STextureRecommendSection> TextureRecommendSection;
 
@@ -73,6 +101,12 @@ protected:
 	FReply OnApplyClicked();
 	FReply OnVerifyClicked();
 	FReply OnSettingsClicked();
+
+	// Tab management
+	void OnTabChanged(EOptimizerTab NewTab);
+	TSharedRef<SWidget> CreateTabContent(EOptimizerTab TabType);
+	FText GetTabDisplayName(EOptimizerTab TabType) const;
+	FSlateIcon GetTabIcon(EOptimizerTab TabType) const;
 
 	// Step controls
 	FReply OnStepAudit();

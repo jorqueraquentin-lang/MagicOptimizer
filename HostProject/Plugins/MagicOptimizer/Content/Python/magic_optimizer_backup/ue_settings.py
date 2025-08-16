@@ -43,7 +43,7 @@ def get_optimizer_settings():
                         'b_close_editor': getattr(settings, 'b_close_editor', False),
                         'output_directory': getattr(settings, 'output_directory', 'Saved/MagicOptimizer'),
                         'b_generate_reports': getattr(settings, 'b_generate_reports', True),
-                        'python_script_path': getattr(settings, 'python_script_path', 'Content/Python/magic_optimizer'),
+                        'python_script_path': getattr(settings, 'python_script_path', ''),  # Empty to default to plugin-shipped Python
                         'b_enable_python_logging': getattr(settings, 'b_enable_python_logging', True)
                     }
     except Exception as e:
@@ -72,7 +72,7 @@ def get_optimizer_settings():
         'b_close_editor': False,
         'output_directory': 'Saved/MagicOptimizer',
         'b_generate_reports': True,
-        'python_script_path': 'Content/Python/magic_optimizer',
+        'python_script_path': '',  # Empty to default to plugin-shipped Python
         'b_enable_python_logging': True
     }
 

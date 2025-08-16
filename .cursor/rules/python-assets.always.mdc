@@ -1,7 +1,3 @@
----
-description: "Python packaging and asset handling requirements for MagicOptimizer plugin development"
-alwaysApply: true
----
 
 # Python and Assets - Always Apply
 
@@ -11,9 +7,6 @@ alwaysApply: true
 ```python
 # ✅ CORRECT: Plugin-shipped Python location
 <PluginContent>/Python/magic_optimizer/
-
-# ❌ WRONG: Local dev path in packages
-HostProject/Content/Python/magic_optimizer/
 ```
 
 ### **Python Path Resolution**
@@ -200,6 +193,10 @@ TArray<FString> PythonModules = {
 - ✅ **Content filtering** excludes dev-only content
 - ✅ **Python path resolution** works across environments
 description:
+globs:
+alwaysApply: false
+---
+
 globs:
 alwaysApply: false
 ---

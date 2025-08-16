@@ -25,7 +25,7 @@
 
 UPythonBridge::UPythonBridge()
 {
-	PythonScriptPath = TEXT("Content/Python/magic_optimizer");
+	PythonScriptPath = TEXT("");  // Empty to default to plugin-shipped Python
 	bPythonInitialized = false;
 	PythonVersion = TEXT("Unknown");
 	OptimizerSettings = nullptr;

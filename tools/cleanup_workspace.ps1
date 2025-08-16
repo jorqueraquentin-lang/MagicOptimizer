@@ -43,7 +43,6 @@ Remove-PathSafe -Path "HostProject/Saved/SourceControl"
 
 # Python __pycache__ folders
 $pycacheDirs = @(
-    "HostProject/Content/Python/magic_optimizer/__pycache__",
     "HostProject/Plugins/MagicOptimizer/Content/Python/magic_optimizer/__pycache__"
 )
 foreach ($d in $pycacheDirs) { Remove-PathSafe -Path $d }

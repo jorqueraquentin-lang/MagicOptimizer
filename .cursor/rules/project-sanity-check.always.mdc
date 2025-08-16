@@ -1,0 +1,214 @@
+# Project Sanity Check and Goal Alignment - Always Apply
+
+## 🎯 **MANDATORY: Regular Project Sanity Checks**
+
+### **CRITICAL: Prevent Project Drift**
+Regular sanity checks prevent the project from losing sight of its core objectives and ensure development stays on track.
+
+### **Check Frequency Requirements**
+- **Daily**: Quick goal alignment check (5-10 minutes)
+- **Weekly**: Medium-term progress review (15-30 minutes)  
+- **Monthly**: Comprehensive long-term goal assessment (30-60 minutes)
+
+## 📅 **Daily Sanity Check (Every Development Session)**
+
+### **When to Perform**
+- **Start of each development session**
+- **After completing a major task**
+- **Before committing significant changes**
+
+### **Daily Check Questions**
+1. **Short-term Goal Alignment**:
+   - ✅ Does today's work advance our immediate objectives?
+   - ✅ Are we building toward the next milestone?
+   - ✅ Is this work necessary for the current phase?
+
+2. **Code Quality Check**:
+   - ✅ Are we following established patterns?
+   - ✅ Are we maintaining module boundaries?
+   - ✅ Are we documenting our changes?
+
+3. **Progress Validation**:
+   - ✅ Are we closer to our short-term goals?
+   - ✅ Are we solving the right problems?
+   - ✅ Are we avoiding scope creep?
+
+## 📊 **Weekly Progress Review (Every 7 Days)**
+
+### **When to Perform**
+- **End of each week**
+- **Before weekend breaks**
+- **When switching between major phases**
+
+### **Weekly Review Questions**
+1. **Medium-term Goal Progress**:
+   - ✅ Are we on track for this month's objectives?
+   - ✅ Have we completed planned milestones?
+   - ✅ Are we addressing technical debt appropriately?
+
+2. **Development Velocity**:
+   - ✅ Are we making steady progress?
+   - ✅ Are we blocked on any critical issues?
+   - ✅ Do we need to adjust our approach?
+
+3. **Quality and Stability**:
+   - ✅ Is the codebase becoming more stable?
+   - ✅ Are we maintaining good test coverage?
+   - ✅ Are we following best practices consistently?
+
+## 🗓️ **Monthly Goal Assessment (Every 30 Days)**
+
+### **When to Perform**
+- **End of each month**
+- **Before major releases**
+- **When planning next development cycle**
+
+### **Monthly Assessment Questions**
+1. **Long-term Goal Alignment**:
+   - ✅ Are we building toward the ultimate project vision?
+   - ✅ Have we achieved major milestones?
+   - ✅ Are we on schedule for the final delivery?
+
+2. **Strategic Direction**:
+   - ✅ Is our technical approach still sound?
+   - ✅ Are we addressing the right user needs?
+   - ✅ Should we pivot or adjust our strategy?
+
+3. **Resource and Timeline**:
+   - ✅ Are we using our time effectively?
+   - ✅ Do we need to adjust our timeline?
+   - ✅ Are we managing technical debt appropriately?
+
+## 📝 **MANDATORY: Sanity Check Logging**
+
+### **Log Entry Format**
+```markdown
+### SANITY CHECK - [DATE] [TIME] - [CHECK_TYPE]
+
+**CHECK TYPE**: Daily / Weekly / Monthly
+
+**SHORT-TERM GOALS** (Next 1-7 days):
+- [ ] Goal 1: Status and progress
+- [ ] Goal 2: Status and progress
+- [ ] Goal 3: Status and progress
+
+**MEDIUM-TERM GOALS** (Next 1-4 weeks):
+- [ ] Goal 1: Status and progress  
+- [ ] Goal 2: Status and progress
+- [ ] Goal 3: Status and progress
+
+**LONG-TERM GOALS** (Next 1-6 months):
+- [ ] Goal 1: Status and progress
+- [ ] Goal 2: Status and progress
+- [ ] Goal 3: Status and progress
+
+**ALIGNMENT ASSESSMENT**:
+- ✅ **ON TRACK**: What's working well
+- ⚠️ **NEEDS ATTENTION**: What needs adjustment
+- ❌ **OFF TRACK**: What needs immediate correction
+
+**NEXT ACTIONS**:
+- Action 1: Who, what, when
+- Action 2: Who, what, when
+- Action 3: Who, what, when
+
+**OVERALL STATUS**: 🟢 ON TRACK / 🟡 NEEDS ATTENTION / 🔴 OFF TRACK
+```
+
+### **Logging Location**
+- **File**: `docs/DEVELOPMENT_LOG.md`
+- **Section**: Append to the end of the file
+- **Format**: Use the exact format above
+- **Timing**: Log immediately after completing the check
+
+## 🎯 **Goal Hierarchy Definition**
+
+### **Short-term Goals (1-7 days)**
+- **Immediate tasks** for current development phase
+- **Bug fixes** and stability improvements
+- **Documentation updates** for recent changes
+- **Testing** of new features
+
+### **Medium-term Goals (1-4 weeks)**
+- **Phase completion** (e.g., complete UI implementation)
+- **Feature integration** and testing
+- **Performance optimization** milestones
+- **User experience improvements**
+
+### **Long-term Goals (1-6 months)**
+- **Plugin completion** and packaging
+- **User testing** and feedback integration
+- **Performance benchmarks** achievement
+- **Documentation** and user guides completion
+
+## ⚠️ **Warning Signs Requiring Immediate Attention**
+
+### **Red Flags**
+- ❌ **Scope Creep**: Adding features not in the original plan
+- ❌ **Technical Debt**: Accumulating code quality issues
+- ❌ **Goal Drift**: Working on tasks that don't advance objectives
+- ❌ **Timeline Slippage**: Consistently missing milestones
+- ❌ **Quality Degradation**: Breaking existing functionality
+
+### **When to Escalate**
+- **Immediate**: Any red flag detected
+- **Same Day**: Document the issue and create action plan
+- **Next Session**: Review progress on the action plan
+
+## 🔄 **Sanity Check Workflow**
+
+### **1. Preparation (2-3 minutes)**
+- Review the last sanity check log entry
+- Check current development log for recent progress
+- Review project roadmap and milestones
+
+### **2. Assessment (5-15 minutes)**
+- Answer the relevant check questions
+- Compare current state to planned objectives
+- Identify any misalignments or issues
+
+### **3. Action Planning (3-5 minutes)**
+- Define specific next actions
+- Assign responsibility and timelines
+- Update development priorities if needed
+
+### **4. Logging (2-3 minutes)**
+- Document the sanity check results
+- Update the development log
+- Commit the log entry to version control
+
+## 🎯 **Success Metrics**
+
+- ✅ **Daily checks performed** at start of each session
+- ✅ **Weekly reviews completed** every 7 days
+- ✅ **Monthly assessments** every 30 days
+- ✅ **All sanity checks logged** with complete information
+- ✅ **Action items tracked** and completed
+- ✅ **Project stays aligned** with long-term vision
+- ✅ **Scope creep prevented** through regular validation
+- ✅ **Technical debt managed** proactively
+
+## 🚫 **What NOT to Do**
+
+- ❌ **Skip sanity checks** due to time constraints
+- ❌ **Perform checks without logging** results
+- ❌ **Ignore warning signs** or red flags
+- ❌ **Continue development** when major misalignment detected
+- ❌ **Make major changes** without goal validation
+
+## ✅ **What to ALWAYS Do**
+
+- ✅ **Perform sanity checks** at the specified intervals
+- ✅ **Log all results** in the development log
+- ✅ **Take immediate action** on any red flags
+- ✅ **Adjust priorities** based on check results
+- ✅ **Communicate findings** to stakeholders if needed
+- ✅ **Use check results** to guide next development session
+
+---
+
+**Remember**: Regular sanity checks are not a waste of time - they're an investment in project success. A few minutes of reflection can save hours of misdirected work.
+description:
+globs:
+alwaysApply: false
+---

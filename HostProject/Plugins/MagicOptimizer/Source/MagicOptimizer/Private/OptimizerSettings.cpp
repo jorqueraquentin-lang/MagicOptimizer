@@ -23,7 +23,7 @@ UOptimizerSettings::UOptimizerSettings()
 	bCloseEditor = false;
 	OutputDirectory = TEXT("Saved/MagicOptimizer");
 	bGenerateReports = true;
-	PythonScriptPath = TEXT("Content/Python/magic_optimizer");
+	PythonScriptPath = TEXT("");  // Empty to default to plugin-shipped Python
 	bEnablePythonLogging = true;
 
 	// Auto-report settings (enabled by default with user consent)
@@ -158,7 +158,7 @@ void UOptimizerSettings::SetToDefaults()
 	bCloseEditor = false;
 	OutputDirectory = TEXT("Saved/MagicOptimizer");
 	bGenerateReports = true;
-	PythonScriptPath = TEXT("Content/Python/magic_optimizer");
+	PythonScriptPath = TEXT("");  // Empty to default to plugin-shipped Python
 	bEnablePythonLogging = true;
 
 	// Auto-report settings (enabled by default with user consent)

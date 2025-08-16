@@ -17,7 +17,7 @@ class PresetManager:
     """Manages optimization presets"""
     
     def __init__(self, presets_dir: str = None):
-        self.presets_dir = presets_dir or "Content/Python/magic_optimizer/presets"
+        self.presets_dir = presets_dir or "presets"  # Relative to plugin Python directory
         self.presets = {}
         self.load_presets()
     

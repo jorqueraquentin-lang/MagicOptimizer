@@ -1,12 +1,9 @@
 """
-Knowledge package for MagicOptimizer (plugin-shipped).
-Contains event logging, pattern analysis and insights generation.
+Knowledge package for MagicOptimizer plugin.
+
+This package implements the self-learning system that gathers usage data,
+optimization patterns, and insights to improve the plugin over time.
 """
 
-__all__ = [
-    'event_logger',
-    'pattern_analyzer',
-    'insights_generator',
-]
-
-
+__version__ = "1.0.0"
+__author__ = "Perseus XR PTY LTD"

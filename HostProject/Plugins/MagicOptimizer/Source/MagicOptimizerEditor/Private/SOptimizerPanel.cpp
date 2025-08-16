@@ -10,10 +10,13 @@
 #include "Widgets/Layout/SGridPanel.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/Layout/SExpandableArea.h"
+#include "Widgets/Layout/SVerticalBox.h"
+#include "Widgets/Layout/SHorizontalBox.h"
 #include "Widgets/Views/SListView.h"
 #include "Widgets/Views/STableRow.h"
 
 #include "EditorStyleSet.h"
+#include "Slate/SlateTextureResource.h"
 #include "ISettingsModule.h"
 #include "Misc/ConfigCacheIni.h"
 #include "MagicOptimizerLogging.h"
@@ -33,6 +36,10 @@
 #include "ContentBrowserActions.h"
 #include "STextureAuditSection.h"
 #include "STextureRecommendSection.h"
+#include "STexturesTab.h"
+#include "SMeshesTab.h"
+#include "SMaterialsTab.h"
+#include "SOptimizationTab.h"
 
 void SOptimizerPanel::Construct(const FArguments& InArgs)
 {
@@ -51,6 +58,12 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 	// Preload latest CSV if present
 	LoadTextureAuditCsv();
 	
+	// Initialize tab widgets
+	TexturesTab = SNew(STexturesTab);
+	MeshesTab = SNew(SMeshesTab);
+	MaterialsTab = SNew(SMaterialsTab);
+	OptimizationTab = SNew(SOptimizationTab);
+
 	// Wire up the new section widgets
 	if (TextureAuditSection.IsValid())
 	{
@@ -98,109 +111,76 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 	ChildSlot
 	[
 		SNew(SBox)
-		.Padding(8.0f)
+		.Padding(16.0f)
 		[
-			SNew(SScrollBox)
+			SNew(SVerticalBox)
 			
-			+ SScrollBox::Slot()
+			// Header with Settings
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(8.0f)
 			[
-				SNew(SGridPanel)
-				.FillColumn(1, 1.0f)
+				SNew(SHorizontalBox)
 				
-				// Header
-				+ SGridPanel::Slot(0, 0)
-				.ColumnSpan(2)
-				.Padding(4.0f)
+				+ SHorizontalBox::Slot()
+				.FillWidth(1.0f)
+				.VAlign(VAlign_Center)
 				[
 					SNew(STextBlock)
 					.Text(FText::FromString(TEXT("Magic Optimizer")))
-					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 18))
+					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 24))
 					.ColorAndOpacity(FLinearColor(0.2f, 0.6f, 1.0f))
 				]
 				
-				// Settings Button
-				+ SGridPanel::Slot(0, 1)
-				.ColumnSpan(2)
-				.Padding(4.0f)
-				.HAlign(HAlign_Right)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.VAlign(VAlign_Center)
 				[
 					SNew(SButton)
 					.Text(FText::FromString(TEXT("Settings")))
 					.OnClicked(this, &SOptimizerPanel::OnSettingsClicked)
-                    .ButtonStyle(FAppStyle::Get(), "FlatButton")
+					.ButtonStyle(FAppStyle::Get(), "FlatButton")
 				]
+			]
+
+			// Tab Interface
+			+ SVerticalBox::Slot()
+			.FillHeight(1.0f)
+			.Padding(8.0f)
+			[
+				SAssignNew(TabView, STabView<EOptimizerTab>)
+				.TabRole(ETabRole::MajorTab)
+				.OnTabChanged(this, &SOptimizerPanel::OnTabChanged)
 				
-				// Profile Selection
-				+ SGridPanel::Slot(0, 2)
-				.Padding(4.0f)
-				.VAlign(VAlign_Center)
+				+ STabView<EOptimizerTab>::Slot(EOptimizerTab::Textures)
+				.TabRole(ETabRole::MajorTab)
 				[
-					SNew(STextBlock)
-					.Text(FText::FromString(TEXT("Target Profile:")))
-				]
-				
-				+ SGridPanel::Slot(1, 2)
-				.Padding(4.0f)
-				[
-					SNew(SComboBox<TSharedPtr<FString>>)
-					.OptionsSource(&TargetProfiles)
-					.OnGenerateWidget_Lambda([](TSharedPtr<FString> Item)
-					{
-						return SNew(STextBlock).Text(FText::FromString(*Item));
-					})
-					.OnSelectionChanged(this, &SOptimizerPanel::OnProfileSelected)
-					.Content()
+					SNew(STabPanel<EOptimizerTab>)
+					.TabRole(ETabRole::MajorTab)
 					[
-						SNew(STextBlock)
-						.Text(this, &SOptimizerPanel::GetCurrentProfileText)
+						SAssignNew(TabPanel, STabPanel<EOptimizerTab>)
+						.TabRole(ETabRole::MajorTab)
+						+ STabPanel<EOptimizerTab>::Slot(EOptimizerTab::Textures)
+						[
+							TexturesTab.ToSharedRef()
+						]
+						+ STabPanel<EOptimizerTab>::Slot(EOptimizerTab::Meshes)
+						[
+							MeshesTab.ToSharedRef()
+						]
+						+ STabPanel<EOptimizerTab>::Slot(EOptimizerTab::Materials)
+						[
+							MaterialsTab.ToSharedRef()
+						]
+						+ STabPanel<EOptimizerTab>::Slot(EOptimizerTab::Optimization)
+						[
+							OptimizationTab.ToSharedRef()
+						]
 					]
 				]
-				
-                // Removed Run Mode dropdown (buttons below are the actions)
-				
-				// Action Buttons
-                + SGridPanel::Slot(0, 3)
-				.ColumnSpan(2)
-				.Padding(4.0f)
-				[
-					SNew(SGridPanel)
-					.FillColumn(0, 1.0f)
-					.FillColumn(1, 1.0f)
-					.FillColumn(2, 1.0f)
-					.FillColumn(3, 1.0f)
-					
-					+ SGridPanel::Slot(0, 0)
-					.Padding(2.0f)
-					[
-						SNew(SButton)
-						.Text(FText::FromString(TEXT("Audit")))
-						.OnClicked(this, &SOptimizerPanel::OnAuditClicked)
-					]
-					
-					+ SGridPanel::Slot(1, 0)
-					.Padding(2.0f)
-					[
-						SNew(SButton)
-						.Text(FText::FromString(TEXT("Recommend")))
-						.OnClicked(this, &SOptimizerPanel::OnRecommendClicked)
-					]
-					
-					+ SGridPanel::Slot(2, 0)
-					.Padding(2.0f)
-					[
-						SNew(SButton)
-						.Text(FText::FromString(TEXT("Apply")))
-						.OnClicked(this, &SOptimizerPanel::OnApplyClicked)
-					]
-					
-					+ SGridPanel::Slot(3, 0)
-					.Padding(2.0f)
-					[
-						SNew(SButton)
-						.Text(FText::FromString(TEXT("Verify")))
-						.OnClicked(this, &SOptimizerPanel::OnVerifyClicked)
-					]
-				]
+			]
+		]
+	];
 
 				// Options Section
                 + SGridPanel::Slot(0, 4)
@@ -479,6 +459,12 @@ void SOptimizerPanel::Construct(const FArguments& InArgs)
 				TextureTableViewModel->SaveSettingsToConfig(OptimizerSettings);
 			}
 		});
+	}
+
+	// Wire up the TexturesTab ViewModel
+	if (TexturesTab.IsValid() && TextureTableViewModel.IsValid())
+	{
+		TexturesTab->SetViewModel(TextureTableViewModel);
 	}
 }
 
@@ -1218,3 +1204,78 @@ void SOptimizerPanel::OnPythonLoggingChanged(ECheckBoxState NewState)
 
 void SOptimizerPanel::UpdateUI() {}
 void SOptimizerPanel::RefreshUI() {}
+
+// Tab management methods
+void SOptimizerPanel::OnTabChanged(EOptimizerTab NewTab)
+{
+	CurrentTab = NewTab;
+	
+	// Handle tab-specific logic here
+	switch (NewTab)
+	{
+	case EOptimizerTab::Textures:
+		// Textures tab selected
+		break;
+	case EOptimizerTab::Meshes:
+		// Meshes tab selected
+		break;
+	case EOptimizerTab::Materials:
+		// Materials tab selected
+		break;
+	case EOptimizerTab::Optimization:
+		// Optimization tab selected
+		break;
+	}
+}
+
+TSharedRef<SWidget> SOptimizerPanel::CreateTabContent(EOptimizerTab TabType)
+{
+	switch (TabType)
+	{
+	case EOptimizerTab::Textures:
+		return TexturesTab.IsValid() ? TexturesTab.ToSharedRef() : SNew(STextBlock).Text(FText::FromString(TEXT("Textures Tab")));
+	case EOptimizerTab::Meshes:
+		return MeshesTab.IsValid() ? MeshesTab.ToSharedRef() : SNew(STextBlock).Text(FText::FromString(TEXT("Meshes Tab")));
+	case EOptimizerTab::Materials:
+		return MaterialsTab.IsValid() ? MaterialsTab.ToSharedRef() : SNew(STextBlock).Text(FText::FromString(TEXT("Materials Tab")));
+	case EOptimizerTab::Optimization:
+		return OptimizationTab.IsValid() ? OptimizationTab.ToSharedRef() : SNew(STextBlock).Text(FText::FromString(TEXT("Optimization Tab")));
+	default:
+		return SNew(STextBlock).Text(FText::FromString(TEXT("Unknown Tab")));
+	}
+}
+
+FText SOptimizerPanel::GetTabDisplayName(EOptimizerTab TabType) const
+{
+	switch (TabType)
+	{
+	case EOptimizerTab::Textures:
+		return FText::FromString(TEXT("Textures"));
+	case EOptimizerTab::Meshes:
+		return FText::FromString(TEXT("Meshes"));
+	case EOptimizerTab::Materials:
+		return FText::FromString(TEXT("Materials"));
+	case EOptimizerTab::Optimization:
+		return FText::FromString(TEXT("Optimization"));
+	default:
+		return FText::FromString(TEXT("Unknown"));
+	}
+}
+
+FSlateIcon SOptimizerPanel::GetTabIcon(EOptimizerTab TabType) const
+{
+	// TODO: Add proper icons for each tab
+	switch (TabType)
+	{
+	case EOptimizerTab::Textures:
+		return FSlateIcon(FAppStyle::GetAppStyleSetName(), "ClassIcon.Texture2D");
+	case EOptimizerTab::Meshes:
+		return FSlateIcon(FAppStyle::GetAppStyleSetName(), "ClassIcon.StaticMesh");
+	case EOptimizerTab::Materials:
+		return FSlateIcon(FAppStyle::GetAppStyleSetName(), "ClassIcon.Material");
+	case EOptimizerTab::Optimization:
+		return FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Settings");
+	default:
+		return FSlateIcon();
+	}
+}
