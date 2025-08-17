@@ -1,5 +1,48 @@
 # MagicOptimizer Plugin Development Log
 
+## 🚨 **CRITICAL SAFETY WARNINGS - READ BEFORE EDITING**
+
+### **⚠️ NEVER DELETE OR REPLACE THIS FILE**
+- **This file contains YEARS of development history**
+- **Accidental deletion = LOSS OF PROJECT MEMORY**
+- **Always APPEND new phases, never replace content**
+
+### **🛡️ SAFETY RULES:**
+1. **ONLY ADD NEW PHASES** - Never delete existing phases
+2. **USE APPEND MODE** - Add to end of file, not beginning
+3. **BACKUP BEFORE MAJOR CHANGES** - Create timestamped backup
+4. **VALIDATE CHANGES** - Check git diff before committing
+5. **USE TEMPLATES** - Follow existing phase format exactly
+
+### **📋 SAFE EDITING TEMPLATE:**
+```markdown
+### ✅ Phase X: [Title] - [STATUS]
+**Date**: [YYYY-MM-DD HH:MM:SS UTC]
+**Status**: [IN_PROGRESS/COMPLETED/ON_HOLD]
+**Description**: [Brief description of what this phase accomplishes]
+
+**Key Achievements**:
+- [Achievement 1]
+- [Achievement 2]
+
+**Files Created/Updated**:
+- [File path and description]
+
+**Next Steps**:
+- [Next action item]
+
+---
+```
+
+### **🔒 SAFETY CHECKLIST BEFORE COMMITTING:**
+- [ ] **File size increased** (not decreased)
+- [ ] **All previous phases still present**
+- [ ] **New content added to end** (not beginning)
+- [ ] **Git diff shows additions only** (no deletions)
+- [ ] **Backup created** if major restructuring needed
+
+---
+
 ## Project Overview
 MagicOptimizer is a comprehensive UE5.6 plugin for asset optimization and editor tools, featuring a Python backend for analysis logic and C++ frontend for UE integration.
 
