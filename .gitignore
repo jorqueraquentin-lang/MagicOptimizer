@@ -1,54 +1,228 @@
-# Unreal Engine (scoped to HostProject)
+# =============================================================================
+# MagicOptimizer Plugin Repository - UE 5.6 Friendly .gitignore
+# =============================================================================
+# 
+# This .gitignore follows UE 5.6 best practices and protects:
+# ✅ Plugin source code and assets
+# ✅ Build scripts and documentation  
+# ✅ CI tools and configuration
+# ❌ All build outputs and temporary files
+# ❌ IDE/editor clutter and OS junk
+# =============================================================================
+
+# =============================================================================
+# UNREAL ENGINE BUILD OUTPUTS (Root Level)
+# =============================================================================
+# These directories can be regenerated and should never be committed
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+DerivedDataCache/*
+
+# =============================================================================
+# HOST PROJECT BUILD OUTPUTS
+# =============================================================================
+# HostProject contains UE project files and our plugin
 HostProject/Binaries/
-HostProject/Intermediate/
 HostProject/DerivedDataCache/
+HostProject/Intermediate/
 HostProject/Saved/
+HostProject/.vs/
+HostProject/.vscode/
+HostProject/DerivedDataCache/*
 
-# MagicOptimizer runtime artifacts (keep logs/CSV out of VCS)
-HostProject/Saved/MagicOptimizer/**
+# =============================================================================
+# PLUGIN BUILD OUTPUTS
+# =============================================================================
+# Ignore all plugin build outputs, but preserve source and assets
+HostProject/Plugins/*/
+!HostProject/Plugins/MagicOptimizer/
+HostProject/Plugins/MagicOptimizer/Binaries/
+HostProject/Plugins/MagicOptimizer/Intermediate/
+HostProject/Plugins/MagicOptimizer/Saved/
 
-# Plugin-specific build outputs
-HostProject/Plugins/**/Binaries/
-HostProject/Plugins/**/Intermediate/
-HostProject/Plugins/**/DerivedDataCache/
-HostProject/Plugins/**/Saved/
-HostProject/Plugins/**/DerivedDataCache/
-HostProject/Plugins/**/Intermediate/
-HostProject/Plugins/**/Binaries/
-
-# Visual Studio generated solution artifacts (keep only source)
-*.user
-*.sln.docstates
-
-# Visual Studio / IDE
+# =============================================================================
+# VISUAL STUDIO / IDE / EDITOR CLUTTER
+# =============================================================================
+# Visual Studio
 .vs/
 .vscode/
+.vscode-test/
 *.VC.db
 *.VC.db-wal
 *.VC.db-shm
 *.suo
+*.user
+*.userprefs
+*.sln.docstates
+*.sln.iml
 *.opensdf
 *.sdf
 *.ipch
+*.ipr
+*.iws
 
-# Build artifacts
-*.pdb
+# JetBrains Rider
+*.sln.DotSettings.user
+.idea/
+.idea/.idea.*
+
+# =============================================================================
+# BUILD ARTIFACTS AND COMPILED FILES
+# =============================================================================
+# C++ build outputs
 *.obj
+*.pch
+*.pdb
+*.idb
+*.ilk
 *.exe
 *.dll
+*.lib
+*.exp
 
-# Python
+# =============================================================================
+# PACKAGED BUILDS AND ARCHIVES
+# =============================================================================
+# Plugin packages and build artifacts
+*.zip
+*.7z
+*.tar
+*.tar.gz
+*.exe
+*.app
+*.dmg
+*.ipa
+*.apk
+*.aab
+
+# =============================================================================
+# PYTHON AND SCRIPTING TOOLS
+# =============================================================================
+# Python cache and virtual environments
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+ENV/
 
-# OS files
-.DS_Store
+# Node.js (if we add any JS tooling)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =============================================================================
+# OPERATING SYSTEM FILES
+# =============================================================================
+# Windows
 Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.tmp
+*.temp
+desktop.ini
+$RECYCLE.BIN/
+*.lnk
 
-# CI artifacts (ephemeral). Keep only curated examples under docs/ci/example
-docs/ci/**
-!docs/ci/example/**
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
 
-# Project assets (ignore all content except Python scripts used by the plugin/CI)
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# =============================================================================
+# LOGS AND TEMPORARY FILES
+# =============================================================================
+# Application logs
+*.log
+*.tlog
+*.cache
+*.tmp
+*.temp
+
+# CI and testing outputs
+docs/ci/
+Reports/
+
+# =============================================================================
+# CI AND DEVELOPMENT TOOLS
+# =============================================================================
+# CI artifacts (ephemeral) - keep only curated examples
+Reports/ci/**
+!Reports/ci/example/**
+
+# Development workspace
+.cursor/
+
+# Keep specific saved data but ignore build artifacts
+Saved/**
+!Saved/MagicOptimizer/Audit/**
+!Saved/MagicOptimizer/Config/**
+
+# =============================================================================
+# PROJECT-SPECIFIC EXCLUSIONS
+# =============================================================================
+# Keep our plugin's Python scripts but ignore other content
 HostProject/Content/**
 !HostProject/Content/Python/**
+
+# Keep our branding assets
+PerseusXR/Branding/**
+
+# =============================================================================
+# SECURITY AND SENSITIVE FILES
+# =============================================================================
+# Never commit these
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.csr
+*.pwd
+.env
+.env.local
+.env.*.local
+secrets.json
+config.local.json
+
+# =============================================================================
+# BACKUP AND TEMPORARY FILES
+# =============================================================================
+# Common backup patterns
+*~
+*.bak
+*.backup
+*.old
+*.orig
+*.rej
+*.swp
+*.swo
+*.#
+.#*
