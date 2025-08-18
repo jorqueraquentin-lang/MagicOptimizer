@@ -205,10 +205,8 @@ Regular sanity checks prevent the project from losing sight of its core objectiv
 - ✅ **Communicate findings** to stakeholders if needed
 - ✅ **Use check results** to guide next development session
 
----
-
 **Remember**: Regular sanity checks are not a waste of time - they're an investment in project success. A few minutes of reflection can save hours of misdirected work.
-description:
-globs:
-alwaysApply: false
+description: Project sanity check rules that enforce regular goal alignment reviews and prevent project drift for the MagicOptimizer UE5 plugin development.
+globs: ["**/*.md", "**/*.py", "**/*.ps1", "**/*.bat"]
+alwaysApply: true
 ---

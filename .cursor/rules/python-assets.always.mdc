@@ -192,11 +192,7 @@ TArray<FString> PythonModules = {
 - ✅ **Asset analysis accurate** and reliable
 - ✅ **Content filtering** excludes dev-only content
 - ✅ **Python path resolution** works across environments
-description:
-globs:
-alwaysApply: false
----
-
-globs:
-alwaysApply: false
+description: Python and asset handling rules that ensure proper asset type detection, Python packaging, and content filtering for the MagicOptimizer UE5 plugin.
+globs: ["**/*.cpp", "**/*.h", "**/*.py", "**/*.ini", "**/*.uasset"]
+alwaysApply: true
 ---

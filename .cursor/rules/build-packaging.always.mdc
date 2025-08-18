@@ -137,7 +137,7 @@ HostProject/Artifacts/                    # Package output directory
 - ✅ **Packaging completes** without errors
 - ✅ **Version fields updated** before packaging
 - ✅ **Artifacts stored** in correct location
-description:
-globs:
-alwaysApply: false
+description: Build and packaging rules that enforce proper build processes, packaging requirements, and build validation for the MagicOptimizer UE5 plugin project.
+globs: ["**/*.cpp", "**/*.h", "**/*.uplugin", "**/*.uproject", "**/*.ps1", "**/*.bat"]
+alwaysApply: true
 ---

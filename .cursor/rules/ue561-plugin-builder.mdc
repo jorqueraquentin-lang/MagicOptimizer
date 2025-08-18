@@ -73,79 +73,63 @@ void MyFunction(); // Won't export properly
 
 ## 🧪 **Testing and Validation - CRITICAL**
 
-### **ALWAYS Use Built-in CI System**
-```bash
-# ✅ CORRECT: Use automated testing
-tools/run_ci.ps1 -Phase Audit -FailOnError
+*Note: Detailed testing and CI requirements are defined in `testing-ci.always.mdc` to avoid duplication.*
 
-# ❌ WRONG: Manual testing only
-# Manual testing is error-prone and inconsistent
-```
-
-### **Log Analysis is Mandatory**
-After ANY fix or change:
-1. **Check generated log files** immediately
-2. **Compare before/after log states**
-3. **Look for error patterns**
-4. **Document log analysis** in responses
-5. **Logs contain the truth** about what's happening
+**NEVER** keep duplicate plugin code at repo root.
 
 ## 📦 **Python and Assets**
 
-### **Python Packaging**
-```python
-# ✅ CORRECT: Plugin-shipped Python
-<PluginContent>/Python/magic_optimizer
-
-# ❌ WRONG: Local dev path in packages
-HostProject/Plugins/MagicOptimizer/Content/Python/magic_optimizer
-```
-
-### **Asset Classification**
-**NEVER infer types from names**. Inspect actual properties:
-- CompressionSettings, LODGroup, PowerOfTwoMode
-- Dimensions, LOD count, lightmap UV presence
-- Nanite state
+*Note: Detailed Python packaging and asset classification rules are defined in `python-assets.always.mdc` to avoid duplication.*
 
 ## 🔄 **Development Workflow**
 
-### **Incremental Development**
-1. **Plan in short steps**
-2. **Compile after each step**
-3. **Verify result** (build/package/test)
-4. **Record timestamped entry** in `docs/DEVELOPMENT_LOG.md`
+*Note: Detailed development workflow is defined in `development-workflow.always.mdc` to avoid duplication.*
 
-### **Documentation Requirements**
-- **Append-only** development log updates
-- **Use `tools/git_commit_push.ps1`** for commits
-- **Push after major milestones** or when approved
+**NEVER** keep duplicate plugin code at repo root.
 
 ## ⚠️ **Common Pitfalls**
 
-### **Ghost Code Trap**
-```cpp
-// ❌ SYMPTOM: Old code still runs after "fixes"
-// ❌ CAUSE: Partial rebuilds, mismatched DLL timestamps
-// ✅ SOLUTION: Rebuild ALL plugin DLLs together
-```
-
-### **Log Ignorance**
-```cpp
-// ❌ SYMPTOM: "Fix didn't work" without log analysis
-// ❌ CAUSE: Not checking logs after changes
-// ✅ SOLUTION: ALWAYS check logs immediately after changes
-```
+*Note: Detailed build pitfalls and common issues are defined in `build-packaging.always.mdc` to avoid duplication.*
 
 ## 🎯 **Success Metrics**
 
 - ✅ **All plugin DLLs rebuilt** together
 - ✅ **Build timestamps match** across modules
-- ✅ **Logs analyzed** after every change
-- ✅ **CI system used** for testing
-- ✅ **Development log updated** after each task
 - ✅ **Module boundaries preserved**
 - ✅ **Existing code style maintained**
+- ✅ **Non-destructive change principles** followed
+- ✅ **UE5.6.1 constraints** respected
 
+## 🛡️ **Non-Destructive Change Policy - CRITICAL**
 
-- ✅ **Existing code style maintained**
+### **Core Principles**
+- **Preserve behavior**: Outputs and user experience must stay the same unless explicitly approved
+- **Minimal change**: Prefer the smallest, local fix near the error site
+- **No feature loss**: Never remove or deactivate features to resolve build errors
+- **No "light" variants**: Do not create reduced versions or temporary forks to "get a green build"
+
+### **UE-Specific Guardrails**
+- **Do not modify** PublicDependencyModuleNames or PrivateDependencyModuleNames to avoid compiling real deps
+- **Do not change** .uplugin Modules, Type, LoadingPhase, or EnabledByDefault to skip loading
+- **Do not move code** from MagicOptimizerEditor into MagicOptimizer to dodge editor-only build errors
+- **Do not touch Engine source** or global DefaultEngine.ini to mask issues
+- **Keep editor-only dependencies** inside the editor module
+
+### **Destructive Operations Forbidden**
+- ❌ Deleting or commenting out classes, functions, or modules to bypass errors
+- ❌ Disabling code paths, features, delegates, or UI that previously worked
+- ❌ Changing public APIs or data schemas without an approved migration
+- ❌ Replacing implementations with hardcoded stubs that alter behavior
+- ❌ Creating "lite" or "safe" copies instead of fixing the real issue
+
+### **Allowed Moves (Preferred)**
+- ✅ Correct include paths, types, macros, build settings that fix compilation
+- ✅ Add narrowly scoped null checks or guards that preserve prior behavior
+- ✅ Fix lifecycle or threading issues without changing public contracts
+- ✅ Gate new code with compile or runtime flags that default to current behavior
+
+description: UE 5.6.1 plugin builder rules that enforce proper plugin architecture, build processes, development standards, and non-destructive change principles for the MagicOptimizer UE5 plugin project.
+globs: ["**/*.cpp", "**/*.h", "**/*.md", "**/*.py", "**/*.uplugin", "**/*.uproject"]
+alwaysApply: true
+---
 

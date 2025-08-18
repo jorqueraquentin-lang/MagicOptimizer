@@ -58,51 +58,13 @@ void MyFunction() {
 
 ## 🏗️ **Repository Structure Rules**
 
-### **Working Directory**
-- **Primary work area**: `HostProject/Plugins/MagicOptimizer/**`
-- **Documentation**: `docs/` directory
-- **Development tools**: `tools/` directory
-- **Generated reports**: `Reports/` directory
-
-### **File Organization**
-```
-MagicOptimizer/                    # Repo root
-├── .cursor/rules/                # Project rules
-├── docs/                         # Documentation
-├── tools/                        # Development tools
-├── Reports/                      # Generated reports
-└── HostProject/                  # UE project
-    └── Plugins/MagicOptimizer/   # SINGLE SOURCE OF TRUTH
-```
+*Note: Repository structure is defined in `ue561-plugin-builder.mdc` to avoid duplication.*
 
 **NEVER** keep duplicate plugin code at repo root.
 
 ## 🔧 **Module Boundary Rules**
 
-### **Runtime vs Editor Code**
-```cpp
-// ✅ CORRECT: Runtime module (HostProject/Plugins/MagicOptimizer/Source/MagicOptimizer/)
-#include "CoreMinimal.h"
-#include "Engine/Engine.h"
-
-// ✅ CORRECT: Editor module (HostProject/Plugins/MagicOptimizer/Source/MagicOptimizerEditor/)
-#include "EditorStyle/Public/EditorStyleSet.h"
-#include "UnrealEd/Public/Editor.h"
-
-// ❌ WRONG: Editor code in runtime module
-#include "EditorStyle/Public/EditorStyleSet.h" // In runtime module!
-```
-
-### **WITH_EDITOR Guards**
-```cpp
-// ✅ CORRECT: Use WITH_EDITOR guards for editor-only code
-#if WITH_EDITOR
-    // Editor-specific functionality
-#endif
-
-// ❌ WRONG: No guards around editor code
-// Editor-specific functionality // Will cause runtime errors!
-```
+*Note: Detailed module boundary rules and WITH_EDITOR guards are defined in `ue561-plugin-builder.mdc` to avoid duplication.*
 
 ## 📚 **Documentation Requirements**
 
@@ -143,11 +105,64 @@ MagicOptimizer/                    # Repo root
 - ✅ **Working behavior preserved**
 - ✅ **All changes tested** before continuing
 - ✅ **Documentation kept current**
-description:
-globs:
-alwaysApply: false
----
 
-globs:
-alwaysApply: false
+## 🚪 **Approval Gate System - CRITICAL**
+
+### **When Approval is Required**
+- **API changes**: Any modification to public interfaces or data schemas
+- **File layout changes**: Moving, renaming, or restructuring files
+- **Module dependencies**: Changes to Build.cs dependencies or .uplugin configuration
+- **Behavior changes**: Any modification that affects user experience or output
+
+### **Approval Request Format**
+```
+APPROVAL NEEDED: <summary>
+Impact: <API/file layout/module/behavior>
+Why not destructive: <reason>
+Proposed diff scope: <files>
+Rollback: <git ref or plan>
+Proceed? yes/no
+```
+
+### **Required Response Format**
+**Before editing files, reply with:**
+```
+Plan:
+Impact:
+Alternatives considered:
+Why this is non destructive:
+Validation plan:
+```
+
+**After implementation, reply with:**
+```
+Diff summary:
+Behavior verification:
+Build + test evidence:
+Packaging check:
+```
+
+## 📋 **Change Workflow Requirements**
+
+### **Required Steps for Any Fix**
+1. **Plan**: Produce a plan with root cause, minimal fix, alternatives rejected, risk assessment
+2. **Approval**: Ask for confirmation when any API, file layout, or module config might change
+3. **Implement**: Apply the smallest fix. Do not edit unrelated files
+4. **Validate**: Rebuild all plugin DLLs together, run tests, exercise affected features
+5. **Report**: Output change report with what was broken, what changed, why non-destructive, validation results
+
+### **Commit Template**
+```
+feat/fix: <one line summary preserving behavior>
+
+Root cause:
+Change:
+Why non destructive:
+Tests/validation:
+Affected modules:
+```
+
+description: Development workflow rules that enforce incremental development, proper logging, module boundary compliance, and approval gate requirements for the MagicOptimizer UE5 plugin project.
+globs: ["**/*.cpp", "**/*.h", "**/*.md", "**/*.py"]
+alwaysApply: true
 ---

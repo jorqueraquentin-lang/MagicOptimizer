@@ -93,3 +93,37 @@ Get-ChildItem "Reports/" | Sort-Object LastWriteTime -Descending | Select-Object
 - ✅ **Error patterns** identified and addressed
 - ✅ **Development log updated** with test results
 - ✅ **Fix effectiveness** verified through log analysis
+
+## 🛡️ **Behavior Preservation Verification - CRITICAL**
+
+### **Validation Checklist**
+- ✅ **Clean rebuild** of all plugin modules without warnings from UHT or UBT
+- ✅ **Feature reproduces** the same behavior as before the fix
+- ✅ **No features disabled**, hidden, or removed
+- ✅ **CI or scripted test run** passes and logs are attached
+- ✅ **Packaging still succeeds** with the plugin enabled
+
+### **Behavior Verification Steps**
+1. **Exercise affected features** end-to-end to confirm behavior is unchanged
+2. **Compare outputs** before and after the fix
+3. **Verify UI elements** still function as expected
+4. **Check performance** characteristics remain similar
+5. **Validate data integrity** and consistency
+
+### **Regression Testing Requirements**
+- **Run comprehensive tests** that cover the affected functionality
+- **Test edge cases** and error conditions
+- **Verify integration points** with other systems
+- **Check backward compatibility** if APIs were modified
+
+### **Evidence Collection**
+- **Screenshots** of before/after states
+- **Log files** showing successful execution
+- **Performance metrics** if applicable
+- **Test results** from CI system
+- **User acceptance** verification if UI was modified
+
+description: Testing and CI rules that enforce automated testing, comprehensive log analysis, and behavior preservation verification for the MagicOptimizer UE5 plugin project.
+globs: ["**/*.cpp", "**/*.h", "**/*.py", "**/*.ps1", "**/*.md"]
+alwaysApply: true
+---
