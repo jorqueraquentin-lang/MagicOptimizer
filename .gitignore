@@ -177,9 +177,6 @@ Reports/
 Reports/ci/**
 !Reports/ci/example/**
 
-# Development workspace
-.cursor/
-
 # Keep specific saved data but ignore build artifacts
 Saved/**
 !Saved/MagicOptimizer/Audit/**
