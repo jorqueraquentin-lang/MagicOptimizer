@@ -2,22 +2,48 @@
 
 # UE5.6 C++ Canvas for Plugin Authors on Windows
 
+---
+
+## Table of Contents
+1. [Foundations Your Agents Must Internalize](#foundations-your-agents-must-internalize)
+2. [Minimal Plugin Anatomy for 5.6](#minimal-plugin-anatomy-for-56)
+3. [Build Rules That Never Bite You Later](#build-rules-that-never-bite-you-later)
+4. [Module Entry Points That Are Safe and Deterministic](#module-entry-points-that-are-safe-and-deterministic)
+5. [Editor Menus and Commands in the Modern ToolMenus System](#editor-menus-and-commands-in-the-modern-toolmenus-system)
+6. [Reflection and Metadata Your Agents Must Use Correctly](#reflection-and-metadata-your-agents-must-use-correctly)
+7. [Strings and Names for Low-Cost Hot Paths](#strings-and-names-for-low-cost-hot-paths)
+8. [Console Variables and Commands Your Plugin Will Expose](#console-variables-and-commands-your-plugin-will-expose)
+9. [Subsystems for Clean Lifetimes](#subsystems-for-clean-lifetimes)
+10. [Tasks and Concurrency That Do Not Stall the Game Thread](#tasks-and-concurrency-that-do-not-stall-the-game-thread)
+11. [Logging and Stats You Will Actually Use](#logging-and-stats-you-will-actually-use)
+12. [Project Settings Surface for Users, Backed by Config and CVars](#project-settings-surface-for-users-backed-by-config-and-cvars)
+13. [Performance Patterns for an Optimization Plugin](#performance-patterns-for-an-optimization-plugin)
+14. [Windows Packaging and Distribution of Your Plugin](#windows-packaging-and-distribution-of-your-plugin)
+15. [Stable Cross-Version Code for 5.6](#stable-cross-version-code-for-56)
+16. [Clean Example Features Your Plugin Can Ship Today](#clean-example-features-your-plugin-can-ship-today)
+17. [Common Pitfalls and How Your Agents Avoid Them](#common-pitfalls-and-how-your-agents-avoid-them)
+18. [Fast Reference Links Your Agents Will Reuse](#fast-reference-links-your-agents-will-reuse)
+19. [Style and Conventions That Keep Your Codebase Durable](#style-and-conventions-that-keep-your-codebase-durable)
+20. [What to Do Next](#what-to-do-next)
+
+---
+
 ## 1. Foundations Your Agents Must Internalize
 
 ### Toolchain and IDE
 - **Visual Studio 2022** is the supported default on Windows for UE5 series
-- Rider and VS Code are also supported
-- Install the C++ workload and Windows SDK
+- **Rider and VS Code** are also supported
+- **Install the C++ workload and Windows SDK**
 - [Epic Games Developers - Hardware and Software Specifications](https://dev.epicgames.com/documentation/en-us/unreal-engine/hardware-and-software-specifications-for-unreal-engine)
 
 ### Two-Stage Compile
-- Every compile runs Unreal Header Tool (UHT) first to parse reflection macros and generate glue
-- Then Unreal Build Tool (UBT) compiles C++
-- If UHT fails, the build fails regardless of your C++ syntax
+- **Every compile runs Unreal Header Tool (UHT) first** to parse reflection macros and generate glue
+- **Then Unreal Build Tool (UBT) compiles C++**
+- **If UHT fails, the build fails regardless of your C++ syntax**
 - [Epic Games Developers - Unreal Header Tool](https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-header-tool-for-unreal-engine)
 
 ### Learning Resources
-- Use Epic's 5.6 C++ section and API browser as the primary source of truth
+- **Use Epic's 5.6 C++ section and API browser as the primary source of truth**
 - [Epic Games Developers - C++ Programming](https://dev.epicgames.com/documentation/en-us/unreal-engine/programming-with-cplusplus-in-unreal-engine?application_version=5.6)
 - [Microsoft Learn - VS Tools for Unreal](https://learn.microsoft.com/en-us/visualstudio/gamedev/unreal/get-started/vs-tools-unreal-uproject)
 
@@ -60,7 +86,7 @@ MyOptimizationPlugin/
 }
 ```
 
-Descriptor and module loading semantics are defined by the Projects module and descriptor classes, which also expose loading phases used by the plugin browser and module manager.
+**Descriptor and module loading semantics** are defined by the Projects module and descriptor classes, which also expose loading phases used by the plugin browser and module manager.
 
 ---
 
@@ -110,7 +136,7 @@ public class MyOptimizationPluginEditor : ModuleRules
 }
 ```
 
-Modules and Build.cs responsibilities, plus Target rules, are codified in Epic docs. Use these patterns so UBT resolves include and link order correctly.
+**Modules and Build.cs responsibilities, plus Target rules, are codified in Epic docs.** Use these patterns so UBT resolves include and link order correctly.
 
 ---
 
@@ -157,7 +183,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogMyOpt, Log, All);
 DEFINE_LOG_CATEGORY(LogMyOpt);
 ```
 
-`IModuleInterface` is the required surface. Always maintain symmetry between register and unregister operations. Use a dedicated log category.
+**`IModuleInterface` is the required surface.** Always maintain symmetry between register and unregister operations. Use a dedicated log category.
 
 ---
 
@@ -229,15 +255,15 @@ class FMyOptimizationPluginEditorModule final : public IModuleInterface
 IMPLEMENT_MODULE(FMyOptimizationPluginEditorModule, MyOptimizationPluginEditor)
 ```
 
-ToolMenus and UI command mapping are the current best practice for editor extensibility in the 5.x series.
+**ToolMenus and UI command mapping are the current best practice for editor extensibility in the 5.x series.**
 
 ---
 
 ## 6. Reflection and Metadata Your Agents Must Use Correctly
 
 ### Required Macros
-- Use `UCLASS`, `USTRUCT`, `UENUM`, `UINTERFACE`, `UFUNCTION`, `UPROPERTY`
-- Generated headers must be included at the end of your header includes
+- **Use `UCLASS`, `USTRUCT`, `UENUM`, `UINTERFACE`, `UFUNCTION`, `UPROPERTY`**
+- **Generated headers must be included at the end of your header includes**
 
 ### Typical UHT Pitfalls
 1. **Missing generated header include** - Always include `"ClassName.generated.h"` last
@@ -245,7 +271,7 @@ ToolMenus and UI command mapping are the current best practice for editor extens
 3. **Templates with UPROPERTY** - UHT has no serializer for complex templates
 4. **Missing Blueprint exposure** - Forgetting `BlueprintType` or `Blueprintable` when you need editor exposure
 
-Epic's programming overview and gameplay class guides detail these requirements.
+**Epic's programming overview and gameplay class guides detail these requirements.**
 
 ---
 
@@ -257,7 +283,7 @@ Choose the right type per use case:
 - **`FString`** for mutable text
 - **`FText`** for localized user-facing text
 
-Epic documents these choices clearly in their string handling guide.
+**Epic documents these choices clearly in their string handling guide.**
 
 ---
 
@@ -283,7 +309,7 @@ static FAutoConsoleCommand CmdMyOptRun(
     }));
 ```
 
-Use the Console Manager API and auto-registering types for commands. List and manage through the Console Variables Editor.
+**Use the Console Manager API and auto-registering types for commands.** List and manage through the Console Variables Editor.
 
 ---
 
@@ -308,7 +334,7 @@ public:
 };
 ```
 
-Subsystems give you automatic lifetime hooks scoped to engine, world, game instance, or editor.
+**Subsystems give you automatic lifetime hooks scoped to engine, world, game instance, or editor.**
 
 ---
 
@@ -340,11 +366,11 @@ void UMyOptEngineSubsystem::RunOptimizationPass()
 ### Important Warnings
 
 - **Do not touch or create UObjects off the game thread**
-- Use `FTSTicker` or latent actions if you must poll regularly
+- **Use `FTSTicker` or latent actions if you must poll regularly**
 
-For asset streaming, use Asset Manager async loads with soft references, which are designed for non-blocking behavior.
+**For asset streaming, use Asset Manager async loads with soft references, which are designed for non-blocking behavior.**
 
-For deeper profiling of tasks and work stealing, use Unreal Insights Task Graph view.
+**For deeper profiling of tasks and work stealing, use Unreal Insights Task Graph view.**
 
 ---
 
@@ -369,7 +395,7 @@ DECLARE_DWORD_COUNTER_STAT(TEXT("Actors Scanned"), STAT_MyOptActors, STATGROUP_M
 INC_DWORD_STAT_BY(STAT_MyOptActors, Actors.Num());
 ```
 
-Use your own log category and stat group so Insights can filter your data.
+**Use your own log category and stat group so Insights can filter your data.**
 
 ---
 
@@ -389,20 +415,20 @@ public:
 };
 ```
 
-Register in your editor module startup. The config system saves to `DefaultEngine.ini` or `DefaultGame.ini` depending on the category.
+**Register in your editor module startup.** The config system saves to `DefaultEngine.ini` or `DefaultGame.ini` depending on the category.
 
 ---
 
 ## 13. Performance Patterns for an Optimization Plugin
 
 ### Key Principles
-- Prefer soft object references and Asset Manager queues for data-heavy passes
-- Replace per-tick work with event-driven hooks, or schedule with `FTSTicker` and generous intervals
-- Avoid allocations in hot loops - use `reserve` on `TArray`, reuse small buffers, prefer `FName` for keys
-- Wrap expensive operations with scoped `QUICK_SCOPE_CYCLE_COUNTER` and verify in Insights under Stat and Task views
-- Provide CVars for every heavy feature so users can toggle and profile quickly: `myopt.Enabled`, `myopt.Verbose`, `myopt.MaxPerFrame`
+- **Prefer soft object references and Asset Manager queues for data-heavy passes**
+- **Replace per-tick work with event-driven hooks, or schedule with `FTSTicker` and generous intervals**
+- **Avoid allocations in hot loops** - use `reserve` on `TArray`, reuse small buffers, prefer `FName` for keys
+- **Wrap expensive operations with scoped `QUICK_SCOPE_CYCLE_COUNTER`** and verify in Insights under Stat and Task views
+- **Provide CVars for every heavy feature** so users can toggle and profile quickly: `myopt.Enabled`, `myopt.Verbose`, `myopt.MaxPerFrame`
 
-Epic provides the command line, console variables, and Insights references you will need.
+**Epic provides the command line, console variables, and Insights references you will need.**
 
 ---
 
@@ -418,16 +444,16 @@ RunUAT.bat BuildPlugin ^
  -Package="D:\Packages\MyOptimizationPlugin"
 ```
 
-This produces a redistributable folder with Binaries, Intermediate cleaned, and a cooked layout suited for Marketplace or manual distribution.
+**This produces a redistributable folder with Binaries, Intermediate cleaned, and a cooked layout suited for Marketplace or manual distribution.**
 
 ### Third-Party Library Inclusion
 
 Place third-party code under `Source/ThirdParty/<LibName>` with a dedicated `<LibName>.Build.cs` that sets:
-- `PublicIncludePaths`
-- `PublicAdditionalLibraries`
-- `RuntimeDependencies` for staged DLLs
+- **`PublicIncludePaths`**
+- **`PublicAdditionalLibraries`**
+- **`RuntimeDependencies` for staged DLLs**
 
-Prefer static where licensing allows, and ensure architecture-correct libs for Win64. Epic's third-party guide outlines patterns and staging rules.
+**Prefer static where licensing allows, and ensure architecture-correct libs for Win64.** Epic's third-party guide outlines patterns and staging rules.
 
 ---
 
@@ -443,7 +469,7 @@ If your agents must straddle minor versions, gate on engine version macros from 
 #endif
 ```
 
-Engine version components are exposed in `FEngineVersion` and macros for major, minor, patch are provided.
+**Engine version components are exposed in `FEngineVersion` and macros for major, minor, patch are provided.**
 
 ---
 
@@ -487,13 +513,13 @@ void UMyOptEngineSubsystem::RunOptimizationPass()
 }
 ```
 
-Uses Tasks for heavy work and marshals back to the game thread before touching actors.
+**Uses Tasks for heavy work and marshals back to the game thread before touching actors.**
 
 ### B. Editor Menu That Runs the Pass and Shows Counts
-Already provided in Section 5. Your command calls the subsystem method.
+**Already provided in Section 5.** Your command calls the subsystem method.
 
 ### C. CVars to Throttle Per-Frame Work
-Already provided in Section 8. Expose `myopt.MaxPerFrame` and read it inside your pass to limit work.
+**Already provided in Section 8.** Expose `myopt.MaxPerFrame` and read it inside your pass to limit work.
 
 ---
 
@@ -502,52 +528,52 @@ Already provided in Section 8. Expose `myopt.MaxPerFrame` and read it inside you
 ### Critical Issues to Avoid
 
 1. **Building editor-only features into runtime modules or shipping targets**
-   - Fix by splitting into an editor module and marking module types correctly
+   - **Fix by splitting into an editor module and marking module types correctly**
 
 2. **Touching UObjects or components from worker threads**
-   - Always marshal back to the game thread for any UObject ownership or mutation
-   - Use Tasks plus `AsyncTask` to switch threads
+   - **Always marshal back to the game thread for any UObject ownership or mutation**
+   - **Use Tasks plus `AsyncTask` to switch threads**
 
 3. **Missing generated include at the end of headers**
-   - Every reflected header must end with `#include "ClassName.generated.h"`
-   - That line must come last among includes
+   - **Every reflected header must end with `#include "ClassName.generated.h"`**
+   - **That line must come last among includes**
 
 4. **Overusing FString on hot paths instead of FName**
-   - Prefer FName for IDs and map keys
-   - Use FString only for mutable text or user output
+   - **Prefer FName for IDs and map keys**
+   - **Use FString only for mutable text or user output**
 
 5. **Dirty shutdown because you never unregistered commands or CVars**
-   - Unregister in `ShutdownModule` and avoid static lifetime surprises
+   - **Unregister in `ShutdownModule` and avoid static lifetime surprises**
 
 6. **Packaging fails because third-party DLLs are not staged**
-   - Add `RuntimeDependencies.Add` in your third-party Build.cs so files are copied for shipping
+   - **Add `RuntimeDependencies.Add` in your third-party Build.cs so files are copied for shipping**
 
 ---
 
 ## 18. Fast Reference Links Your Agents Will Reuse
 
 ### Essential Documentation
-- [Programming Overview and API Browser for 5.6](https://dev.epicgames.com/documentation/en-us/unreal-engine/programming-with-cplusplus-in-unreal-engine?application_version=5.6)
-- [Modules and Build Rules Guide](https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-modules)
-- [Editor Menus and Commands APIs](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Developer/ToolMenus/UToolMenus)
-- [Console Variables and Commands](https://dev.epicgames.com/documentation/en-us/unreal-engine/console-variables-cplusplus-in-unreal-engine)
-- [Tasks System Overview](https://dev.epicgames.com/documentation/en-us/unreal-engine/tasks-systems-in-unreal-engine)
-- [UHT and Reflection Basics](https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-header-tool-for-unreal-engine)
-- [Windows Setup and Requirements](https://dev.epicgames.com/documentation/en-us/unreal-engine/hardware-and-software-specifications-for-unreal-engine)
-- [Build Plugin with UAT](https://dev.epicgames.com/community/learning/tutorials/qz93/unreal-engine-building-plugins)
+- **[Programming Overview and API Browser for 5.6](https://dev.epicgames.com/documentation/en-us/unreal-engine/programming-with-cplusplus-in-unreal-engine?application_version=5.6)**
+- **[Modules and Build Rules Guide](https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-modules)**
+- **[Editor Menus and Commands APIs](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Developer/ToolMenus/UToolMenus)**
+- **[Console Variables and Commands](https://dev.epicgames.com/documentation/en-us/unreal-engine/console-variables-cplusplus-in-unreal-engine)**
+- **[Tasks System Overview](https://dev.epicgames.com/documentation/en-us/unreal-engine/tasks-systems-in-unreal-engine)**
+- **[UHT and Reflection Basics](https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-header-tool-for-unreal-engine)**
+- **[Windows Setup and Requirements](https://dev.epicgames.com/documentation/en-us/unreal-engine/hardware-and-software-specifications-for-unreal-engine)**
+- **[Build Plugin with UAT](https://dev.epicgames.com/community/learning/tutorials/qz93/unreal-engine-building-plugins)**
 
 ---
 
 ## 19. Style and Conventions That Keep Your Codebase Durable
 
 ### Coding Standards
-- Follow Epic's C++ standard for naming, formatting, and safety checks
-- This will save you from many subtle build and runtime issues
+- **Follow Epic's C++ standard for naming, formatting, and safety checks**
+- **This will save you from many subtle build and runtime issues**
 - [Epic C++ Coding Standard](https://dev.epicgames.com/documentation/en-us/unreal-engine/epic-cplusplus-coding-standard-for-unreal-engine)
 
 ### Asset Naming
-- Use asset and content naming guidance from Epic or established community guides
-- Keep user projects organized with consistent conventions
+- **Use asset and content naming guidance from Epic or established community guides**
+- **Keep user projects organized with consistent conventions**
 - [Recommended Asset Naming Conventions](https://dev.epicgames.com/documentation/en-us/unreal-engine/recommended-asset-naming-conventions-in-unreal-engine-projects)
 
 ---
@@ -563,4 +589,10 @@ Already provided in Section 8. Expose `myopt.MaxPerFrame` and read it inside you
 
 ---
 
-*This document provides a comprehensive guide for developing UE5.6 C++ optimization plugins on Windows, following Epic's best practices and avoiding common pitfalls.*
+## Summary
+
+This document provides a comprehensive guide for developing UE5.6 C++ optimization plugins on Windows, following Epic's best practices and avoiding common pitfalls. The guide covers everything from basic plugin structure to advanced performance patterns, ensuring your agents can build robust, maintainable optimization tools.
+
+---
+
+*For the most up-to-date information, always consult the official Epic Games Developers documentation.*
