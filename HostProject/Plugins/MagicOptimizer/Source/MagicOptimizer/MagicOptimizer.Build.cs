@@ -9,8 +9,21 @@ public class MagicOptimizer : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		bUseUnity = true;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "DeveloperSettings" });
-		PrivateDependencyModuleNames.AddRange(new string[] { "Json", "JsonUtilities", "Projects" });
+		PublicDependencyModuleNames.AddRange(new string[] { 
+			"Core", 
+			"CoreUObject", 
+			"Engine", 
+			"DeveloperSettings"
+			// UEngineSubsystem is part of the Engine module
+		});
+		
+		PrivateDependencyModuleNames.AddRange(new string[] { 
+			"Json", 
+			"JsonUtilities", 
+			"Projects"
+			// UE::Tasks and AsyncTask are part of the Core module
+		});
+		
 		// Do not add editor dependencies here
 	}
 }

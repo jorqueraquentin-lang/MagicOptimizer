@@ -5,8 +5,7 @@
 #include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
 #include "Widgets/Views/SHeaderRow.h"
-#include "Widgets/Views/STabView.h"
-#include "Widgets/Views/STabPanel.h"
+// TabView and TabPanel might not be available in UE5.6, using standard widgets instead
 #include "OptimizerSettings.h"
 #include "PythonBridge.h"
 #include "ViewModels/TextureModels.h"
@@ -66,8 +65,7 @@ protected:
 
 	// Tab management
 	EOptimizerTab CurrentTab = EOptimizerTab::Textures;
-	TSharedPtr<STabView<EOptimizerTab>> TabView;
-	TSharedPtr<STabPanel<EOptimizerTab>> TabPanel;
+	// Using standard Slate widgets instead of TabView/TabPanel
 
 	// Tab widgets
 	TSharedPtr<STexturesTab> TexturesTab;

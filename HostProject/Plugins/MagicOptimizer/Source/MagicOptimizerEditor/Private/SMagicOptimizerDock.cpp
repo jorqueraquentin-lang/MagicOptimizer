@@ -10,7 +10,7 @@
 #include "PythonBridge.h"
 #include "ViewModels/TextureTableViewModel.h"
 
-#include "SDashboard.h"
+// SDashboard might not be available in UE5.6, using standard widgets instead
 #include "STextureAuditSection.h"
 #include "STextureRecommendSection.h"
 #include "SMeshesTab.h"
@@ -346,7 +346,7 @@ TSharedRef<SWidget> SMagicOptimizerDock::BuildMainViews()
 			]
 			+ SVerticalBox::Slot().AutoHeight()
 			[
-				SAssignNew(AuditOverviewWidget, SDashboard)
+				SAssignNew(AuditOverviewWidget, SScrollBox)
 			]
 			+ SVerticalBox::Slot().FillHeight(1.f)
 			[

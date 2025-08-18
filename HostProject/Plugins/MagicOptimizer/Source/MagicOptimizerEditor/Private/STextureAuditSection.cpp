@@ -5,18 +5,17 @@
 #include "Widgets/Text/STextBlock.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SEditableTextBox.h"
-#include "Widgets/Layout/SVerticalBox.h"
-#include "Widgets/Layout/SHorizontalBox.h"
+#include "Widgets/SBoxPanel.h"
 #include "Widgets/Views/SListView.h"
 #include "Widgets/Views/STableRow.h"
 #include "Widgets/Layout/SExpandableArea.h"
-#include "CoreStyle.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "ContentBrowserModule.h"
 #include "IContentBrowserSingleton.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Services/Editor/ContentBrowserActions.h"
 #include "ViewModels/TextureTableViewModel.h"
+#include "MagicOptimizerLogging.h"
 
 void STextureAuditSection::Construct(const FArguments& InArgs)
 {
