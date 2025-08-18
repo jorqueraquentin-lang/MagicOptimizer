@@ -1,23 +1,5 @@
 # C++ Plugin Development in Unreal Engine 5.6 (Optimization Plugins for Windows)
 
-## Introduction
-
-This guide provides a comprehensive walkthrough of creating C++ optimization plugins in Unreal Engine 5.6, with a focus on the Windows platform. We will cover:
-
-- **Plugin Architecture** - Structure and module setup
-- **Build Configuration** - Module setup and dependencies
-- **API Exposure** - Reflection system and Blueprint integration
-- **Editor Integration** - Custom UI and editor extensions
-- **Runtime vs Editor-only** - Considerations and best practices
-- **Engine Subsystem Interfacing** - Integration with Unreal systems
-- **Code-level Optimization** - Performance techniques and best practices
-- **Cross-module Dependencies** - Managing plugin interactions
-- **Memory Management** - Best practices and profiling tools
-- **Stability & Compatibility** - Ensuring long-term reliability
-- **AI System Integration** - Automation and AI-friendly design
-
-All code examples and class references are up-to-date with UE 5.6's API documentation. By the end, you should be able to build a robust and efficient plugin that can integrate with both game runtime and editor, and even expose its functionality to AI systems or automation scripts.
-
 ---
 
 ## Table of Contents
