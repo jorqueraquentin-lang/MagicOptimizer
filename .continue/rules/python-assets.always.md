@@ -1,0 +1,198 @@
+
+# Python and Assets - Always Apply
+
+## 🐍 **Python Packaging Rules**
+
+### **Plugin-Shipped Python**
+```python
+# ✅ CORRECT: Plugin-shipped Python location
+<PluginContent>/Python/magic_optimizer/
+```
+
+### **Python Path Resolution**
+```cpp
+// ✅ CORRECT: Resolve via IPluginManager
+IPluginManager& PluginManager = IPluginManager::Get();
+TSharedPtr<IPlugin> Plugin = PluginManager.FindPlugin(TEXT("MagicOptimizer"));
+FString PythonPath = Plugin->GetContentDir() / TEXT("Python/magic_optimizer");
+
+// ❌ WRONG: Hardcoded engine paths
+FString PythonPath = TEXT("C:/Program Files/Epic Games/UE_5.6/Engine/...");
+```
+
+### **Python Module Self-Containment**
+```python
+# ✅ CORRECT: Self-contained modules
+from . import utils
+from . import io_csv
+from . import presets
+
+# ❌ WRONG: External dependencies
+import external_library  # Not available in packaged plugin
+```
+
+## 🎨 **Asset Classification Rules**
+
+### **NEVER Infer Types from Names**
+```cpp
+// ❌ WRONG: Infer type from filename
+if (AssetName.Contains(TEXT("_Normal"))) {
+    // Assume it's a normal map
+}
+
+// ✅ CORRECT: Inspect actual properties
+UTexture2D* Texture = Cast<UTexture2D>(Asset);
+if (Texture && Texture->CompressionSettings == TC_Normalmap) {
+    // It's actually a normal map
+}
+```
+
+### **Required Property Checks**
+```cpp
+// ✅ CORRECT: Check actual texture properties
+UTexture2D* Texture = Cast<UTexture2D>(Asset);
+if (Texture) {
+    // Check compression settings
+    TextureCompressionSettings Compression = Texture->CompressionSettings;
+    
+    // Check LOD group
+    TextureGroup LODGroup = Texture->LODGroup;
+    
+    // Check dimensions
+    int32 Width = Texture->GetSizeX();
+    int32 Height = Texture->GetSizeY();
+    
+    // Check power of two mode
+    bool bIsPowerOfTwo = Texture->IsPowerOfTwo();
+}
+```
+
+### **Asset Type Detection**
+```cpp
+// ✅ CORRECT: Check actual asset class
+if (UStaticMesh* Mesh = Cast<UStaticMesh>(Asset)) {
+    // It's actually a static mesh
+    int32 LODCount = Mesh->GetNumLODs();
+    bool bHasLightmapUVs = Mesh->GetLightMapCoordinateIndex() >= 0;
+    bool bIsNaniteEnabled = Mesh->IsNaniteEnabled();
+}
+
+// ❌ WRONG: Assume type from path
+if (AssetPath.Contains(TEXT("/Meshes/"))) {
+    // Assume it's a mesh
+}
+```
+
+## 🔍 **Asset Analysis Patterns**
+
+### **Texture Analysis**
+```cpp
+// ✅ CORRECT: Comprehensive texture analysis
+void AnalyzeTexture(UTexture2D* Texture) {
+    if (!Texture) return;
+    
+    // Basic properties
+    FString Name = Texture->GetName();
+    int32 Width = Texture->GetSizeX();
+    int32 Height = Texture->GetSizeY();
+    EPixelFormat Format = Texture->GetPixelFormat();
+    
+    // Compression settings
+    TextureCompressionSettings Compression = Texture->CompressionSettings;
+    TextureGroup LODGroup = Texture->LODGroup;
+    
+    // LOD settings
+    int32 MaxSize = Texture->GetMaxTextureSize();
+    bool bIsPowerOfTwo = Texture->IsPowerOfTwo();
+    
+    // Mip settings
+    bool bHasMips = Texture->GetNumMips() > 1;
+    int32 MipCount = Texture->GetNumMips();
+}
+```
+
+### **Mesh Analysis**
+```cpp
+// ✅ CORRECT: Comprehensive mesh analysis
+void AnalyzeMesh(UStaticMesh* Mesh) {
+    if (!Mesh) return;
+    
+    // LOD information
+    int32 LODCount = Mesh->GetNumLODs();
+    
+    // Lightmap settings
+    int32 LightmapCoordinateIndex = Mesh->GetLightMapCoordinateIndex();
+    bool bHasLightmapUVs = LightmapCoordinateIndex >= 0;
+    
+    // Nanite settings
+    bool bIsNaniteEnabled = Mesh->IsNaniteEnabled();
+    
+    // Collision settings
+    bool bHasCollision = Mesh->GetCollisionComplexity() != ECollisionTraceFlag::CTF_UseDefault;
+    
+    // LOD settings
+    float ScreenSize = Mesh->GetMinimumScreenSize();
+}
+```
+
+## 📦 **Asset Packaging Considerations**
+
+### **Content Filtering**
+```ini
+# ✅ CORRECT: FilterPlugin.ini excludes dev content
+[Content]
++Paths=Content/Python
++Paths=Content/Textures
+-Paths=Content/DevOnly
+-Paths=Content/Tests
+-Paths=Content/Debug
+```
+
+### **Python Module Packaging**
+```cpp
+// ✅ CORRECT: Include Python modules in package
+TArray<FString> PythonModules = {
+    TEXT("magic_optimizer"),
+    TEXT("magic_optimizer.utils"),
+    TEXT("magic_optimizer.io_csv"),
+    TEXT("magic_optimizer.presets"),
+    TEXT("magic_optimizer.textures")
+};
+
+// ❌ WRONG: Exclude Python from package
+// Python modules won't be available to users
+```
+
+## ⚠️ **Common Asset Mistakes**
+
+### **Type Assumption Errors**
+```cpp
+// ❌ SYMPTOM: "Asset not found" errors
+// ❌ CAUSE: Assuming asset type from path or name
+// ✅ SOLUTION: Check actual asset class and properties
+
+// ❌ SYMPTOM: Incorrect optimization applied
+// ❌ CAUSE: Wrong asset type classification
+// ✅ SOLUTION: Verify asset properties before processing
+```
+
+### **Path Hardcoding**
+```cpp
+// ❌ SYMPTOM: Plugin breaks on different machines
+// ❌ CAUSE: Hardcoded paths to engine or project
+// ✅ SOLUTION: Use IPluginManager and relative paths
+```
+
+## 🎯 **Success Metrics**
+
+- ✅ **Python modules self-contained** and packageable
+- ✅ **Asset types correctly identified** through properties
+- ✅ **No hardcoded paths** in code
+- ✅ **Plugin-shipped Python** works in packaged plugin
+- ✅ **Asset analysis accurate** and reliable
+- ✅ **Content filtering** excludes dev-only content
+- ✅ **Python path resolution** works across environments
+description: Python and asset handling rules that ensure proper asset type detection, Python packaging, and content filtering for the MagicOptimizer UE5 plugin.
+globs: ["**/*.cpp", "**/*.h", "**/*.py", "**/*.ini", "**/*.uasset"]
+alwaysApply: true
+---
