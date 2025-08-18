@@ -48,12 +48,67 @@ UE5 plugins often have multiple DLLs that MUST be rebuilt together:
 // Check build timestamps match across all plugin DLLs
 ```
 
+### **Development Build Process (PRIMARY WORKFLOW)**
+```bash
+# ✅ CORRECT: Direct plugin development workflow
+1. Regenerate project files in UE5.6
+2. Build plugin directly in HostProject/Plugins/MagicOptimizer/
+3. Test immediately in editor
+4. Iterate and test again
+```
+
+**When to Use Development Build:**
+- ✅ **During active development** and feature implementation
+- ✅ **When testing changes** and debugging
+- ✅ **For immediate validation** of modifications
+- ✅ **Following "baby steps and testing"** philosophy
+
+### **Project File Regeneration Requirements**
+```bash
+# MANDATORY: Regenerate project files when:
+1. Plugin modules added/removed/modified
+2. .uplugin file changes
+3. Build.cs dependencies modified
+4. After major structural changes
+5. When switching between development branches
+```
+
+**Regeneration Process:**
+1. **Open HostProject.uproject** in UE5.6
+2. **Choose "Yes"** to regenerate project files
+3. **Wait for completion** - Visual Studio solution will be generated
+4. **Verify solution** contains all plugin modules
+
+### **Direct Plugin Build Steps**
+```bash
+# Complete Development Build Process:
+1. Open HostProject.sln in Visual Studio 2022
+2. Build Solution (Build → Build Solution)
+3. Target: Development Editor | Win64
+4. Verify plugin DLLs generated in:
+   - HostProject/Plugins/MagicOptimizer/Binaries/Win64/
+   - Should contain MagicOptimizer.dll and MagicOptimizerEditor.dll
+5. Test plugin in UE5.6 Editor
+```
+
 ### **Build Rules**
-1. **Use `Scripts/PackagePlugin.ps1`** as canonical entrypoint
+1. **Use direct development build** for all development work
 2. **Regenerate project files** when descriptor or modules change
 3. **Windows baseline**: Visual Studio 2022 + current Windows SDK
-4. **Package with `-NoHostPlatform`** to avoid host rules scans
-5. **Clean Binaries/Intermediate** before packaging
+4. **Clean Binaries/Intermediate** before major rebuilds
+5. **Verify all plugin DLLs** rebuilt together
+
+### **Distribution Build (ONLY for Distribution)**
+```bash
+# Use packaging script ONLY for distribution:
+Scripts/PackagePlugin.ps1 -EngineRoot "C:\Path\To\UE5.6" -Clean -NoHostPlatform
+```
+
+**When to Use Distribution Build:**
+- ✅ **Creating plugin packages** for distribution
+- ✅ **Testing packaged plugin** in fresh projects
+- ✅ **Preparing releases** for marketplace or distribution
+- ❌ **NOT for development** or testing changes
 
 ## 📝 **Coding Standards**
 
@@ -91,6 +146,21 @@ void MyFunction(); // Won't export properly
 
 *Note: Detailed build pitfalls and common issues are defined in `build-packaging.always.mdc` to avoid duplication.*
 
+### **Development Build Pitfalls**
+```cpp
+// ❌ SYMPTOM: Plugin DLLs not generated in development location
+// ❌ CAUSE: Using packaging script for development
+// ✅ SOLUTION: Use direct development build workflow
+
+// ❌ SYMPTOM: Project files not regenerated after module changes
+// ❌ CAUSE: Skipping project file regeneration
+// ✅ SOLUTION: Always regenerate when modules change
+
+// ❌ SYMPTOM: Plugin not appearing in editor after build
+// ❌ CAUSE: Build failed or DLLs not in correct location
+// ✅ SOLUTION: Verify build success and DLL location
+```
+
 ## 🎯 **Success Metrics**
 
 - ✅ **All plugin DLLs rebuilt** together
@@ -99,6 +169,9 @@ void MyFunction(); // Won't export properly
 - ✅ **Existing code style maintained**
 - ✅ **Non-destructive change principles** followed
 - ✅ **UE5.6.1 constraints** respected
+- ✅ **Development build workflow** used for development
+- ✅ **Project files regenerated** when needed
+- ✅ **Plugin loads in editor** after build
 
 ## 🛡️ **Non-Destructive Change Policy - CRITICAL**
 
@@ -128,7 +201,24 @@ void MyFunction(); // Won't export properly
 - ✅ Fix lifecycle or threading issues without changing public contracts
 - ✅ Gate new code with compile or runtime flags that default to current behavior
 
-description: UE 5.6.1 plugin builder rules that enforce proper plugin architecture, build processes, development standards, and non-destructive change principles for the MagicOptimizer UE5 plugin project.
+## 🔄 **Build Workflow Integration**
+
+### **Development Session Build Flow**
+1. **Start Session**: Ensure clean development environment
+2. **Regenerate Files**: Regenerate project files if needed
+3. **Make Changes**: Implement features following "baby steps and testing"
+4. **Build Plugin**: Use direct development build workflow
+5. **Test Changes**: Test immediately in editor
+6. **Iterate**: Continue development cycle
+7. **Package When Ready**: Use packaging script only for distribution
+
+### **Integration with Other Rules**
+- **Build & Packaging**: Development build workflow integrated
+- **Development Workflow**: Build process included in development cycle
+- **Testing & CI**: Build validation included in testing process
+- **Project Sanity Check**: Build status included in regular checks
+
+description: UE 5.6.1 plugin builder rules that enforce proper plugin architecture, development build processes, project file regeneration, canonical development location, and non-destructive change principles for the MagicOptimizer UE5 plugin project.
 globs: ["**/*.cpp", "**/*.h", "**/*.md", "**/*.py", "**/*.uplugin", "**/*.uproject"]
 alwaysApply: true
 ---
