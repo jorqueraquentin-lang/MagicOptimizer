@@ -20,6 +20,7 @@ $ErrorActionPreference = "Stop"
 # Paths
 $RepoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path | Split-Path -Parent
 $DevLog = Join-Path $RepoRoot "docs/DEVELOPMENT_LOG.md"
+$SanityChecksFolder = Join-Path $RepoRoot "docs/sanity_checks"
 $LastCheckFile = Join-Path $RepoRoot "tools/.last_sanity_check"
 
 # Colors for output
@@ -81,9 +82,30 @@ function Get-DevLogLastCheck {
     return $null
 }
 
+function Get-SanityChecksFolderLastCheck {
+    if (Test-Path $SanityChecksFolder) {
+        $files = Get-ChildItem -Path $SanityChecksFolder -Filter "sanity_check_*.md" | Sort-Object LastWriteTime -Descending
+        if ($files.Count -gt 0) {
+            $lastFile = $files[0]
+            $filename = $lastFile.Name
+            $match = [regex]::Match($filename, "sanity_check_(\d{4})_(\d{2})_(\d{2})_(\d{2})(\d{2})")
+            if ($match.Success) {
+                try {
+                    $dateStr = "$($match.Groups[1].Value)-$($match.Groups[2].Value)-$($match.Groups[3].Value) $($match.Groups[4].Value):$($match.Groups[5].Value)"
+                    return [DateTime]::Parse($dateStr)
+                } catch {
+                    return $null
+                }
+            }
+        }
+    }
+    return $null
+}
+
 function Show-SanityCheckStatus {
     $lastCheck = Get-LastSanityCheck
     $lastLogCheck = Get-DevLogLastCheck
+    $lastSanityCheckFile = Get-SanityChecksFolderLastCheck
     $now = Get-Date
     
     Write-ColorOutput "`nPROJECT SANITY CHECK STATUS" $Cyan
@@ -129,10 +151,17 @@ function Show-SanityCheckStatus {
         Write-ColorOutput "`nLast Logged Check: NOT FOUND IN DEV LOG" $Red
     }
     
+    if ($lastSanityCheckFile) {
+        Write-ColorOutput "Last Sanity Check File: $($lastSanityCheckFile.ToString('yyyy-MM-dd HH:mm:ss'))" $White
+    } else {
+        Write-ColorOutput "Last Sanity Check File: NOT FOUND IN SANITY_CHECKS FOLDER" $Red
+    }
+    
     Write-ColorOutput "`nNEXT ACTIONS:" $Cyan
     Write-ColorOutput "1. Perform sanity check if overdue" $White
-    Write-ColorOutput "2. Log results in docs/DEVELOPMENT_LOG.md" $White
-    Write-ColorOutput "3. Update project priorities based on findings" $White
+    Write-ColorOutput "2. Create timestamped file in docs/sanity_checks/ folder" $White
+    Write-ColorOutput "3. Add summary entry to docs/DEVELOPMENT_LOG.md" $White
+    Write-ColorOutput "4. Update project priorities based on findings" $White
 }
 
 function Start-SanityCheck {
@@ -159,14 +188,16 @@ function Start-SanityCheck {
     Write-ColorOutput "- Update development priorities if needed" $White
     
     Write-ColorOutput "`nLOGGING (2-3 minutes):" $Yellow
+    Write-ColorOutput "- Create timestamped file in docs/sanity_checks/ folder" $White
     Write-ColorOutput "- Document the sanity check results" $White
-    Write-ColorOutput "- Update the development log" $White
-    Write-ColorOutput "- Commit the log entry to version control" $White
+    Write-ColorOutput "- Add summary entry to docs/DEVELOPMENT_LOG.md" $White
+    Write-ColorOutput "- Commit both files to version control" $White
     
     Write-ColorOutput "`nCOMPLETE THE CHECK:" $Green
     Write-ColorOutput "1. Follow the workflow above" $White
-    Write-ColorOutput "2. Log results in docs/DEVELOPMENT_LOG.md" $White
-    Write-ColorOutput "3. Run this script again to mark as complete" $White
+    Write-ColorOutput "2. Create timestamped file in docs/sanity_checks/ folder" $White
+    Write-ColorOutput "3. Add summary entry to docs/DEVELOPMENT_LOG.md" $White
+    Write-ColorOutput "4. Run this script again to mark as complete" $White
     
     Write-ColorOutput "`nTIP: Use the format from .cursor/rules/project-sanity-check.always.mdc" $Cyan
 }
@@ -183,9 +214,10 @@ function Complete-SanityCheck {
     Write-ColorOutput "=================================" $Green
     
     Write-ColorOutput "`nREMINDER:" $Yellow
-    Write-ColorOutput "- Log your results in docs/DEVELOPMENT_LOG.md" $White
+    Write-ColorOutput "- Create timestamped file in docs/sanity_checks/ folder" $White
+    Write-ColorOutput "- Add summary entry to docs/DEVELOPMENT_LOG.md" $White
     Write-ColorOutput "- Use the standard format from the rules" $White
-    Write-ColorOutput "- Commit your log entry to version control" $White
+    Write-ColorOutput "- Commit both files to version control" $White
     
     Write-ColorOutput "`nNext check due:" $Cyan
     switch ($CheckType) {
@@ -242,12 +274,13 @@ if ($ShowStatus) {
     Write-ColorOutput "  .\sanity_check_reminder.ps1 -Monthly        # Start monthly sanity check" $White
     
     Write-ColorOutput "`nFREQUENCY:" $Yellow
-    Write-ColorOutput "  Daily: Every development session (5-10 minutes)" $White
+    Write-ColorOutput "  Daily: MANDATORY - Every calendar day (5-10 minutes)" $White
     Write-ColorOutput "  Weekly: Every 7 days (15-30 minutes)" $White
     Write-ColorOutput "  Monthly: Every 30 days (30-60 minutes)" $White
     
     Write-ColorOutput "`nLOGGING:" $Yellow
-    Write-ColorOutput "  All sanity checks must be logged in docs/DEVELOPMENT_LOG.md" $White
+    Write-ColorOutput "  Daily checks: Create timestamped file in docs/sanity_checks/ folder" $White
+    Write-ColorOutput "  All checks: Add summary entry to docs/DEVELOPMENT_LOG.md" $White
     Write-ColorOutput "  Use the format from .cursor/rules/project-sanity-check.always.mdc" $White
     
     Write-ColorOutput "`nTIP: Run -Check to see if you're due for a sanity check!" $Cyan

@@ -4,12 +4,10 @@
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Text/STextBlock.h"
 #include "Widgets/Input/SButton.h"
-#include "Widgets/Layout/SVerticalBox.h"
-#include "Widgets/Layout/SHorizontalBox.h"
+#include "Widgets/SBoxPanel.h"
 #include "Widgets/Views/SListView.h"
 #include "Widgets/Views/STableRow.h"
 #include "Widgets/Layout/SExpandableArea.h"
-#include "CoreStyle.h"
 
 void STextureRecommendSection::Construct(const FArguments& InArgs)
 {

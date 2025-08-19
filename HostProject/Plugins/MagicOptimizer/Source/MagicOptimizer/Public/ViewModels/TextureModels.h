@@ -4,6 +4,16 @@
 
 #include "CoreMinimal.h"
 
+// Texture sort column enum
+UENUM(BlueprintType)
+enum class ETextureSortColumn : uint8
+{
+	Path UMETA(DisplayName = "Path"),
+	Width UMETA(DisplayName = "Width"),
+	Height UMETA(DisplayName = "Height"),
+	Format UMETA(DisplayName = "Format")
+};
+
 // Texture audit row
 typedef TSharedPtr<struct FTextureAuditRow> FTextureAuditRowPtr;
 

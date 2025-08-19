@@ -76,7 +76,6 @@ protected:
 	FString FormatFilter;
 	
 	// Sort state (now managed by ViewModel, kept for UI binding)
-	enum class ETextureSortColumn { Path, Width, Height, Format };
 	ETextureSortColumn CurrentSortColumn = ETextureSortColumn::Path;
 	bool bSortAscending = true;
 
@@ -88,9 +87,6 @@ protected:
 	
 	// Filter handlers
 	void OnFilterTextChanged(const FText& NewText);
-	void OnMinWidthChanged(const FText& NewText);
-	void OnMinHeightChanged(const FText& NewText);
-	void OnFormatFilterChanged(const FText& NewText);
 	FReply OnClearFilters();
 	
 	// Helper methods
