@@ -7,6 +7,9 @@
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/SWidget.h"
 
+// Custom log category for MagicOptimizer
+DECLARE_LOG_CATEGORY_EXTERN(LogMagicOptimizer, Log, All);
+
 /**
  * Magic Optimizer Plugin Module
  * 
@@ -35,6 +38,7 @@ private:
     void AddToolbarButton(FToolBarBuilder& Builder);
     void RegisterMenus();
     TSharedRef<SDockTab> OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs);
+    void OpenSettings();
 
     TSharedPtr<class FUICommandList> PluginCommands;
     TSharedPtr<SDockTab> MagicOptimizerTab;

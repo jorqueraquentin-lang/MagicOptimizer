@@ -13,11 +13,16 @@
 #include "Engine/Engine.h"
 #include "HAL/IConsoleManager.h"
 #include "Framework/MultiBox/MultiBoxExtender.h"
+#include "OptimizerSettings.h"
+#include "MagicOptimizerDiagnostics.h"
 #include "HAL/PlatformFilemanager.h"
 #include "Misc/App.h"
 #include "ISettingsModule.h"
 
 #define LOCTEXT_NAMESPACE "FMagicOptimizerModule"
+
+// Define the custom log category
+DEFINE_LOG_CATEGORY(LogMagicOptimizer);
 
 static const FName MagicOptimizerTabName("MagicOptimizer");
 
@@ -42,15 +47,19 @@ static FAutoConsoleCommand TestMagicOptimizerCmd(
 
 void FMagicOptimizerModule::StartupModule()
 {
+    // Initialize diagnostics system first
+    FMagicOptimizerDiagnostics::Initialize();
+    
     // This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
-    UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Module started successfully"));
+    MAGIC_LOG(General, TEXT("Module started successfully"));
+    MAGIC_LOG_SCREEN(General, TEXT("MagicOptimizer Plugin Loaded"), 5.0f);
     
     // CRITICAL: Settings are automatically registered by UDeveloperSettings
     // DO NOT manually register them to prevent duplicate settings windows
     // This is the ONLY way to ensure single settings registration
     
-    UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Settings auto-registration enabled via UDeveloperSettings"));
-    UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: NO manual settings registration - preventing duplicates"));
+    MAGIC_LOG(Settings, TEXT("Settings auto-registration enabled via UDeveloperSettings"));
+    MAGIC_LOG(Settings, TEXT("NO manual settings registration - preventing duplicates"));
     
     // Register the tab first
     UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Registering tab spawner"));
@@ -80,11 +89,14 @@ void FMagicOptimizerModule::ShutdownModule()
     // CRITICAL: Settings are automatically unregistered by UDeveloperSettings
     // DO NOT manually unregister them to prevent conflicts
     
-    UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Settings auto-unregistration enabled via UDeveloperSettings"));
-    UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Module shutdown successfully"));
+    MAGIC_LOG(Settings, TEXT("Settings auto-unregistration enabled via UDeveloperSettings"));
+    MAGIC_LOG(General, TEXT("Module shutdown successfully"));
     
     // Unregister UI components
     FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(MagicOptimizerTabName);
+    
+    // Shutdown diagnostics system
+    FMagicOptimizerDiagnostics::Shutdown();
 }
 
 void FMagicOptimizerModule::PluginButtonClicked()
@@ -111,6 +123,51 @@ void FMagicOptimizerModule::AddToolbarButton(FToolBarBuilder& Builder)
         LOCTEXT("MagicOptimizerToolbarButtonTooltip", "Open the Magic Optimizer window"),
         FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Toolbar.Play")
     );
+}
+
+void FMagicOptimizerModule::OpenSettings()
+{
+    MAGIC_LOG(Settings, TEXT("Opening settings..."));
+    MAGIC_LOG_PERF_START(TEXT("OpenSettings"));
+    
+    if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
+    {
+        MAGIC_LOG(Settings, TEXT("Settings module found, attempting to open viewer"));
+        
+        // Try to open the settings viewer
+        MAGIC_LOG(Settings, TEXT("Attempting to open Magic Optimizer settings"));
+        SettingsModule->ShowViewer("Project", "Plugins", "Magic Optimizer");
+        MAGIC_LOG(Settings, TEXT("Settings viewer command executed"));
+        
+        // Note: ShowViewer returns void, so we can't check success/failure directly
+        // The settings should open if the plugin is properly registered
+    }
+    else
+    {
+        MAGIC_LOG_ERROR(TEXT("Settings module not found! Cannot open settings"), TEXT("OpenSettings"));
+    }
+    
+    // Verify settings object exists
+    if (UOptimizerSettings* Settings = GetMutableDefault<UOptimizerSettings>())
+    {
+        MAGIC_LOG(Settings, FString::Printf(TEXT("Settings object verified - DefaultProfile: %s, MaxAssetsPerBatch: %d"), 
+               *Settings->DefaultProfile, Settings->MaxAssetsPerBatch));
+        
+        // Log detailed settings state
+        FMagicOptimizerDiagnostics::LogSettingsState();
+        
+        // Validate settings
+        FMagicOptimizerDiagnostics::ValidateSettings();
+    }
+    else
+    {
+        MAGIC_LOG_ERROR(TEXT("Settings object not found! This indicates a registration issue"), TEXT("OpenSettings"));
+    }
+    
+    // Log memory usage after operation
+    FMagicOptimizerDiagnostics::LogMemoryUsage(TEXT("After Settings Open"));
+    
+    MAGIC_LOG_PERF_END(TEXT("OpenSettings"));
 }
 
 void FMagicOptimizerModule::RegisterMenus()
@@ -213,7 +270,24 @@ TSharedRef<SDockTab> FMagicOptimizerModule::OnSpawnPluginTab(const FSpawnTabArgs
                     .Text(LOCTEXT("RunAuditButtonText", "🔍 Run Asset Audit"))
                     .OnClicked_Lambda([this]()
                     {
-                        UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Asset Audit button clicked"));
+                        MAGIC_LOG(UI, TEXT("Asset Audit button clicked"));
+                        MAGIC_LOG_PERF_START(TEXT("AssetAuditButtonClick"));
+                        
+                        // Log UI state
+                        FMagicOptimizerDiagnostics::LogButtonClick(TEXT("Asset Audit"), true);
+                        FMagicOptimizerDiagnostics::LogUIState(TEXT("Asset Audit Button"), TEXT("Clicked"));
+                        
+                        // Log current settings for context
+                        FMagicOptimizerDiagnostics::LogSettingsState();
+                        
+                        // Log memory usage before operation
+                        FMagicOptimizerDiagnostics::LogMemoryUsage(TEXT("Before Asset Audit"));
+                        
+                        // TODO: Implement actual asset audit functionality
+                        MAGIC_LOG(AssetProcessing, TEXT("Asset audit functionality not yet implemented"));
+                        MAGIC_LOG_SCREEN(Info, TEXT("Asset Audit: Feature coming soon!"), 3.0f);
+                        
+                        MAGIC_LOG_PERF_END(TEXT("AssetAuditButtonClick"));
                         return FReply::Handled();
                     })
                     .HAlign(HAlign_Center)
@@ -228,12 +302,48 @@ TSharedRef<SDockTab> FMagicOptimizerModule::OnSpawnPluginTab(const FSpawnTabArgs
                     .Text(LOCTEXT("ViewSettingsButtonText", "⚙️ View Settings"))
                     .OnClicked_Lambda([this]()
                     {
-                        UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: View Settings button clicked"));
-                        // Open project settings to Magic Optimizer section
-                        if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
-                        {
-                            SettingsModule->ShowViewer("Project", "Plugins", "Magic Optimizer");
-                        }
+                        MAGIC_LOG(UI, TEXT("View Settings button clicked"));
+                        MAGIC_LOG_PERF_START(TEXT("ViewSettingsButtonClick"));
+                        
+                        // Log UI state
+                        FMagicOptimizerDiagnostics::LogButtonClick(TEXT("View Settings"), true);
+                        FMagicOptimizerDiagnostics::LogUIState(TEXT("View Settings Button"), TEXT("Clicked"));
+                        
+                        // Log memory usage before operation
+                        FMagicOptimizerDiagnostics::LogMemoryUsage(TEXT("Before Settings Open"));
+                        
+                        // Open settings with enhanced logging
+                        OpenSettings();
+                        
+                        MAGIC_LOG_PERF_END(TEXT("ViewSettingsButtonClick"));
+                        return FReply::Handled();
+                    })
+                    .HAlign(HAlign_Center)
+                    .VAlign(VAlign_Center)
+                ]
+                + SScrollBox::Slot()
+                .HAlign(HAlign_Fill)
+                .VAlign(VAlign_Top)
+                .Padding(20)
+                [
+                    SNew(SButton)
+                    .Text(LOCTEXT("DiagnosticsButtonText", "🔧 Generate Diagnostic Report"))
+                    .OnClicked_Lambda([this]()
+                    {
+                        MAGIC_LOG(UI, TEXT("Diagnostics button clicked"));
+                        MAGIC_LOG_PERF_START(TEXT("DiagnosticsButtonClick"));
+                        
+                        // Log UI state
+                        FMagicOptimizerDiagnostics::LogButtonClick(TEXT("Diagnostics"), true);
+                        FMagicOptimizerDiagnostics::LogUIState(TEXT("Diagnostics Button"), TEXT("Clicked"));
+                        
+                        // Generate comprehensive diagnostic report
+                        FMagicOptimizerDiagnostics::GenerateDiagnosticReport();
+                        
+                        // Show success message
+                        MAGIC_LOG_SCREEN(Info, TEXT("Diagnostic report generated successfully!"), 5.0f);
+                        
+                        MAGIC_LOG_PERF_END(TEXT("DiagnosticsButtonClick"));
                         return FReply::Handled();
                     })
                     .HAlign(HAlign_Center)

@@ -277,6 +277,14 @@ if ($shouldFail) {
   exit 1
 }
 
+# Generate enhanced CI summary
+try {
+  & (Join-Path $RepoRoot "tools\generate_ci_summary.ps1") -CiOutputDir $CiOut -Phase $Phase -Profile $Profile
+  Write-Host "✅ Enhanced CI summary generated" -ForegroundColor Green
+} catch {
+  Write-Warning "Failed to generate enhanced summary: $_"
+}
+
 # Optionally open Windows Explorer to the artifacts folder for convenience
 try {
   if ($OpenExplorer) {

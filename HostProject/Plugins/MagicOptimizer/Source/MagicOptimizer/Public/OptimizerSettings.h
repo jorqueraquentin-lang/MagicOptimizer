@@ -82,4 +82,8 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Magic Optimizer")
     void LoadSettings();
+
+protected:
+    // Input validation and property change handling
+    virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 };
