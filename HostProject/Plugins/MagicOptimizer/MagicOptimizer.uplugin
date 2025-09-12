@@ -1,0 +1,25 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "Magic Optimizer",
+	"Description": "Comprehensive asset optimization plugin for UE5.6",
+	"Category": "Perseus XR",
+	"CreatedBy": "Perseus XR PTY LTD",
+	"CreatedByURL": "https://perseusxr.com",
+	"DocsURL": "https://github.com/jorqueraquentin-lang/MagicOptimizer",
+	"SupportURL": "https://github.com/jorqueraquentin-lang/MagicOptimizer/issues",
+	"CanContainContent": false,
+	"IsBetaVersion": true,
+	"IsExperimentalVersion": false,
+	"Installed": true,
+	"EnabledByDefault": true,
+	"Modules": [
+		{
+			"Name": "MagicOptimizer",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
+		}
+	],
+	"MarketplaceURL": ""
+}

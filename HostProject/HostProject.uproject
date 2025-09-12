@@ -12,6 +12,10 @@
 	],
 	"Plugins": [
 		{
+			"Name": "PluginBrowser",
+			"Enabled": true
+		},
+		{
 			"Name": "ModelingToolsEditorMode",
 			"Enabled": true,
 			"TargetAllowList": [
@@ -25,6 +29,13 @@
 		{
 			"Name": "PythonAutomationTest",
 			"Enabled": true
+		},
+		{
+			"Name": "MagicOptimizer",
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
 		}
 	]
 }
