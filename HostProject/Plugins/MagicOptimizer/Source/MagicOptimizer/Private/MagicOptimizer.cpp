@@ -15,6 +15,7 @@
 #include "Framework/MultiBox/MultiBoxExtender.h"
 #include "OptimizerSettings.h"
 #include "MagicOptimizerDiagnostics.h"
+#include "MagicOptimizerAuditManager.h"
 #include "HAL/PlatformFilemanager.h"
 #include "Misc/App.h"
 #include "ISettingsModule.h"
@@ -49,6 +50,9 @@ void FMagicOptimizerModule::StartupModule()
 {
     // Initialize diagnostics system first
     FMagicOptimizerDiagnostics::Initialize();
+    
+    // Initialize audit system
+    UMagicOptimizerAuditManager::Initialize();
     
     // This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
     MAGIC_LOG(General, TEXT("Module started successfully"));
@@ -94,6 +98,9 @@ void FMagicOptimizerModule::ShutdownModule()
     
     // Unregister UI components
     FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(MagicOptimizerTabName);
+    
+    // Shutdown audit system
+    UMagicOptimizerAuditManager::Shutdown();
     
     // Shutdown diagnostics system
     FMagicOptimizerDiagnostics::Shutdown();
@@ -283,9 +290,23 @@ TSharedRef<SDockTab> FMagicOptimizerModule::OnSpawnPluginTab(const FSpawnTabArgs
                         // Log memory usage before operation
                         FMagicOptimizerDiagnostics::LogMemoryUsage(TEXT("Before Asset Audit"));
                         
-                        // TODO: Implement actual asset audit functionality
-                        MAGIC_LOG(AssetProcessing, TEXT("Asset audit functionality not yet implemented"));
-                        MAGIC_LOG_SCREEN(Info, TEXT("Asset Audit: Feature coming soon!"), 3.0f);
+                        // Start asset audit
+                        FAuditConfig Config;
+                        Config.TargetPlatform = TEXT("WindowsEditor");
+                        Config.QualityLevel = EQualityLevel::High;
+                        Config.bDryRunMode = true;
+                        Config.bGenerateReports = true;
+                        
+                        if (UMagicOptimizerAuditManager::StartAssetAudit(Config))
+                        {
+                            MAGIC_LOG(AssetProcessing, TEXT("Asset audit started successfully"));
+                            MAGIC_LOG_SCREEN(Info, TEXT("Asset Audit: Started successfully!"), 3.0f);
+                        }
+                        else
+                        {
+                            MAGIC_LOG_ERROR(TEXT("Failed to start asset audit"), TEXT("AssetAuditButtonClick"));
+                            MAGIC_LOG_SCREEN(Error, TEXT("Asset Audit: Failed to start!"), 5.0f);
+                        }
                         
                         MAGIC_LOG_PERF_END(TEXT("AssetAuditButtonClick"));
                         return FReply::Handled();
