@@ -31,7 +31,15 @@ public class MagicOptimizer : ModuleRules
                     "EditorStyle",
                     "EditorWidgets",
                     "ToolMenus",
-                    "LevelEditor"
+                    "LevelEditor",
+                    "UMG",
+                    "UMGEditor",
+                    "BlueprintGraph",
+                    "KismetCompiler",
+                    "UnrealEd",
+                    "PropertyEditor",
+                    "DetailCustomizations",
+                    "EditorWidgets"
                 }
             );
         }

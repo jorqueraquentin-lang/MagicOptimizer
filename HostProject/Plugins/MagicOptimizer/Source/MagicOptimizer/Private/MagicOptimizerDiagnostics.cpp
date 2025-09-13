@@ -137,9 +137,21 @@ void FMagicOptimizerDiagnostics::EndPerformanceTimer(const FString& OperationNam
         // Log memory usage change
         uint64 CurrentMemory = GetCurrentMemoryUsage();
         int64 MemoryDelta = (int64)CurrentMemory - (int64)Metrics->MemoryUsage;
+        
+        // Format memory delta properly (handle negative values)
+        FString MemoryDeltaStr;
+        if (MemoryDelta >= 0)
+        {
+            MemoryDeltaStr = FormatMemorySize((uint64)MemoryDelta);
+        }
+        else
+        {
+            MemoryDeltaStr = FString::Printf(TEXT("-%s"), *FormatMemorySize((uint64)(-MemoryDelta)));
+        }
+        
         LogMessage(EDiagnosticCategory::Memory, 
             FString::Printf(TEXT("Memory delta for %s: %s"), 
-                *OperationName, *FormatMemorySize(MemoryDelta)));
+                *OperationName, *MemoryDeltaStr));
     }
     else
     {

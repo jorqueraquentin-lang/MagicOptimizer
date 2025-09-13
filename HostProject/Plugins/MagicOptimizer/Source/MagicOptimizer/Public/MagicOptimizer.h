@@ -13,6 +13,9 @@ DECLARE_LOG_CATEGORY_EXTERN(LogMagicOptimizer, Log, All);
 /**
  * Magic Optimizer Plugin Module
  * 
+ * Developed by Perseus XR PTY LTD
+ * Website: https://perseusxr.com
+ * 
  * CRITICAL DESIGN PRINCIPLES TO PREVENT DUPLICATE SETTINGS:
  * 1. NEVER manually register settings - let UDeveloperSettings handle it automatically
  * 2. NEVER use ISettingsModule directly in plugin code
