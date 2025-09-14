@@ -28,18 +28,38 @@ public class MagicOptimizer : ModuleRules
                     "Settings",
                     "Slate",
                     "SlateCore",
+                    "SlateRHIRenderer",
                     "EditorStyle",
                     "EditorWidgets",
                     "ToolMenus",
                     "LevelEditor",
                     "UMG",
                     "UMGEditor",
-                    "BlueprintGraph",
-                    "KismetCompiler",
-                    "UnrealEd",
                     "PropertyEditor",
-                    "DetailCustomizations",
-                    "EditorWidgets"
+                    "WorkspaceMenuStructure",
+                    "ContentBrowser",
+                    "MainFrame",
+                    "AppFramework",
+                    "ToolWidgets",
+                    "DesktopPlatform"
+                }
+            );
+
+            PrivateDependencyModuleNames.AddRange(
+                new string[]
+                {
+                    "InputCore",
+                    "RenderCore",
+                    "RHI",
+                    "Json",
+                    "HTTP",
+                    "Projects",
+                    "TargetPlatform",
+                    "ImageWrapper",
+                    "Serialization",
+                    "TextureCompressor",
+                    "MessageLog",
+                    "Engine"
                 }
             );
         }

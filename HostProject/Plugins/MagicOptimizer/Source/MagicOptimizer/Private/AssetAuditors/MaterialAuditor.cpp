@@ -25,9 +25,9 @@ bool FMaterialAuditor::CanAuditAsset(const FAssetData& AssetData) const
 FAuditResult FMaterialAuditor::AuditAsset(const FAssetData& AssetData) const
 {
     FAuditResult Result;
-    Result.AssetData = AssetData;
-    Result.Status = EAuditStatus::Running;
-    Result.StartTime = FDateTime::Now();
+    Result.Guid = AssetData.GetSoftObjectPath().GetAssetFName();
+    Result.AssetPath = AssetData.GetSoftObjectPath();
+    Result.AssetClass = AssetData.AssetClass;
 
     try
     {
@@ -37,14 +37,7 @@ FAuditResult FMaterialAuditor::AuditAsset(const FAssetData& AssetData) const
         UMaterialInterface* MaterialInterface = Cast<UMaterialInterface>(AssetData.GetAsset());
         if (!MaterialInterface)
         {
-            FAuditIssue Issue;
-            Issue.ID = TEXT("MATERIAL_LOAD_FAILED");
-            Issue.Type = EAuditIssueType::Error;
-            Issue.Title = TEXT("Material Loading Failed");
-            Issue.Description = TEXT("Unable to load material asset for analysis");
-            Issue.Severity = 0.7f;
-            Result.AddIssue(Issue);
-            Result.MarkFailed(TEXT("Unable to load material asset"));
+            Result.AddIssue(EAuditIssueLevel::Must, TEXT("MATERIAL_LOAD_FAILED"), TEXT("Unable to load material asset for analysis"));
             return Result;
         }
 
@@ -52,7 +45,7 @@ FAuditResult FMaterialAuditor::AuditAsset(const FAssetData& AssetData) const
         AnalyzeMaterialComplexity(MaterialInterface, Result);
         AnalyzeMaterialTextures(MaterialInterface, Result);
         
-        Result.MarkCompleted();
+        // Analysis completed successfully
         
         MAGIC_LOG(General, FString::Printf(TEXT("Material audit completed: %s"), *AssetData.AssetName.ToString()));
     }
@@ -61,14 +54,7 @@ FAuditResult FMaterialAuditor::AuditAsset(const FAssetData& AssetData) const
         FString ErrorMsg = FString::Printf(TEXT("Exception during material audit: %s"), *FString(e.what()));
         MAGIC_LOG_ERROR(ErrorMsg, TEXT("AuditAsset"));
         
-        FAuditIssue Issue;
-        Issue.ID = TEXT("AUDIT_EXCEPTION");
-        Issue.Type = EAuditIssueType::Error;
-        Issue.Title = TEXT("Audit Exception");
-        Issue.Description = ErrorMsg;
-        Issue.Severity = 1.0f;
-        Result.AddIssue(Issue);
-        Result.MarkFailed(ErrorMsg);
+        Result.AddIssue(EAuditIssueLevel::Must, TEXT("AUDIT_EXCEPTION"), ErrorMsg);
     }
 
     return Result;
@@ -135,29 +121,19 @@ void FMaterialAuditor::AnalyzeMaterialComplexity(const UMaterialInterface* Mater
     // Get material complexity information
     float ShaderComplexity = CalculateShaderComplexity(MaterialInterface);
     
-    // Update performance metrics
-    Result.PerformanceMetrics.QualityScore = ShaderComplexity / 100.0f;
+    // Store performance metrics in context
+    Result.Context.Add(TEXT("QualityScore"), FString::Printf(TEXT("%.2f"), ShaderComplexity / 100.0f));
     
     // Check for high shader complexity
     if (ShaderComplexity > 80.0f)
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("HIGH_SHADER_COMPLEXITY");
-        Issue.Type = EAuditIssueType::Error;
-        Issue.Title = TEXT("High Shader Complexity");
-        Issue.Description = FString::Printf(TEXT("Material has high shader complexity: %.1f"), ShaderComplexity);
-        Issue.Severity = 0.8f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Must, TEXT("HIGH_SHADER_COMPLEXITY"), 
+            FString::Printf(TEXT("Material has high shader complexity: %.1f"), ShaderComplexity));
     }
     else if (ShaderComplexity > 60.0f)
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("MODERATE_SHADER_COMPLEXITY");
-        Issue.Type = EAuditIssueType::Warning;
-        Issue.Title = TEXT("Moderate Shader Complexity");
-        Issue.Description = FString::Printf(TEXT("Material has moderate shader complexity: %.1f"), ShaderComplexity);
-        Issue.Severity = 0.6f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Should, TEXT("MODERATE_SHADER_COMPLEXITY"), 
+            FString::Printf(TEXT("Material has moderate shader complexity: %.1f"), ShaderComplexity));
     }
 }
 
@@ -172,41 +148,25 @@ void FMaterialAuditor::AnalyzeMaterialTextures(const UMaterialInterface* Materia
     
     int32 TextureCount = UsedTextures.Num();
     
-    // Update performance metrics
-    Result.PerformanceMetrics.MemoryUsageMB = TextureCount * 10.0f; // Rough estimate
+    // Store performance metrics in context
+    Result.Context.Add(TEXT("MemoryUsageMB"), FString::Printf(TEXT("%.2f"), TextureCount * 10.0f));
     
     // Check for excessive texture usage
     if (TextureCount > 8)
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("HIGH_TEXTURE_COUNT");
-        Issue.Type = EAuditIssueType::Error;
-        Issue.Title = TEXT("High Texture Count");
-        Issue.Description = FString::Printf(TEXT("Material uses %d textures"), TextureCount);
-        Issue.Severity = 0.8f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Must, TEXT("HIGH_TEXTURE_COUNT"), 
+            FString::Printf(TEXT("Material uses %d textures"), TextureCount));
     }
     else if (TextureCount > 6)
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("MODERATE_TEXTURE_COUNT");
-        Issue.Type = EAuditIssueType::Warning;
-        Issue.Title = TEXT("Moderate Texture Count");
-        Issue.Description = FString::Printf(TEXT("Material uses %d textures"), TextureCount);
-        Issue.Severity = 0.6f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Should, TEXT("MODERATE_TEXTURE_COUNT"), 
+            FString::Printf(TEXT("Material uses %d textures"), TextureCount));
     }
 
     // Check for missing textures
     if (TextureCount == 0)
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("NO_TEXTURES");
-        Issue.Type = EAuditIssueType::Info;
-        Issue.Title = TEXT("No Textures");
-        Issue.Description = TEXT("Material uses no textures");
-        Issue.Severity = 0.3f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Info, TEXT("NO_TEXTURES"), TEXT("Material uses no textures"));
     }
 }
 
@@ -216,13 +176,7 @@ void FMaterialAuditor::AnalyzeMaterialShaders(const UMaterialInterface* Material
         return;
 
     // Basic shader analysis - simplified for now
-    FAuditIssue Issue;
-    Issue.ID = TEXT("MATERIAL_SHADER_ANALYSIS");
-    Issue.Type = EAuditIssueType::Info;
-    Issue.Title = TEXT("Material Shader Analysis");
-    Issue.Description = TEXT("Shader analysis completed");
-    Issue.Severity = 0.4f;
-    Result.AddIssue(Issue);
+    Result.AddIssue(EAuditIssueLevel::Info, TEXT("MATERIAL_SHADER_ANALYSIS"), TEXT("Shader analysis completed"));
 }
 
 void FMaterialAuditor::AnalyzeMaterialParameters(const UMaterialInterface* MaterialInterface, FAuditResult& Result) const
@@ -240,13 +194,8 @@ void FMaterialAuditor::AnalyzeMaterialParameters(const UMaterialInterface* Mater
         
         if (ScalarParameterIds.Num() > 20)
         {
-            FAuditIssue Issue;
-            Issue.ID = TEXT("HIGH_SCALAR_PARAMETER_COUNT");
-            Issue.Type = EAuditIssueType::Warning;
-            Issue.Title = TEXT("High Scalar Parameter Count");
-            Issue.Description = FString::Printf(TEXT("Material instance has %d scalar parameters"), ScalarParameterIds.Num());
-            Issue.Severity = 0.6f;
-            Result.AddIssue(Issue);
+            Result.AddIssue(EAuditIssueLevel::Should, TEXT("HIGH_SCALAR_PARAMETER_COUNT"), 
+                FString::Printf(TEXT("Material instance has %d scalar parameters"), ScalarParameterIds.Num()));
         }
     }
 }
@@ -257,13 +206,7 @@ void FMaterialAuditor::AnalyzeMaterialPerformance(const UMaterialInterface* Mate
         return;
 
     // Basic performance analysis - simplified for now
-    FAuditIssue Issue;
-    Issue.ID = TEXT("MATERIAL_PERFORMANCE_ANALYSIS");
-    Issue.Type = EAuditIssueType::Info;
-    Issue.Title = TEXT("Material Performance Analysis");
-    Issue.Description = TEXT("Performance analysis completed");
-    Issue.Severity = 0.4f;
-    Result.AddIssue(Issue);
+    Result.AddIssue(EAuditIssueLevel::Info, TEXT("MATERIAL_PERFORMANCE_ANALYSIS"), TEXT("Performance analysis completed"));
 }
 
 void FMaterialAuditor::GeneratePlatformRecommendations(const UMaterialInterface* MaterialInterface, FAuditResult& Result) const

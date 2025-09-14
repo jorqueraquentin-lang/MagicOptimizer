@@ -2,8 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Engine/Engine.h"
-#include "AuditResult.h"
-#include "OptimizationRecommendation.h"
+#include "Model/AuditResult.h"
+#include "Model/OptimizationRecommendation.h"
 #include "AssetAuditData.generated.h"
 
 class UTexture2D;

@@ -38,7 +38,7 @@
 // #include "Components/WidgetAnimation.h" // Not available in UE 5.6
 #include "MagicOptimizerAuditManager.h"
 #include "AssetAuditors/TextureAuditor.h"
-#include "AuditTypes/AuditResult.h"
+#include "Model/AuditResult.h"
 #include "MagicOptimizerTextureAuditWidget.generated.h"
 
 /**

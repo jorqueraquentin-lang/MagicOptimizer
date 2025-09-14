@@ -2,8 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "AuditTypes/ProgressUpdate.h"
-#include "AuditTypes/AssetAuditData.h"
+#include "Model/ProgressUpdate.h"
+#include "Model/AssetAuditData.h"
 #include "MagicOptimizerUIDataManager.generated.h"
 
 // Forward declarations

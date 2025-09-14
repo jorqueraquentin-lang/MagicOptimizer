@@ -540,7 +540,7 @@ void UMagicOptimizerTextureAuditWidget::UpdateResultsDisplay(const TArray<FAudit
         Item->AssetName = Result.AssetData.AssetName.ToString();
         Item->AssetPath = Result.AssetData.GetObjectPathString();
         Item->IssueCount = Result.Issues.Num();
-        Item->MemoryUsageMB = Result.PerformanceMetrics.MemoryUsageMB;
+        Item->MemoryUsageMB = FCString::Atof(*Result.Context.FindRef(TEXT("MemoryUsageMB"), TEXT("0.0")));
         Item->Status = Result.Status;
         Item->Issues = Result.Issues;
         Item->Recommendations = Result.Recommendations;
@@ -606,7 +606,7 @@ void UMagicOptimizerTextureAuditWidget::UpdateStatistics()
     for (const FAuditResult& Result : CurrentResults)
     {
         IssuesFound += Result.Issues.Num();
-        TotalMemoryUsage += Result.PerformanceMetrics.MemoryUsageMB;
+        TotalMemoryUsage += FCString::Atof(*Result.Context.FindRef(TEXT("MemoryUsageMB"), TEXT("0.0")));
         
         for (const FOptimizationRecommendation& Rec : Result.Recommendations)
         {

@@ -1,12 +1,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/Engine.h"
-#include "AssetRegistry/AssetData.h"
-#include "AuditTypes/AuditConfig.h"
-#include "AuditTypes/AuditResult.h"
-#include "AssetAuditors/IAssetAuditor.h"
 #include "MagicOptimizerAuditManager.generated.h"
+
+// Forward declarations to avoid UHT conflicts
+struct FAuditResult;
+struct FOptimizationRecommendation;
+struct FAuditIssue;
+class IAssetAuditor;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAuditProgress, float, Progress);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAuditCompleted, const TArray<FAuditResult>&, Results);
@@ -121,6 +122,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "MagicOptimizer Audit")
     static void ClearAuditResults();
 
+
     /**
      * Get total estimated savings from all recommendations
      * @return Total estimated savings in MB
@@ -135,10 +137,20 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "MagicOptimizer Audit")
     static FString GetAuditStatistics();
 
-    // Event delegates (static, not UPROPERTY)
-    static FOnAuditProgress OnAuditProgress;
-    static FOnAuditCompleted OnAuditCompleted;
-    static FOnAuditFailed OnAuditFailed;
+    // Event delegates
+    UPROPERTY(BlueprintAssignable)
+    FOnAuditProgress OnAuditProgress;
+    
+    UPROPERTY(BlueprintAssignable)
+    FOnAuditCompleted OnAuditCompleted;
+    
+    UPROPERTY(BlueprintAssignable)
+    FOnAuditFailed OnAuditFailed;
+
+    // Dispatch methods (moves member access to .cpp)
+    void DispatchAuditResults(const TArray<FAuditResult>& Results);
+    void DispatchProgress(float Value);
+    void DispatchError(const FString& Msg);
 
 private:
     static UMagicOptimizerAuditManager* Instance;

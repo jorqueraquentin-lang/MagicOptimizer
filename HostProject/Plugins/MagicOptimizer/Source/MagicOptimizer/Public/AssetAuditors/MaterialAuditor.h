@@ -5,8 +5,8 @@
 #include "Materials/MaterialInterface.h"
 #include "Materials/Material.h"
 #include "AssetAuditors/IAssetAuditor.h"
-#include "AuditTypes/AuditConfig.h"
-#include "AuditTypes/AuditResult.h"
+#include "Model/AuditConfig.h"
+#include "Model/AuditResult.h"
 
 /**
  * Material auditor implementation for analyzing material assets

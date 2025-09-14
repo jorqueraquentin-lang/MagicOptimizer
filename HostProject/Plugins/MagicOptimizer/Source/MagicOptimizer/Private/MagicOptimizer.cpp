@@ -9,7 +9,6 @@
 #include "Widgets/Views/SListView.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Layout/SScrollBox.h"
-#include "EditorStyleSet.h"
 #include "Styling/AppStyle.h"
 #include "Engine/Engine.h"
 #include "HAL/IConsoleManager.h"
@@ -20,7 +19,8 @@
 #include "MagicOptimizerBranding.h"
 #include "UI/MagicOptimizerTextureAuditWidget.h"
 #include "UI/MagicOptimizerUIDataManager.h"
-#include "UI/MagicOptimizerMainWidget.h"
+// #include "UI/MagicOptimizerMainWidget.h" // Replaced with Slate UI
+#include "UI/MagicOptimizerMainPanel.h"
 #include "HAL/PlatformFilemanager.h"
 #include "Misc/App.h"
 #include "ISettingsModule.h"
@@ -269,87 +269,24 @@ void FMagicOptimizerModule::RegisterMenus()
 
 TSharedRef<SDockTab> FMagicOptimizerModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
 {
-    UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: OnSpawnPluginTab called"));
+    UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: OnSpawnPluginTab called - Using new Slate Main Panel"));
     
-    UWorld* World = GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
-
-    // **STEP 1: Create or get the one manager instance for the editor**
-    UMagicOptimizerUIDataManager* Manager = GetOrCreateUIDataManager();
-    UIDataManagerKeeper = TStrongObjectPtr<UMagicOptimizerUIDataManager>(Manager);
-
-    // **STEP 2: Create the widget**
-    UMagicOptimizerMainWidget* MainWidget = World 
-        ? CreateWidget<UMagicOptimizerMainWidget>(World)
-        : NewObject<UMagicOptimizerMainWidget>();
-    MainWidgetKeeper = TStrongObjectPtr<UMagicOptimizerMainWidget>(MainWidget);
+    // Create the new Slate main panel
+    TSharedRef<SMagicOptimizerMainPanel> MainPanel = SNew(SMagicOptimizerMainPanel);
     
-    if (MainWidget)
-    {
-        UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Main Widget created successfully"));
-        
-        // **STEP 3: Inject the manager BEFORE Slate wraps it**
-        MainWidget->SetUIDataManager(Manager);
-        UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Injected manager into main widget"));
-        
-        // **STEP 4: Create the tab with Slate stretching wrapper (GPT-5 recommendation)**
-        TSharedRef<SDockTab> Tab = SNew(SDockTab)
-            .TabRole(ETabRole::NomadTab)
-            .Label(LOCTEXT("MagicOptimizerTabTitle", "Magic Optimizer"))
-            [
-                SNew(SBorder).Padding(0)
-                [
-                    SNew(SBox).HAlign(HAlign_Fill).VAlign(VAlign_Fill)
-                    [
-                        MainWidget->TakeWidget()
-                    ]
-                ]
-            ];
-            
-        MagicOptimizerTab = Tab;
-        return Tab;
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("MagicOptimizer: Failed to create Main Widget"));
-    }
-
-    // If we get here, something went wrong - create a fallback
-    UE_LOG(LogTemp, Warning, TEXT("MagicOptimizer: All widget creation attempts failed, using fallback Slate UI"));
+    UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Main Panel created successfully"));
     
-    // Fallback to simple Slate UI
-    TSharedRef<SWidget> FallbackWidget = SNew(SVerticalBox)
-        + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(10)
-        [
-            SNew(STextBlock)
-            .Text(LOCTEXT("ErrorText", "Magic Optimizer - Widget Creation Failed"))
-            .Font(FCoreStyle::GetDefaultFontStyle("Bold", 16))
-            .ColorAndOpacity(FLinearColor::Red)
-        ]
-        + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(10)
-        [
-            SNew(STextBlock)
-            .Text(LOCTEXT("DebugText", "Check the output log for detailed error messages"))
-            .ColorAndOpacity(FLinearColor::Yellow)
-        ]
-        + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(10)
-        [
-            SNew(STextBlock)
-            .Text(LOCTEXT("InfoText", "This is a fallback Slate UI while debugging the UMG widget issue"))
-            .ColorAndOpacity(FLinearColor::White)
-        ];
-
-    return SNew(SDockTab)
+    // Create the tab with the main panel
+    TSharedRef<SDockTab> Tab = SNew(SDockTab)
         .TabRole(ETabRole::NomadTab)
         .Label(LOCTEXT("MagicOptimizerTabTitle", "Magic Optimizer"))
+        .Icon(FAppStyle::GetBrush("LevelEditor.Tabs.Viewports"))
         [
-            FallbackWidget
+            MainPanel
         ];
+        
+    MagicOptimizerTab = Tab;
+    return Tab;
 }
 
 UMagicOptimizerUIDataManager* FMagicOptimizerModule::GetOrCreateUIDataManager()
@@ -374,7 +311,7 @@ void FMagicOptimizerModule::OnTabClosed(TSharedRef<SDockTab> Tab)
     UE_LOG(LogTemp, Log, TEXT("MagicOptimizer: Tab closed, cleaning up references"));
     
     // Clean up strong references when tab is closed
-    MainWidgetKeeper.Reset();
+    // MainWidgetKeeper.Reset(); // Replaced with Slate UI
     UIDataManagerKeeper.Reset();
     MagicOptimizerTab.Reset();
 }

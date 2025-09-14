@@ -21,9 +21,9 @@ bool FBlueprintAuditor::CanAuditAsset(const FAssetData& AssetData) const
 FAuditResult FBlueprintAuditor::AuditAsset(const FAssetData& AssetData) const
 {
     FAuditResult Result;
-    Result.AssetData = AssetData;
-    Result.Status = EAuditStatus::Running;
-    Result.StartTime = FDateTime::Now();
+    Result.Guid = AssetData.GetSoftObjectPath().GetAssetFName();
+    Result.AssetPath = AssetData.GetSoftObjectPath();
+    Result.AssetClass = AssetData.AssetClass;
 
     try
     {
@@ -33,14 +33,7 @@ FAuditResult FBlueprintAuditor::AuditAsset(const FAssetData& AssetData) const
         UObject* BlueprintObject = AssetData.GetAsset();
         if (!BlueprintObject)
         {
-            FAuditIssue Issue;
-            Issue.ID = TEXT("BLUEPRINT_LOAD_FAILED");
-            Issue.Type = EAuditIssueType::Error;
-            Issue.Title = TEXT("Blueprint Loading Failed");
-            Issue.Description = TEXT("Unable to load blueprint asset for analysis");
-            Issue.Severity = 0.7f;
-            Result.AddIssue(Issue);
-            Result.MarkFailed(TEXT("Unable to load blueprint asset"));
+            Result.AddIssue(EAuditIssueLevel::Must, TEXT("BLUEPRINT_LOAD_FAILED"), TEXT("Unable to load blueprint asset for analysis"));
             return Result;
         }
 
@@ -49,7 +42,7 @@ FAuditResult FBlueprintAuditor::AuditAsset(const FAssetData& AssetData) const
         AnalyzeBlueprintFunctions(BlueprintObject, Result);
         AnalyzeBlueprintVariables(BlueprintObject, Result);
         
-        Result.MarkCompleted();
+        // Analysis completed successfully
         
         MAGIC_LOG(General, FString::Printf(TEXT("Blueprint audit completed: %s"), *AssetData.AssetName.ToString()));
     }
@@ -58,14 +51,7 @@ FAuditResult FBlueprintAuditor::AuditAsset(const FAssetData& AssetData) const
         FString ErrorMsg = FString::Printf(TEXT("Exception during blueprint audit: %s"), *FString(e.what()));
         MAGIC_LOG_ERROR(ErrorMsg, TEXT("AuditAsset"));
         
-        FAuditIssue Issue;
-        Issue.ID = TEXT("AUDIT_EXCEPTION");
-        Issue.Type = EAuditIssueType::Error;
-        Issue.Title = TEXT("Audit Exception");
-        Issue.Description = ErrorMsg;
-        Issue.Severity = 1.0f;
-        Result.AddIssue(Issue);
-        Result.MarkFailed(ErrorMsg);
+        Result.AddIssue(EAuditIssueLevel::Must, TEXT("AUDIT_EXCEPTION"), ErrorMsg);
     }
 
     return Result;
@@ -132,17 +118,11 @@ void FBlueprintAuditor::AnalyzeBlueprintComplexity(const UObject* Blueprint, FAu
     // Basic blueprint analysis - simplified for now
     float Complexity = 50.0f; // Default complexity score
     
-    // Update performance metrics
-    Result.PerformanceMetrics.QualityScore = Complexity / 100.0f;
+    // Store complexity in context
+    Result.Context.Add(TEXT("Complexity"), FString::Printf(TEXT("%.1f"), Complexity));
     
     // Add a basic issue for testing
-    FAuditIssue Issue;
-    Issue.ID = TEXT("BLUEPRINT_BASIC_ANALYSIS");
-    Issue.Type = EAuditIssueType::Info;
-    Issue.Title = TEXT("Blueprint Analysis");
-    Issue.Description = TEXT("Basic blueprint analysis completed");
-    Issue.Severity = 0.5f;
-    Result.AddIssue(Issue);
+    Result.AddIssue(EAuditIssueLevel::Info, TEXT("BLUEPRINT_BASIC_ANALYSIS"), TEXT("Basic blueprint analysis completed"));
 }
 
 void FBlueprintAuditor::AnalyzeBlueprintFunctions(const UObject* Blueprint, FAuditResult& Result) const
@@ -151,13 +131,7 @@ void FBlueprintAuditor::AnalyzeBlueprintFunctions(const UObject* Blueprint, FAud
         return;
 
     // Basic function analysis - simplified for now
-    FAuditIssue Issue;
-    Issue.ID = TEXT("BLUEPRINT_FUNCTION_ANALYSIS");
-    Issue.Type = EAuditIssueType::Info;
-    Issue.Title = TEXT("Blueprint Function Analysis");
-    Issue.Description = TEXT("Function analysis completed");
-    Issue.Severity = 0.4f;
-    Result.AddIssue(Issue);
+    Result.AddIssue(EAuditIssueLevel::Info, TEXT("BLUEPRINT_FUNCTION_ANALYSIS"), TEXT("Function analysis completed"));
 }
 
 void FBlueprintAuditor::AnalyzeBlueprintVariables(const UObject* Blueprint, FAuditResult& Result) const
@@ -166,13 +140,7 @@ void FBlueprintAuditor::AnalyzeBlueprintVariables(const UObject* Blueprint, FAud
         return;
 
     // Basic variable analysis - simplified for now
-    FAuditIssue Issue;
-    Issue.ID = TEXT("BLUEPRINT_VARIABLE_ANALYSIS");
-    Issue.Type = EAuditIssueType::Info;
-    Issue.Title = TEXT("Blueprint Variable Analysis");
-    Issue.Description = TEXT("Variable analysis completed");
-    Issue.Severity = 0.4f;
-    Result.AddIssue(Issue);
+    Result.AddIssue(EAuditIssueLevel::Info, TEXT("BLUEPRINT_VARIABLE_ANALYSIS"), TEXT("Variable analysis completed"));
 }
 
 void FBlueprintAuditor::AnalyzeBlueprintPerformance(const UObject* Blueprint, FAuditResult& Result) const

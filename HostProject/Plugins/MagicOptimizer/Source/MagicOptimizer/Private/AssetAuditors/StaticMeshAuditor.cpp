@@ -23,9 +23,9 @@ bool FStaticMeshAuditor::CanAuditAsset(const FAssetData& AssetData) const
 FAuditResult FStaticMeshAuditor::AuditAsset(const FAssetData& AssetData) const
 {
     FAuditResult Result;
-    Result.AssetData = AssetData;
-    Result.Status = EAuditStatus::Running;
-    Result.StartTime = FDateTime::Now();
+    Result.Guid = AssetData.GetSoftObjectPath().GetAssetFName();
+    Result.AssetPath = AssetData.GetSoftObjectPath();
+    Result.AssetClass = AssetData.AssetClass;
 
     try
     {
@@ -35,14 +35,7 @@ FAuditResult FStaticMeshAuditor::AuditAsset(const FAssetData& AssetData) const
         UStaticMesh* StaticMesh = Cast<UStaticMesh>(AssetData.GetAsset());
         if (!StaticMesh)
         {
-            FAuditIssue Issue;
-            Issue.ID = TEXT("STATIC_MESH_LOAD_FAILED");
-            Issue.Type = EAuditIssueType::Error;
-            Issue.Title = TEXT("Static Mesh Loading Failed");
-            Issue.Description = TEXT("Unable to load static mesh asset for analysis");
-            Issue.Severity = 0.7f;
-            Result.AddIssue(Issue);
-            Result.MarkFailed(TEXT("Unable to load static mesh asset"));
+            Result.AddIssue(EAuditIssueLevel::Must, TEXT("STATIC_MESH_LOAD_FAILED"), TEXT("Unable to load static mesh asset for analysis"));
             return Result;
         }
 
@@ -51,7 +44,7 @@ FAuditResult FStaticMeshAuditor::AuditAsset(const FAssetData& AssetData) const
         AnalyzeMeshLODs(StaticMesh, Result);
         AnalyzeMeshMaterials(StaticMesh, Result);
         
-        Result.MarkCompleted();
+        // Analysis completed successfully
         
         MAGIC_LOG(General, FString::Printf(TEXT("Static mesh audit completed: %s"), *AssetData.AssetName.ToString()));
     }
@@ -60,14 +53,7 @@ FAuditResult FStaticMeshAuditor::AuditAsset(const FAssetData& AssetData) const
         FString ErrorMsg = FString::Printf(TEXT("Exception during static mesh audit: %s"), *FString(e.what()));
         MAGIC_LOG_ERROR(ErrorMsg, TEXT("AuditAsset"));
         
-        FAuditIssue Issue;
-        Issue.ID = TEXT("AUDIT_EXCEPTION");
-        Issue.Type = EAuditIssueType::Error;
-        Issue.Title = TEXT("Audit Exception");
-        Issue.Description = ErrorMsg;
-        Issue.Severity = 1.0f;
-        Result.AddIssue(Issue);
-        Result.MarkFailed(ErrorMsg);
+        Result.AddIssue(EAuditIssueLevel::Must, TEXT("AUDIT_EXCEPTION"), ErrorMsg);
     }
 
     return Result;
@@ -142,31 +128,21 @@ void FStaticMeshAuditor::AnalyzeMeshComplexity(const UStaticMesh* StaticMesh, FA
         TotalVertices = LOD0.GetNumVertices();
     }
 
-    // Update performance metrics
-    Result.PerformanceMetrics.Triangles = TotalTriangles;
-    Result.PerformanceMetrics.Vertices = TotalVertices;
-    Result.PerformanceMetrics.MemoryUsageMB = CalculateMeshMemoryUsage(StaticMesh);
+    // Store performance metrics in context
+    Result.Context.Add(TEXT("Triangles"), FString::Printf(TEXT("%d"), TotalTriangles));
+    Result.Context.Add(TEXT("Vertices"), FString::Printf(TEXT("%d"), TotalVertices));
+    Result.Context.Add(TEXT("MemoryUsageMB"), FString::Printf(TEXT("%.2f"), CalculateMeshMemoryUsage(StaticMesh)));
 
     // Check for excessive polygon count
     if (TotalTriangles > 100000)
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("HIGH_POLYGON_COUNT");
-        Issue.Type = EAuditIssueType::Error;
-        Issue.Title = TEXT("High Polygon Count");
-        Issue.Description = FString::Printf(TEXT("Mesh has %d triangles, which is very high"), TotalTriangles);
-        Issue.Severity = 0.8f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Must, TEXT("HIGH_POLYGON_COUNT"), 
+            FString::Printf(TEXT("Mesh has %d triangles, which is very high"), TotalTriangles));
     }
     else if (TotalTriangles > 50000)
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("MODERATE_POLYGON_COUNT");
-        Issue.Type = EAuditIssueType::Warning;
-        Issue.Title = TEXT("Moderate Polygon Count");
-        Issue.Description = FString::Printf(TEXT("Mesh has %d triangles"), TotalTriangles);
-        Issue.Severity = 0.6f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Should, TEXT("MODERATE_POLYGON_COUNT"), 
+            FString::Printf(TEXT("Mesh has %d triangles"), TotalTriangles));
     }
 }
 
@@ -180,13 +156,8 @@ void FStaticMeshAuditor::AnalyzeMeshLODs(const UStaticMesh* StaticMesh, FAuditRe
     // Check for missing LODs
     if (LODCount <= 1)
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("NO_LODS");
-        Issue.Type = EAuditIssueType::Warning;
-        Issue.Title = TEXT("No LODs");
-        Issue.Description = FString::Printf(TEXT("Mesh has only %d LOD level"), LODCount);
-        Issue.Severity = 0.6f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Should, TEXT("NO_LODS"), 
+            FString::Printf(TEXT("Mesh has only %d LOD level"), LODCount));
     }
 }
 
@@ -200,25 +171,14 @@ void FStaticMeshAuditor::AnalyzeMeshMaterials(const UStaticMesh* StaticMesh, FAu
     // Check for excessive material count
     if (MaterialCount > 10)
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("HIGH_MATERIAL_COUNT");
-        Issue.Type = EAuditIssueType::Error;
-        Issue.Title = TEXT("High Material Count");
-        Issue.Description = FString::Printf(TEXT("Mesh uses %d materials"), MaterialCount);
-        Issue.Severity = 0.7f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Must, TEXT("HIGH_MATERIAL_COUNT"), 
+            FString::Printf(TEXT("Mesh uses %d materials"), MaterialCount));
     }
 
     // Check for missing materials
     if (MaterialCount == 0)
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("NO_MATERIALS");
-        Issue.Type = EAuditIssueType::Warning;
-        Issue.Title = TEXT("No Materials");
-        Issue.Description = TEXT("Mesh has no materials assigned");
-        Issue.Severity = 0.5f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Should, TEXT("NO_MATERIALS"), TEXT("Mesh has no materials assigned"));
     }
 }
 
@@ -228,13 +188,7 @@ void FStaticMeshAuditor::AnalyzeMeshCollision(const UStaticMesh* StaticMesh, FAu
         return;
 
     // Basic collision analysis - simplified for now
-    FAuditIssue Issue;
-    Issue.ID = TEXT("MESH_COLLISION_ANALYSIS");
-    Issue.Type = EAuditIssueType::Info;
-    Issue.Title = TEXT("Mesh Collision Analysis");
-    Issue.Description = TEXT("Collision analysis completed");
-    Issue.Severity = 0.4f;
-    Result.AddIssue(Issue);
+    Result.AddIssue(EAuditIssueLevel::Info, TEXT("MESH_COLLISION_ANALYSIS"), TEXT("Collision analysis completed"));
 }
 
 void FStaticMeshAuditor::AnalyzeMeshUVs(const UStaticMesh* StaticMesh, FAuditResult& Result) const
@@ -252,13 +206,7 @@ void FStaticMeshAuditor::AnalyzeMeshUVs(const UStaticMesh* StaticMesh, FAuditRes
         
         if (UVChannelCount == 0)
         {
-            FAuditIssue Issue;
-            Issue.ID = TEXT("NO_UV_COORDINATES");
-            Issue.Type = EAuditIssueType::Error;
-            Issue.Title = TEXT("No UV Coordinates");
-            Issue.Description = TEXT("Mesh has no UV coordinates");
-            Issue.Severity = 0.8f;
-            Result.AddIssue(Issue);
+            Result.AddIssue(EAuditIssueLevel::Must, TEXT("NO_UV_COORDINATES"), TEXT("Mesh has no UV coordinates"));
         }
     }
 }

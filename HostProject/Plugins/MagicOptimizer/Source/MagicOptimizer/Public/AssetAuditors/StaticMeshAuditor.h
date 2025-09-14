@@ -4,8 +4,8 @@
 #include "AssetRegistry/AssetData.h"
 #include "Engine/StaticMesh.h"
 #include "AssetAuditors/IAssetAuditor.h"
-#include "AuditTypes/AuditConfig.h"
-#include "AuditTypes/AuditResult.h"
+#include "Model/AuditConfig.h"
+#include "Model/AuditResult.h"
 
 /**
  * Static mesh auditor implementation for analyzing static mesh assets

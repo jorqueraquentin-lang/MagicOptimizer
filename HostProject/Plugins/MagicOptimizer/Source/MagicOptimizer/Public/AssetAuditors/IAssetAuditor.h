@@ -2,8 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "AssetRegistry/AssetData.h"
-#include "AuditTypes/AuditConfig.h"
-#include "AuditTypes/AuditResult.h"
+#include "Model/AuditConfig.h"
+#include "Model/AuditResult.h"
 
 /**
  * Abstract base class for asset auditors

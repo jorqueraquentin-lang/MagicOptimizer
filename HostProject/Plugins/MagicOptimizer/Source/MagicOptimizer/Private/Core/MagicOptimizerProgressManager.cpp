@@ -1,7 +1,7 @@
 #include "Core/MagicOptimizerProgressManager.h"
 #include "MagicOptimizerDiagnostics.h"
-#include "AuditTypes/ProgressUpdate.h"
-#include "AuditTypes/AssetAuditData.h"
+#include "Model/ProgressUpdate.h"
+#include "Model/AssetAuditData.h"
 #include "Misc/DateTime.h"
 
 void UMagicOptimizerProgressManager::Initialize(FSubsystemCollectionBase& Collection)

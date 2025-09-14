@@ -6,8 +6,8 @@
 #include "Engine/World.h"
 #include "Engine/GameInstance.h"
 #include "Subsystems/GameInstanceSubsystem.h"
-#include "AuditTypes/ProgressUpdate.h"
-#include "AuditTypes/AssetAuditData.h"
+#include "Model/ProgressUpdate.h"
+#include "Model/AssetAuditData.h"
 #include "MagicOptimizerProgressManager.generated.h"
 
 // Forward declarations

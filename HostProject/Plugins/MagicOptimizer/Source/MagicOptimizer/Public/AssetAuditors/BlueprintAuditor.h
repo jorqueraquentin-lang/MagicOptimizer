@@ -3,8 +3,8 @@
 #include "CoreMinimal.h"
 #include "AssetRegistry/AssetData.h"
 #include "AssetAuditors/IAssetAuditor.h"
-#include "AuditTypes/AuditConfig.h"
-#include "AuditTypes/AuditResult.h"
+#include "Model/AuditConfig.h"
+#include "Model/AuditResult.h"
 
 /**
  * Blueprint auditor implementation for analyzing blueprint assets

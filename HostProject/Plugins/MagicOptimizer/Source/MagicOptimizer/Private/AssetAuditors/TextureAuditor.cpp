@@ -40,9 +40,9 @@ bool FTextureAuditor::CanAuditAsset(const FAssetData& AssetData) const
 FAuditResult FTextureAuditor::AuditAsset(const FAssetData& AssetData) const
 {
     FAuditResult Result;
-    Result.AssetData = AssetData;
-    Result.Status = EAuditStatus::Running;
-    Result.StartTime = FDateTime::Now();
+    Result.Guid = AssetData.GetSoftObjectPath().GetAssetFName();
+    Result.AssetPath = AssetData.GetSoftObjectPath();
+    Result.AssetClass = AssetData.AssetClass;
 
     try
     {
@@ -52,14 +52,7 @@ FAuditResult FTextureAuditor::AuditAsset(const FAssetData& AssetData) const
         UTexture2D* Texture = Cast<UTexture2D>(AssetData.GetAsset());
         if (!Texture)
         {
-            FAuditIssue Issue;
-            Issue.ID = TEXT("TEXTURE_LOAD_FAILED");
-            Issue.Type = EAuditIssueType::Error;
-            Issue.Title = TEXT("Texture Loading Failed");
-            Issue.Description = TEXT("Unable to load texture asset for analysis");
-            Issue.Severity = 0.7f;
-            Result.AddIssue(Issue);
-            Result.MarkFailed(TEXT("Unable to load texture asset"));
+            Result.AddIssue(EAuditIssueLevel::Must, TEXT("TEXTURE_LOAD_FAILED"), TEXT("Unable to load texture asset for analysis"));
             return Result;
         }
 
@@ -73,7 +66,7 @@ FAuditResult FTextureAuditor::AuditAsset(const FAssetData& AssetData) const
         AnalyzeTextureUsage(Texture, Result);
         GeneratePlatformRecommendations(Texture, Result);
         
-        Result.MarkCompleted();
+        // Analysis completed successfully
         
         MAGIC_LOG(General, FString::Printf(TEXT("Texture audit completed: %s"), *AssetData.AssetName.ToString()));
     }
@@ -82,14 +75,7 @@ FAuditResult FTextureAuditor::AuditAsset(const FAssetData& AssetData) const
         FString ErrorMsg = FString::Printf(TEXT("Exception during texture audit: %s"), *FString(e.what()));
         MAGIC_LOG_ERROR(ErrorMsg, TEXT("AuditAsset"));
         
-        FAuditIssue Issue;
-        Issue.ID = TEXT("AUDIT_EXCEPTION");
-        Issue.Type = EAuditIssueType::Error;
-        Issue.Title = TEXT("Audit Exception");
-        Issue.Description = ErrorMsg;
-        Issue.Severity = 1.0f;
-        Result.AddIssue(Issue);
-        Result.MarkFailed(ErrorMsg);
+        Result.AddIssue(EAuditIssueLevel::Must, TEXT("AUDIT_EXCEPTION"), ErrorMsg);
     }
 
     return Result;
@@ -171,56 +157,36 @@ void FTextureAuditor::AnalyzeTextureResolution(const UTexture2D* Texture, FAudit
     bool bShouldBePowerOfTwo = !Texture->SRGB && !Texture->bNotOfflineProcessed;
     if (bShouldBePowerOfTwo && (!FMath::IsPowerOfTwo(Width) || !FMath::IsPowerOfTwo(Height)))
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("NON_POWER_OF_2");
-        Issue.Type = EAuditIssueType::Warning;
-        Issue.Title = TEXT("Non-Power-of-2 Resolution");
-        Issue.Description = FString::Printf(TEXT("Texture resolution %dx%d is not power-of-2 (Source: %dx%d)"), Width, Height, SourceWidth, SourceHeight);
-        Issue.Severity = 0.6f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Should, TEXT("NON_POWER_OF_2"), 
+            FString::Printf(TEXT("Texture resolution %dx%d is not power-of-2 (Source: %dx%d)"), Width, Height, SourceWidth, SourceHeight));
     }
 
     // Check for excessive resolution based on platform
     int32 MaxResolution = GetMaxRecommendedResolution();
     if (Width > MaxResolution || Height > MaxResolution)
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("EXCESSIVE_RESOLUTION");
-        Issue.Type = EAuditIssueType::Error;
-        Issue.Title = TEXT("Excessive Resolution");
-        Issue.Description = FString::Printf(TEXT("Texture resolution %dx%d exceeds recommended %d for platform"), Width, Height, MaxResolution);
-        Issue.Severity = 0.8f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Must, TEXT("EXCESSIVE_RESOLUTION"), 
+            FString::Printf(TEXT("Texture resolution %dx%d exceeds recommended %d for platform"), Width, Height, MaxResolution));
     }
 
     // Check for very low resolution textures
     if (Width < 64 || Height < 64)
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("LOW_RESOLUTION");
-        Issue.Type = EAuditIssueType::Info;
-        Issue.Title = TEXT("Low Resolution Texture");
-        Issue.Description = FString::Printf(TEXT("Texture resolution %dx%d may be too low for quality"), Width, Height);
-        Issue.Severity = 0.4f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Info, TEXT("LOW_RESOLUTION"), 
+            FString::Printf(TEXT("Texture resolution %dx%d may be too low for quality"), Width, Height));
     }
 
     // Check aspect ratio
     float AspectRatio = (float)Width / (float)Height;
     if (AspectRatio > 4.0f || AspectRatio < 0.25f)
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("EXTREME_ASPECT_RATIO");
-        Issue.Type = EAuditIssueType::Warning;
-        Issue.Title = TEXT("Extreme Aspect Ratio");
-        Issue.Description = FString::Printf(TEXT("Texture has extreme aspect ratio %.2f:1"), AspectRatio);
-        Issue.Severity = 0.5f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Should, TEXT("EXTREME_ASPECT_RATIO"), 
+            FString::Printf(TEXT("Texture has extreme aspect ratio %.2f:1"), AspectRatio));
     }
 
-    // Update performance metrics with real data
-    Result.PerformanceMetrics.MemoryUsageMB = CalculateTextureMemoryUsage(Texture);
-    Result.PerformanceMetrics.QualityScore = CalculateQualityScore(Width, Height);
+    // Store performance metrics in context
+    Result.Context.Add(TEXT("MemoryUsageMB"), FString::Printf(TEXT("%.2f"), CalculateTextureMemoryUsage(Texture)));
+    Result.Context.Add(TEXT("QualityScore"), FString::Printf(TEXT("%.2f"), CalculateQualityScore(Width, Height)));
 }
 
 void FTextureAuditor::AnalyzeTextureCompression(const UTexture2D* Texture, FAuditResult& Result) const
@@ -241,61 +207,32 @@ void FTextureAuditor::AnalyzeTextureCompression(const UTexture2D* Texture, FAudi
     // Check for uncompressed textures (only for large textures)
     if (ShouldBeCompressed(Texture) && (CompressionSettings == TC_Default || CompressionSettings == TC_Displacementmap))
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("UNCOMPRESSED_TEXTURE");
-        Issue.Type = EAuditIssueType::Error;
-        Issue.Title = TEXT("Uncompressed Texture");
-        Issue.Description = FString::Printf(TEXT("Large texture (%dx%d) is not using optimized compression"), Texture->GetSizeX(), Texture->GetSizeY());
-        Issue.Severity = 0.8f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Must, TEXT("UNCOMPRESSED_TEXTURE"), 
+            FString::Printf(TEXT("Large texture (%dx%d) is not using optimized compression"), Texture->GetSizeX(), Texture->GetSizeY()));
     }
 
     // Check for inappropriate compression settings
     if (bIsSRGB && CompressionSettings == TC_Normalmap)
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("INAPPROPRIATE_COMPRESSION");
-        Issue.Type = EAuditIssueType::Error;
-        Issue.Title = TEXT("Inappropriate Compression");
-        Issue.Description = TEXT("Normal map should not have sRGB enabled");
-        Issue.Severity = 0.9f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Must, TEXT("INAPPROPRIATE_COMPRESSION"), TEXT("Normal map should not have sRGB enabled"));
     }
 
     // Check for normal maps with wrong compression
     if (CompressionSettings == TC_Normalmap && !IsNormalMapTexture(Texture))
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("WRONG_COMPRESSION_TYPE");
-        Issue.Type = EAuditIssueType::Warning;
-        Issue.Title = TEXT("Wrong Compression Type");
-        Issue.Description = TEXT("Non-normal map texture using normal map compression");
-        Issue.Severity = 0.6f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Should, TEXT("WRONG_COMPRESSION_TYPE"), TEXT("Non-normal map texture using normal map compression"));
     }
 
     // Check for grayscale textures that could use BC4
     if (IsGrayscaleTexture(Texture) && CompressionSettings != TC_Grayscale)
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("GRAYSCALE_OPTIMIZATION");
-        Issue.Type = EAuditIssueType::Info;
-        Issue.Title = TEXT("Grayscale Optimization");
-        Issue.Description = TEXT("Grayscale texture could use more efficient compression");
-        Issue.Severity = 0.5f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Info, TEXT("GRAYSCALE_OPTIMIZATION"), TEXT("Grayscale texture could use more efficient compression"));
     }
 
     // Check for HDR textures with inappropriate compression
     if (IsHDRTexture(Texture) && CompressionSettings != TC_HDR)
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("HDR_COMPRESSION");
-        Issue.Type = EAuditIssueType::Warning;
-        Issue.Title = TEXT("HDR Compression");
-        Issue.Description = TEXT("HDR texture should use HDR compression settings");
-        Issue.Severity = 0.7f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Should, TEXT("HDR_COMPRESSION"), TEXT("HDR texture should use HDR compression settings"));
     }
 }
 
@@ -309,13 +246,8 @@ void FTextureAuditor::AnalyzeTextureMemory(const UTexture2D* Texture, FAuditResu
     // Check for excessive memory usage
     if (MemoryUsage > 100.0f) // More than 100MB
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("HIGH_MEMORY_USAGE");
-        Issue.Type = EAuditIssueType::Error;
-        Issue.Title = TEXT("High Memory Usage");
-        Issue.Description = FString::Printf(TEXT("Texture uses %.2f MB of memory"), MemoryUsage);
-        Issue.Severity = 0.9f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Must, TEXT("HIGH_MEMORY_USAGE"), 
+            FString::Printf(TEXT("Texture uses %.2f MB of memory"), MemoryUsage));
     }
 }
 
@@ -327,13 +259,7 @@ void FTextureAuditor::AnalyzeTextureMipmaps(const UTexture2D* Texture, FAuditRes
     // Check mipmap settings
     if (!Texture->MipGenSettings)
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("NO_MIPMAPS");
-        Issue.Type = EAuditIssueType::Warning;
-        Issue.Title = TEXT("No Mipmaps");
-        Issue.Description = TEXT("Texture does not have mipmaps enabled");
-        Issue.Severity = 0.6f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Should, TEXT("NO_MIPMAPS"), TEXT("Texture does not have mipmaps enabled"));
     }
 }
 
@@ -345,13 +271,7 @@ void FTextureAuditor::AnalyzeTextureFormat(const UTexture2D* Texture, FAuditResu
     // Check for appropriate format usage
     if (Texture->SRGB && Texture->CompressionSettings == TC_Normalmap)
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("INCORRECT_SRGB");
-        Issue.Type = EAuditIssueType::Error;
-        Issue.Title = TEXT("Incorrect sRGB Usage");
-        Issue.Description = TEXT("Normal map should not use sRGB color space");
-        Issue.Severity = 0.8f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Must, TEXT("INCORRECT_SRGB"), TEXT("Normal map should not use sRGB color space"));
     }
 }
 
@@ -369,13 +289,13 @@ void FTextureAuditor::GeneratePlatformRecommendations(const UTexture2D* Texture,
         if (Width > 1024 || Height > 1024)
         {
             FOptimizationRecommendation Rec;
-            Rec.RecommendationID = TEXT("MOBILE_OPTIMIZATION");
-            Rec.Title = TEXT("Mobile Optimization");
+            Rec.Id = TEXT("MOBILE_OPTIMIZATION");
+            Rec.Label = TEXT("Mobile Optimization");
             Rec.Description = TEXT("Reduce texture resolution for mobile platforms");
-            Rec.Priority = EOptimizationPriority::High;
-            Rec.Category = EOptimizationCategory::Performance;
-            Rec.EstimatedMemorySavingsMB = 60.0f;
-            Result.AddRecommendation(Rec);
+            Rec.EstimatedSavings = 60;
+            Rec.bIsSafe = true;
+            Rec.Items.Add(Result.AssetPath);
+            Result.Recommendations.Add(Rec);
         }
     }
 }
@@ -630,13 +550,7 @@ void FTextureAuditor::AnalyzeTextureStreaming(const UTexture2D* Texture, FAuditR
     
     if (!bIsStreaming && ShouldBeStreamed(Texture))
     {
-        FAuditIssue Issue;
-        Issue.ID = TEXT("NOT_STREAMING");
-        Issue.Type = EAuditIssueType::Warning;
-        Issue.Title = TEXT("Texture Not Streaming");
-        Issue.Description = TEXT("Large texture should be set up for streaming");
-        Issue.Severity = 0.6f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Should, TEXT("NOT_STREAMING"), TEXT("Large texture should be set up for streaming"));
     }
     
     // Check streaming settings (simplified for UE 5.6)
@@ -644,13 +558,7 @@ void FTextureAuditor::AnalyzeTextureStreaming(const UTexture2D* Texture, FAuditR
     if (bIsStreaming)
     {
         // Streaming analysis simplified for UE 5.6 compatibility
-        FAuditIssue Issue;
-        Issue.ID = TEXT("STREAMING_ENABLED");
-        Issue.Type = EAuditIssueType::Info;
-        Issue.Title = TEXT("Streaming Enabled");
-        Issue.Description = TEXT("Texture has streaming enabled");
-        Issue.Severity = 0.3f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Info, TEXT("STREAMING_ENABLED"), TEXT("Texture has streaming enabled"));
     }
 }
 
@@ -667,25 +575,13 @@ void FTextureAuditor::AnalyzeTextureUsage(const UTexture2D* Texture, FAuditResul
     if (Texture->LODGroup == TEXTUREGROUP_World)
     {
         // World textures should generally be optimized
-        FAuditIssue Issue;
-        Issue.ID = TEXT("WORLD_TEXTURE");
-        Issue.Type = EAuditIssueType::Info;
-        Issue.Title = TEXT("World Texture");
-        Issue.Description = TEXT("World texture detected - consider optimization for streaming");
-        Issue.Severity = 0.5f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Info, TEXT("WORLD_TEXTURE"), TEXT("World texture detected - consider optimization for streaming"));
     }
     
     if (Texture->LODGroup == TEXTUREGROUP_UI)
     {
         // UI textures should be optimized for immediate loading
-        FAuditIssue Issue;
-        Issue.ID = TEXT("UI_TEXTURE");
-        Issue.Type = EAuditIssueType::Info;
-        Issue.Title = TEXT("UI Texture");
-        Issue.Description = TEXT("UI texture detected - optimize for immediate loading");
-        Issue.Severity = 0.4f;
-        Result.AddIssue(Issue);
+        Result.AddIssue(EAuditIssueLevel::Info, TEXT("UI_TEXTURE"), TEXT("UI texture detected - optimize for immediate loading"));
     }
 }
 

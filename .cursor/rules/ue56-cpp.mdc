@@ -1,0 +1,249 @@
+# UE 5.6 C++ Coding Standards and Best Practices
+
+## 🎯 **Scope and Context**
+
+**Target**: All C++ source files in Unreal Engine 5.6 projects
+**Engine**: Unreal Engine **5.6** - Follow Epic C++ Coding Standard and **IWYU**
+**Build System**: Use UBT targets/modules and `.Build.cs` correctly - NEVER add CMake files
+
+## 🏗️ **Core Conventions**
+
+### **UE Types and Includes**
+```cpp
+// ✅ CORRECT: Always use GENERATED_BODY() in UE types
+UCLASS()
+class MAGICOPTIMIZER_API UMyClass : public UObject
+{
+    GENERATED_BODY()
+public:
+    // Implementation
+};
+
+// ✅ CORRECT: Put *.generated.h LAST in includes for each header
+#include "CoreMinimal.h"
+#include "Engine/Engine.h"
+#include "MyOtherClass.h"
+#include "MyClass.generated.h"  // ALWAYS LAST
+
+// ✅ CORRECT: Prefer forward declarations, include only what you use (IWYU)
+class UTexture2D;
+class UMaterial;
+```
+
+### **UE Container Types**
+```cpp
+// ✅ CORRECT: Prefer UE types over std types
+TArray<FString> Names;
+TMap<FName, int32> NameToIndex;
+TSharedPtr<class UMyClass> SharedInstance;
+TUniquePtr<class FMyData> UniqueData;
+FString DisplayName;
+FName ObjectName;
+
+// ❌ AVOID: std:: types unless required for interop
+std::vector<std::string> Names; // Only use when interfacing with third-party
+```
+
+### **Reflection Annotations**
+```cpp
+// ✅ CORRECT: Use UPROPERTY for GC/Reflection/Replication/Editor exposure
+UCLASS()
+class MAGICOPTIMIZER_API UMyComponent : public UActorComponent
+{
+    GENERATED_BODY()
+    
+public:
+    // ✅ CORRECT: UPROPERTY for UObject references (GC participation)
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    TObjectPtr<UTexture2D> MyTexture;
+    
+    // ✅ CORRECT: UPROPERTY for editor exposure
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+    float MaxDistance = 100.0f;
+    
+    // ✅ CORRECT: UFUNCTION for Blueprint/RPC/Reflection
+    UFUNCTION(BlueprintCallable, Category = "My Component")
+    void DoSomething();
+    
+private:
+    // ✅ CORRECT: Plain C++ - no annotation needed
+    int32 InternalCounter;
+    bool bIsInitialized;
+};
+
+// ❌ WRONG: Don't annotate plain C++ that doesn't need reflection
+class FMyUtility  // Plain C++ class
+{
+private:
+    // ❌ WRONG: UPROPERTY on non-UObject class
+    // UPROPERTY() int32 Value;
+    
+    // ✅ CORRECT: Plain C++ member
+    int32 Value;
+};
+```
+
+### **Logging Standards**
+```cpp
+// ✅ CORRECT: Use UE_LOG with module-specific categories
+DECLARE_LOG_CATEGORY_EXTERN(LogMagicOptimizer, Log, All);
+
+// In implementation:
+UE_LOG(LogMagicOptimizer, Log, TEXT("Processing asset: %s"), *AssetName);
+UE_LOG(LogMagicOptimizer, Warning, TEXT("Performance issue detected"));
+UE_LOG(LogMagicOptimizer, Error, TEXT("Critical failure in %s"), *FunctionName);
+
+// ❌ AVOID: Generic LogTemp for production code
+UE_LOG(LogTemp, Log, TEXT("Debug message")); // Only for temporary debugging
+```
+
+## 🔨 **Build System Integration**
+
+### **Module Dependencies**
+```cpp
+// ✅ CORRECT: Minimal dependencies in .Build.cs
+PublicDependencyModuleNames.AddRange(new string[] {
+    "Core",
+    "CoreUObject", 
+    "Engine"
+});
+
+// ✅ CORRECT: Editor dependencies only when needed
+if (Target.bBuildEditor)
+{
+    PrivateDependencyModuleNames.AddRange(new string[] {
+        "UnrealEd",
+        "AssetRegistry"
+    });
+}
+```
+
+### **API Macros**
+```cpp
+// ✅ CORRECT: Use proper API macros for public symbols
+MAGICOPTIMIZER_API void PublicFunction();
+
+class MAGICOPTIMIZER_API FPublicClass
+{
+    // Public implementation
+};
+
+// ✅ CORRECT: No API macro for private/internal symbols
+void InternalFunction();
+```
+
+### **PCH and IWYU Compliance**
+```cpp
+// ✅ CORRECT: Include order in .cpp files
+#include "MyClass.h"          // Own header first
+#include "CoreMinimal.h"      // PCH header
+#include "Engine/Engine.h"    // Engine headers
+#include "OtherModuleClass.h" // Other module headers
+#include "LocalClass.h"       // Local headers
+
+// ✅ CORRECT: Enable IWYU compliance
+PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+```
+
+## 🎯 **Code Review Guidelines**
+
+### **Memory and Lifecycle Patterns**
+```cpp
+// ✅ CORRECT: Proper UObject pointer handling
+UPROPERTY()
+TObjectPtr<UTexture2D> SafeTextureRef;  // GC-safe
+
+// ❌ WRONG: Raw UObject pointers without UPROPERTY
+UTexture2D* UnsafeTextureRef;  // Can become dangling pointer
+
+// ✅ CORRECT: Constructor vs BeginPlay lifecycle
+class MAGICOPTIMIZER_API AMyActor : public AActor
+{
+public:
+    AMyActor()
+    {
+        // ✅ CORRECT: Component creation, default values
+        MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+        Health = 100.0f;
+    }
+    
+protected:
+    virtual void BeginPlay() override
+    {
+        Super::BeginPlay();
+        
+        // ✅ CORRECT: World interaction, initialization logic
+        if (UWorld* World = GetWorld())
+        {
+            // World is guaranteed to be valid here
+        }
+    }
+};
+```
+
+### **Threading and Async Safety**
+```cpp
+// ✅ CORRECT: Game thread safety checks
+void UMyClass::ModifyGameplayData()
+{
+    check(IsInGameThread()); // Ensure we're on game thread
+    
+    // Safe to modify UObjects and gameplay data
+    MyGameplayValue = NewValue;
+}
+
+// ✅ CORRECT: Async task with proper thread marshalling
+void UMyClass::ProcessDataAsync()
+{
+    AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [this]()
+    {
+        // Heavy computation on background thread
+        TArray<FString> ProcessedData = ProcessLargeDataSet();
+        
+        // Marshal back to game thread for UObject interaction
+        AsyncTask(ENamedThreads::GameThread, [this, ProcessedData]()
+        {
+            // Safe to interact with UObjects here
+            UpdateGameplayWithProcessedData(ProcessedData);
+        });
+    });
+}
+```
+
+## 📝 **Edit and Output Requirements**
+
+### **Code Generation Standards**
+- Show minimal, focused diffs with clear rationale
+- Include necessary `.Build.cs` changes when adding module dependencies
+- Ensure all generated code follows IWYU principles
+- Provide exact UBT command for compilation when relevant
+
+### **Build Commands**
+```bash
+# Development build command
+UnrealBuildTool.exe HostProjectEditor Win64 Development -project="Path/To/Project.uproject"
+
+# Generate clangd database
+UnrealBuildTool.exe -mode=GenerateClangDatabase -project="Path/To/Project.uproject" HostProjectEditor Win64 Development
+```
+
+### **Include Header Validation**
+- Verify `*.generated.h` is last in header includes
+- Ensure forward declarations are used where possible
+- Check that all included headers are actually used (IWYU compliance)
+- Validate proper API macro usage for public symbols
+
+## 🚫 **Common Anti-Patterns to Flag**
+
+1. **❌ Missing UPROPERTY on UObject references** - Will cause GC issues
+2. **❌ Heavy initialization in constructors** - Use BeginPlay for world interaction
+3. **❌ std:: containers for gameplay data** - Use UE containers (TArray, TMap, etc.)
+4. **❌ Missing API macros on public classes/functions** - Export will fail
+5. **❌ Threading violations** - UObject access from non-game threads
+6. **❌ Manual settings registration** - Use UDeveloperSettings auto-registration
+7. **❌ Incorrect include order** - PCH and generated headers must be positioned correctly
+
+description: Comprehensive UE 5.6 C++ coding standards focusing on Epic's conventions, IWYU compliance, proper reflection usage, build system integration, and common pitfall avoidance for professional Unreal Engine plugin development.
+globs: ["Source/**/*.h", "Source/**/*.cpp", "Plugins/**/*.h", "Plugins/**/*.cpp", "**/*.Build.cs", "**/*.uplugin", "**/*.uproject"]
+alwaysApply: false
+---

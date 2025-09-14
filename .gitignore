@@ -49,6 +49,7 @@ HostProject/Plugins/MagicOptimizer/Saved/
 .vs/
 .vscode/
 .vscode-test/
+compile_commands.json
 *.VC.db
 *.VC.db-wal
 *.VC.db-shm

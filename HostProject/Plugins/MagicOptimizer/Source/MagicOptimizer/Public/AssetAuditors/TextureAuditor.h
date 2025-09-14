@@ -6,8 +6,8 @@
 #include "Engine/TextureCube.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "AssetAuditors/IAssetAuditor.h"
-#include "AuditTypes/AuditConfig.h"
-#include "AuditTypes/AuditResult.h"
+#include "Model/AuditConfig.h"
+#include "Model/AuditResult.h"
 
 /**
  * Texture auditor implementation for analyzing texture assets

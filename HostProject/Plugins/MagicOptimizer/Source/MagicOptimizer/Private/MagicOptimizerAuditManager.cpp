@@ -11,6 +11,10 @@
 #include "AssetAuditors/StaticMeshAuditor.h"
 #include "AssetAuditors/MaterialAuditor.h"
 #include "AssetAuditors/BlueprintAuditor.h"
+#include "Model/AuditResult.h"
+#include "Model/OptimizationRecommendation.h"
+#include "Model/AuditConfig.h"
+#include "AssetAuditors/IAssetAuditor.h"
 
 // Static member definitions
 UMagicOptimizerAuditManager* UMagicOptimizerAuditManager::Instance = nullptr;
@@ -21,10 +25,7 @@ bool UMagicOptimizerAuditManager::bIsAuditRunning = false;
 float UMagicOptimizerAuditManager::CurrentProgress = 0.0f;
 FString UMagicOptimizerAuditManager::CurrentStatus = TEXT("Idle");
 
-// Event delegates
-FOnAuditProgress UMagicOptimizerAuditManager::OnAuditProgress;
-FOnAuditCompleted UMagicOptimizerAuditManager::OnAuditCompleted;
-FOnAuditFailed UMagicOptimizerAuditManager::OnAuditFailed;
+// Event delegates are now UPROPERTY members, no static definitions needed
 
 UMagicOptimizerAuditManager::UMagicOptimizerAuditManager()
 {
@@ -240,7 +241,7 @@ bool UMagicOptimizerAuditManager::StartAssetAudit(const FAuditConfig& Config)
             AssetAuditData.Issues = Result.Issues;
             AssetAuditData.Recommendations = Result.Recommendations;
             AssetAuditData.QualityScore = FMath::RoundToInt(Result.GetOptimizationScore() * 100.0f);
-            AssetAuditData.MemoryUsageMB = Result.PerformanceMetrics.MemoryUsageMB;
+            AssetAuditData.MemoryUsageMB = FCString::Atof(*Result.Context.FindRef(TEXT("MemoryUsageMB"), TEXT("0.0")));
             
             ProgressManager->AddAssetResult(AssetAuditData);
         }
@@ -693,7 +694,7 @@ FAuditResult UMagicOptimizerAuditManager::ProcessAssetForAudit(const FAssetData&
         
         Result.AddRecommendation(Recommendation);
         
-        Result.MarkCompleted();
+        // Analysis completed successfully
         MAGIC_LOG(General, FString::Printf(TEXT("Successfully processed asset: %s"), *AssetPath));
     }
     catch (...)
@@ -727,13 +728,19 @@ void UMagicOptimizerAuditManager::HandleAuditError(const FString& ErrorMessage)
     bIsAuditRunning = false;
     CurrentStatus = TEXT("Failed");
     
-    OnAuditFailed.Broadcast(ErrorMessage);
+    if (Instance)
+    {
+        Instance->OnAuditFailed.Broadcast(ErrorMessage);
+    }
 }
 
 void UMagicOptimizerAuditManager::UpdateAuditProgress(float Progress)
 {
     CurrentProgress = FMath::Clamp(Progress, 0.0f, 1.0f);
-    OnAuditProgress.Broadcast(CurrentProgress);
+    if (Instance)
+    {
+        Instance->OnAuditProgress.Broadcast(CurrentProgress);
+    }
 }
 
 void UMagicOptimizerAuditManager::CompleteAudit()
@@ -742,7 +749,35 @@ void UMagicOptimizerAuditManager::CompleteAudit()
     CurrentProgress = 1.0f;
     CurrentStatus = TEXT("Completed");
     
-    OnAuditCompleted.Broadcast(AuditResults);
+    // Get instance and broadcast
+    if (Instance)
+    {
+        Instance->OnAuditCompleted.Broadcast(AuditResults);
+    }
     
     MAGIC_LOG(General, TEXT("Audit completed successfully"));
+}
+
+void UMagicOptimizerAuditManager::DispatchAuditResults(const TArray<FAuditResult>& Results)
+{
+    if (Instance)
+    {
+        Instance->OnAuditCompleted.Broadcast(Results);
+    }
+}
+
+void UMagicOptimizerAuditManager::DispatchProgress(float Value)
+{
+    if (Instance)
+    {
+        Instance->OnAuditProgress.Broadcast(Value);
+    }
+}
+
+void UMagicOptimizerAuditManager::DispatchError(const FString& Msg)
+{
+    if (Instance)
+    {
+        Instance->OnAuditFailed.Broadcast(Msg);
+    }
 }

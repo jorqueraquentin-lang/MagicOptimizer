@@ -52,7 +52,7 @@ private:
     TSharedPtr<class SWidget> MagicOptimizerWidget;
 
     // Strong references to prevent GC
-    TStrongObjectPtr<class UMagicOptimizerMainWidget> MainWidgetKeeper;
+    // TStrongObjectPtr<class UMagicOptimizerMainWidget> MainWidgetKeeper; // Replaced with Slate UI
     TStrongObjectPtr<class UMagicOptimizerUIDataManager> UIDataManagerKeeper;
 
     // NO SETTINGS REGISTRATION FUNCTIONS - This prevents duplicate registration

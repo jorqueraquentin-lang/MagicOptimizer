@@ -278,3 +278,50 @@ struct MAGICOPTIMIZER_API FAuditConfig
         return IncludePaths.Num() == 0;
     }
 };
+
+/**
+ * UI-specific audit configuration
+ * Bridge between UI expectations and the audit system
+ */
+USTRUCT(BlueprintType)
+struct MAGICOPTIMIZER_API FAuditUIConfig
+{
+    GENERATED_BODY()
+
+    FAuditUIConfig()
+        : bIncludeTextures(true)
+        , bIncludeMeshes(true)
+        , bIncludeMaterials(true)
+        , bIncludeAnimations(false)
+        , bIncludeAudio(false)
+        , MaxAssetsToProcess(1000)
+    {}
+
+    /** Include textures in audit */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Asset Types")
+    bool bIncludeTextures;
+
+    /** Include meshes in audit */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Asset Types")
+    bool bIncludeMeshes;
+
+    /** Include materials in audit */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Asset Types")
+    bool bIncludeMaterials;
+
+    /** Include animations in audit */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Asset Types")
+    bool bIncludeAnimations;
+
+    /** Include audio assets in audit */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Asset Types")
+    bool bIncludeAudio;
+
+    /** Maximum number of assets to process */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Performance")
+    int32 MaxAssetsToProcess;
+
+    /** Asset path filters */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Scope")
+    TArray<FString> AssetPathFilters;
+};
