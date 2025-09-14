@@ -279,12 +279,12 @@ void FMaterialAuditor::GeneratePlatformRecommendations(const UMaterialInterface*
         if (ShaderComplexity > 40.0f)
         {
             FOptimizationRecommendation Rec;
-            Rec.ID = TEXT("MOBILE_OPTIMIZATION");
+            Rec.RecommendationID = TEXT("MOBILE_OPTIMIZATION");
             Rec.Title = TEXT("Mobile Optimization");
             Rec.Description = TEXT("Simplify material for mobile platforms");
             Rec.Priority = EOptimizationPriority::High;
-            Rec.Type = EAuditOptimizationType::Performance;
-            Rec.EstimatedSavingsMB = 50.0f;
+            Rec.Category = EOptimizationCategory::Performance;
+            Rec.EstimatedMemorySavingsMB = 50.0f;
             Result.AddRecommendation(Rec);
         }
     }

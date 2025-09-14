@@ -297,7 +297,7 @@ struct MAGICOPTIMIZER_API FAuditResult
         float TotalSavings = 0.0f;
         for (const FOptimizationRecommendation& Rec : Recommendations)
         {
-            TotalSavings += Rec.EstimatedSavingsMB;
+            TotalSavings += Rec.EstimatedMemorySavingsMB;
         }
         return TotalSavings;
     }
@@ -316,7 +316,29 @@ struct MAGICOPTIMIZER_API FAuditResult
         float TotalScore = 0.0f;
         for (const FOptimizationRecommendation& Rec : Recommendations)
         {
-            TotalScore += Rec.GetTotalImpactScore();
+            // Calculate impact score based on priority and estimated savings
+            float ImpactScore = 0.0f;
+            switch (Rec.Priority)
+            {
+                case EOptimizationPriority::Low:
+                    ImpactScore = 0.25f;
+                    break;
+                case EOptimizationPriority::Medium:
+                    ImpactScore = 0.5f;
+                    break;
+                case EOptimizationPriority::High:
+                    ImpactScore = 0.75f;
+                    break;
+                case EOptimizationPriority::Critical:
+                    ImpactScore = 1.0f;
+                    break;
+            }
+            
+            // Factor in estimated savings
+            float SavingsFactor = FMath::Clamp(Rec.EstimatedMemorySavingsMB / 100.0f, 0.0f, 1.0f);
+            ImpactScore *= (0.5f + 0.5f * SavingsFactor);
+            
+            TotalScore += ImpactScore;
         }
         
         return FMath::Clamp(TotalScore / Recommendations.Num(), 0.0f, 1.0f);
@@ -395,7 +417,7 @@ struct MAGICOPTIMIZER_API FAuditResult
             Report += TEXT("=== OPTIMIZATION RECOMMENDATIONS ===\n");
             for (const FOptimizationRecommendation& Rec : Recommendations)
             {
-                Report += FString::Printf(TEXT("- %s\n"), *Rec.GetSummary());
+                Report += FString::Printf(TEXT("- %s\n"), *Rec.GetSummaryString());
             }
             Report += TEXT("\n");
         }

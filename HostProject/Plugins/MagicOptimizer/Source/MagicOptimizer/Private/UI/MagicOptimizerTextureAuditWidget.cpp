@@ -610,7 +610,7 @@ void UMagicOptimizerTextureAuditWidget::UpdateStatistics()
         
         for (const FOptimizationRecommendation& Rec : Result.Recommendations)
         {
-            EstimatedMemorySaved += Rec.EstimatedSavingsMB;
+            EstimatedMemorySaved += Rec.EstimatedMemorySavingsMB;
         }
     }
     
@@ -675,7 +675,7 @@ void UMagicOptimizerTextureAuditWidget::UpdateIssueDetails(UTextureAuditIssueIte
         for (int32 i = 0; i < InSelectedItem->Recommendations.Num(); ++i)
         {
             if (i > 0) RecommendationsText += TEXT("\n");
-            RecommendationsText += FString::Printf(TEXT("• %s (Savings: %.1f MB)"), *InSelectedItem->Recommendations[i].Title, InSelectedItem->Recommendations[i].EstimatedSavingsMB);
+            RecommendationsText += FString::Printf(TEXT("• %s (Savings: %.1f MB)"), *InSelectedItem->Recommendations[i].Title, InSelectedItem->Recommendations[i].EstimatedMemorySavingsMB);
         }
         SelectedAssetRecommendationsText->SetText(FText::FromString(RecommendationsText));
     }

@@ -2,325 +2,392 @@
 
 #include "CoreMinimal.h"
 #include "Engine/Engine.h"
-#include "PerformanceMetrics.h"
 #include "OptimizationRecommendation.generated.h"
 
 /**
- * Priority levels for optimization recommendations
+ * Enumeration for optimization recommendation priority levels
  */
 UENUM(BlueprintType)
 enum class EOptimizationPriority : uint8
 {
-    Low         UMETA(DisplayName = "Low"),
-    Medium      UMETA(DisplayName = "Medium"),
-    High        UMETA(DisplayName = "High"),
-    Critical    UMETA(DisplayName = "Critical")
+    /** Low priority - minor optimization */
+    Low UMETA(DisplayName = "Low"),
+    
+    /** Medium priority - moderate optimization */
+    Medium UMETA(DisplayName = "Medium"),
+    
+    /** High priority - significant optimization */
+    High UMETA(DisplayName = "High"),
+    
+    /** Critical priority - major optimization required */
+    Critical UMETA(DisplayName = "Critical")
 };
 
 /**
- * Types of optimization recommendations
+ * Enumeration for optimization recommendation categories
  */
 UENUM(BlueprintType)
-enum class EAuditOptimizationType : uint8
+enum class EOptimizationCategory : uint8
 {
-    Memory      UMETA(DisplayName = "Memory"),
+    /** Memory optimization */
+    Memory UMETA(DisplayName = "Memory"),
+    
+    /** Performance optimization */
     Performance UMETA(DisplayName = "Performance"),
-    Quality     UMETA(DisplayName = "Quality"),
+    
+    /** Quality optimization */
+    Quality UMETA(DisplayName = "Quality"),
+    
+    /** Size optimization */
+    Size UMETA(DisplayName = "Size"),
+    
+    /** Compatibility optimization */
     Compatibility UMETA(DisplayName = "Compatibility"),
-    Workflow    UMETA(DisplayName = "Workflow"),
-    BestPractice UMETA(DisplayName = "Best Practice")
+    
+    /** Workflow optimization */
+    Workflow UMETA(DisplayName = "Workflow")
 };
 
 /**
- * Optimization recommendation for asset improvement
- * Provides specific suggestions for optimizing assets based on audit results
+ * Comprehensive optimization recommendation structure for asset improvements.
+ * 
+ * This structure provides detailed recommendations for optimizing assets,
+ * including priority levels, estimated benefits, and implementation details.
  */
 USTRUCT(BlueprintType)
 struct MAGICOPTIMIZER_API FOptimizationRecommendation
 {
     GENERATED_BODY()
 
-    FOptimizationRecommendation()
-    {
-        Priority = EOptimizationPriority::Medium;
-        Type = EAuditOptimizationType::Performance;
-        Confidence = 0.5f;
-        EstimatedSavingsMB = 0.0f;
-        EstimatedPerformanceGain = 0.0f;
-        EstimatedQualityImpact = 0.0f;
-        bRequiresRestart = false;
-        bRequiresRebuild = false;
-        bIsReversible = true;
-        bIsSafe = true;
-        bIsTested = false;
-    }
+    // ============================================================================
+    // BASIC INFORMATION
+    // ============================================================================
 
     /** Unique identifier for this recommendation */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity", meta = (DisplayName = "ID"))
-    FString ID;
+    UPROPERTY(BlueprintReadOnly, Category = "Basic Info", meta = (DisplayName = "ID"))
+    FString RecommendationID;
 
-    /** Short title for the recommendation */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Content", meta = (DisplayName = "Title"))
+    /** Title of the recommendation */
+    UPROPERTY(BlueprintReadOnly, Category = "Basic Info", meta = (DisplayName = "Title"))
     FString Title;
 
     /** Detailed description of the recommendation */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Content", meta = (DisplayName = "Description"))
+    UPROPERTY(BlueprintReadOnly, Category = "Basic Info", meta = (DisplayName = "Description"))
     FString Description;
 
+    /** Category of the optimization */
+    UPROPERTY(BlueprintReadOnly, Category = "Basic Info", meta = (DisplayName = "Category"))
+    EOptimizationCategory Category;
+
     /** Priority level of the recommendation */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Priority", meta = (DisplayName = "Priority"))
+    UPROPERTY(BlueprintReadOnly, Category = "Basic Info", meta = (DisplayName = "Priority"))
     EOptimizationPriority Priority;
 
-    /** Type of optimization */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Type", meta = (DisplayName = "Type"))
-    EAuditOptimizationType Type;
+    // ============================================================================
+    // IMPACT ESTIMATES
+    // ============================================================================
 
-    /** Confidence level (0.0 = low, 1.0 = high) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Confidence", meta = (DisplayName = "Confidence", ClampMin = "0.0", ClampMax = "1.0"))
-    float Confidence;
+    /** Estimated memory savings in megabytes */
+    UPROPERTY(BlueprintReadOnly, Category = "Impact Estimates", meta = (DisplayName = "Memory Savings (MB)"))
+    float EstimatedMemorySavingsMB;
 
-    /** Estimated memory savings in MB */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Impact", meta = (DisplayName = "Estimated Memory Savings (MB)"))
-    float EstimatedSavingsMB;
+    /** Estimated disk space savings in megabytes */
+    UPROPERTY(BlueprintReadOnly, Category = "Impact Estimates", meta = (DisplayName = "Disk Savings (MB)"))
+    float EstimatedDiskSavingsMB;
 
-    /** Estimated performance gain (0.0 = no gain, 1.0 = maximum gain) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Impact", meta = (DisplayName = "Estimated Performance Gain", ClampMin = "0.0", ClampMax = "1.0"))
+    /** Estimated performance gain percentage (0-100) */
+    UPROPERTY(BlueprintReadOnly, Category = "Impact Estimates", meta = (DisplayName = "Performance Gain (%)"))
     float EstimatedPerformanceGain;
 
-    /** Estimated quality impact (-1.0 = quality loss, 0.0 = no change, 1.0 = quality gain) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Impact", meta = (DisplayName = "Estimated Quality Impact", ClampMin = "-1.0", ClampMax = "1.0"))
+    /** Estimated quality impact percentage (-100 to +100, negative = quality loss) */
+    UPROPERTY(BlueprintReadOnly, Category = "Impact Estimates", meta = (DisplayName = "Quality Impact (%)"))
     float EstimatedQualityImpact;
 
-    /** Specific action to take */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Action", meta = (DisplayName = "Action"))
-    FString Action;
+    /** Estimated time to implement in minutes */
+    UPROPERTY(BlueprintReadOnly, Category = "Impact Estimates", meta = (DisplayName = "Implementation Time (min)"))
+    int32 EstimatedImplementationTimeMinutes;
 
-    /** Parameters for the action */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Action", meta = (DisplayName = "Parameters"))
-    TMap<FString, FString> Parameters;
+    // ============================================================================
+    // IMPLEMENTATION DETAILS
+    // ============================================================================
 
-    /** Whether this recommendation requires a restart */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Requirements", meta = (DisplayName = "Requires Restart"))
-    bool bRequiresRestart;
+    /** Command or action to perform the optimization */
+    UPROPERTY(BlueprintReadOnly, Category = "Implementation", meta = (DisplayName = "Action Command"))
+    FString ActionCommand;
 
-    /** Whether this recommendation requires a rebuild */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Requirements", meta = (DisplayName = "Requires Rebuild"))
-    bool bRequiresRebuild;
+    /** Parameters for the action command */
+    UPROPERTY(BlueprintReadOnly, Category = "Implementation", meta = (DisplayName = "Action Parameters"))
+    TMap<FString, FString> ActionParameters;
+
+    /** Whether this recommendation can be applied automatically */
+    UPROPERTY(BlueprintReadOnly, Category = "Implementation", meta = (DisplayName = "Can Auto Apply"))
+    bool bCanAutoApply;
+
+    /** Whether this recommendation requires user confirmation */
+    UPROPERTY(BlueprintReadOnly, Category = "Implementation", meta = (DisplayName = "Requires Confirmation"))
+    bool bRequiresConfirmation;
 
     /** Whether this recommendation is reversible */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Safety", meta = (DisplayName = "Is Reversible"))
+    UPROPERTY(BlueprintReadOnly, Category = "Implementation", meta = (DisplayName = "Is Reversible"))
     bool bIsReversible;
 
-    /** Whether this recommendation is safe to apply */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Safety", meta = (DisplayName = "Is Safe"))
-    bool bIsSafe;
+    /** Backup information for reverting changes */
+    UPROPERTY(BlueprintReadOnly, Category = "Implementation", meta = (DisplayName = "Backup Info"))
+    FString BackupInfo;
 
-    /** Whether this recommendation has been tested */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Testing", meta = (DisplayName = "Is Tested"))
-    bool bIsTested;
+    // ============================================================================
+    // ADDITIONAL INFORMATION
+    // ============================================================================
 
-    /** Additional notes or warnings */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Notes", meta = (DisplayName = "Notes"))
-    FString Notes;
+    /** Detailed instructions for manual implementation */
+    UPROPERTY(BlueprintReadOnly, Category = "Additional Info", meta = (DisplayName = "Instructions"))
+    FString Instructions;
 
-    /** Related recommendations */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Relations", meta = (DisplayName = "Related Recommendations"))
-    TArray<FString> RelatedRecommendations;
+    /** Tips and best practices related to this recommendation */
+    UPROPERTY(BlueprintReadOnly, Category = "Additional Info", meta = (DisplayName = "Tips"))
+    FString Tips;
 
-    /** Dependencies (recommendations that must be applied first) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Relations", meta = (DisplayName = "Dependencies"))
-    TArray<FString> Dependencies;
+    /** Related documentation or help links */
+    UPROPERTY(BlueprintReadOnly, Category = "Additional Info", meta = (DisplayName = "Documentation Links"))
+    TArray<FString> DocumentationLinks;
 
-    /** Conflicts (recommendations that conflict with this one) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Relations", meta = (DisplayName = "Conflicts"))
-    TArray<FString> Conflicts;
+    /** Tags for categorizing and filtering recommendations */
+    UPROPERTY(BlueprintReadOnly, Category = "Additional Info", meta = (DisplayName = "Tags"))
+    TArray<FString> Tags;
 
-    /**
-     * Get priority as string
-     * @return Priority string
-     */
+    /** When this recommendation was created */
+    UPROPERTY(BlueprintReadOnly, Category = "Additional Info", meta = (DisplayName = "Created At"))
+    FDateTime CreatedAt;
+
+    /** When this recommendation was last updated */
+    UPROPERTY(BlueprintReadOnly, Category = "Additional Info", meta = (DisplayName = "Updated At"))
+    FDateTime UpdatedAt;
+
+    // ============================================================================
+    // CONSTRUCTOR
+    // ============================================================================
+
+    /** Default constructor */
+    FOptimizationRecommendation()
+        : RecommendationID(TEXT(""))
+        , Title(TEXT("No Recommendation"))
+        , Description(TEXT("No optimization recommendation available"))
+        , Category(EOptimizationCategory::Performance)
+        , Priority(EOptimizationPriority::Medium)
+        , EstimatedMemorySavingsMB(0.0f)
+        , EstimatedDiskSavingsMB(0.0f)
+        , EstimatedPerformanceGain(0.0f)
+        , EstimatedQualityImpact(0.0f)
+        , EstimatedImplementationTimeMinutes(0)
+        , ActionCommand(TEXT(""))
+        , bCanAutoApply(false)
+        , bRequiresConfirmation(true)
+        , bIsReversible(true)
+        , BackupInfo(TEXT(""))
+        , Instructions(TEXT(""))
+        , Tips(TEXT(""))
+        , CreatedAt(FDateTime::Now())
+        , UpdatedAt(FDateTime::Now())
+    {
+        // Generate a unique ID
+        RecommendationID = FString::Printf(TEXT("REC_%s"), *FGuid::NewGuid().ToString());
+    }
+
+    // ============================================================================
+    // UTILITY FUNCTIONS
+    // ============================================================================
+
+    /** Get the priority as a string */
     FString GetPriorityString() const
     {
         switch (Priority)
         {
-            case EOptimizationPriority::Low: return TEXT("Low");
-            case EOptimizationPriority::Medium: return TEXT("Medium");
-            case EOptimizationPriority::High: return TEXT("High");
-            case EOptimizationPriority::Critical: return TEXT("Critical");
-            default: return TEXT("Unknown");
+            case EOptimizationPriority::Low:
+                return TEXT("Low");
+            case EOptimizationPriority::Medium:
+                return TEXT("Medium");
+            case EOptimizationPriority::High:
+                return TEXT("High");
+            case EOptimizationPriority::Critical:
+                return TEXT("Critical");
+            default:
+                return TEXT("Unknown");
         }
     }
 
-    /**
-     * Get type as string
-     * @return Type string
-     */
-    FString GetTypeString() const
+    /** Get the category as a string */
+    FString GetCategoryString() const
     {
-        switch (Type)
+        switch (Category)
         {
-            case EAuditOptimizationType::Memory: return TEXT("Memory");
-            case EAuditOptimizationType::Performance: return TEXT("Performance");
-            case EAuditOptimizationType::Quality: return TEXT("Quality");
-            case EAuditOptimizationType::Compatibility: return TEXT("Compatibility");
-            case EAuditOptimizationType::Workflow: return TEXT("Workflow");
-            case EAuditOptimizationType::BestPractice: return TEXT("Best Practice");
-            default: return TEXT("Unknown");
+            case EOptimizationCategory::Memory:
+                return TEXT("Memory");
+            case EOptimizationCategory::Performance:
+                return TEXT("Performance");
+            case EOptimizationCategory::Quality:
+                return TEXT("Quality");
+            case EOptimizationCategory::Size:
+                return TEXT("Size");
+            case EOptimizationCategory::Compatibility:
+                return TEXT("Compatibility");
+            case EOptimizationCategory::Workflow:
+                return TEXT("Workflow");
+            default:
+                return TEXT("Unknown");
         }
     }
 
-    /**
-     * Get confidence as string
-     * @return Confidence string
-     */
-    FString GetConfidenceString() const
+    /** Get the estimated total savings in MB */
+    float GetTotalSavingsMB() const
     {
-        if (Confidence >= 0.9f) return TEXT("Very High");
-        if (Confidence >= 0.7f) return TEXT("High");
-        if (Confidence >= 0.5f) return TEXT("Medium");
-        if (Confidence >= 0.3f) return TEXT("Low");
-        return TEXT("Very Low");
+        return EstimatedMemorySavingsMB + EstimatedDiskSavingsMB;
     }
 
-    /**
-     * Get impact summary as string
-     * @return Impact summary string
-     */
-    FString GetImpactSummary() const
+    /** Get a formatted savings string */
+    FString GetSavingsString() const
     {
-        FString Summary = TEXT("");
+        float TotalSavings = GetTotalSavingsMB();
+        if (TotalSavings > 1024.0f)
+        {
+            return FString::Printf(TEXT("%.1f GB"), TotalSavings / 1024.0f);
+        }
+        else
+        {
+            return FString::Printf(TEXT("%.1f MB"), TotalSavings);
+        }
+    }
+
+    /** Get a formatted implementation time string */
+    FString GetImplementationTimeString() const
+    {
+        if (EstimatedImplementationTimeMinutes < 60)
+        {
+            return FString::Printf(TEXT("%d min"), EstimatedImplementationTimeMinutes);
+        }
+        else
+        {
+            int32 Hours = EstimatedImplementationTimeMinutes / 60;
+            int32 Minutes = EstimatedImplementationTimeMinutes % 60;
+            if (Minutes > 0)
+            {
+                return FString::Printf(TEXT("%d h %d min"), Hours, Minutes);
+            }
+            else
+            {
+                return FString::Printf(TEXT("%d h"), Hours);
+            }
+        }
+    }
+
+    /** Get a summary string for display */
+    FString GetSummaryString() const
+    {
+        return FString::Printf(TEXT("%s - %s (%s) - %s savings"),
+            *Title,
+            *GetPriorityString(),
+            *GetCategoryString(),
+            *GetSavingsString()
+        );
+    }
+
+    /** Get a detailed description string */
+    FString GetDetailedDescription() const
+    {
+        FString Detailed = Description;
         
-        if (EstimatedSavingsMB > 0.0f)
+        if (EstimatedMemorySavingsMB > 0.0f)
         {
-            Summary += FString::Printf(TEXT("Memory: %.2fMB "), EstimatedSavingsMB);
+            Detailed += FString::Printf(TEXT("\n\nMemory Savings: %.1f MB"), EstimatedMemorySavingsMB);
+        }
+        
+        if (EstimatedDiskSavingsMB > 0.0f)
+        {
+            Detailed += FString::Printf(TEXT("\nDisk Savings: %.1f MB"), EstimatedDiskSavingsMB);
         }
         
         if (EstimatedPerformanceGain > 0.0f)
         {
-            Summary += FString::Printf(TEXT("Performance: +%.1f%% "), EstimatedPerformanceGain * 100.0f);
+            Detailed += FString::Printf(TEXT("\nPerformance Gain: %.1f%%"), EstimatedPerformanceGain);
         }
         
-        if (FMath::Abs(EstimatedQualityImpact) > 0.01f)
+        if (EstimatedQualityImpact != 0.0f)
         {
             if (EstimatedQualityImpact > 0.0f)
             {
-                Summary += FString::Printf(TEXT("Quality: +%.1f%% "), EstimatedQualityImpact * 100.0f);
+                Detailed += FString::Printf(TEXT("\nQuality Improvement: +%.1f%%"), EstimatedQualityImpact);
             }
             else
             {
-                Summary += FString::Printf(TEXT("Quality: %.1f%% "), EstimatedQualityImpact * 100.0f);
+                Detailed += FString::Printf(TEXT("\nQuality Impact: %.1f%%"), EstimatedQualityImpact);
             }
         }
         
-        return Summary.TrimEnd();
-    }
-
-    /**
-     * Get safety summary as string
-     * @return Safety summary string
-     */
-    FString GetSafetySummary() const
-    {
-        FString Summary = TEXT("");
-        
-        if (!bIsSafe)
+        if (EstimatedImplementationTimeMinutes > 0)
         {
-            Summary += TEXT("⚠️ Not Safe ");
+            Detailed += FString::Printf(TEXT("\nImplementation Time: %s"), *GetImplementationTimeString());
         }
         
-        if (bRequiresRestart)
+        return Detailed;
+    }
+
+    /** Check if this recommendation is high priority */
+    bool IsHighPriority() const
+    {
+        return Priority == EOptimizationPriority::High || Priority == EOptimizationPriority::Critical;
+    }
+
+    /** Check if this recommendation is critical */
+    bool IsCritical() const
+    {
+        return Priority == EOptimizationPriority::Critical;
+    }
+
+    /** Get the priority color for UI display */
+    FLinearColor GetPriorityColor() const
+    {
+        switch (Priority)
         {
-            Summary += TEXT("🔄 Requires Restart ");
+            case EOptimizationPriority::Low:
+                return FLinearColor::Green;
+            case EOptimizationPriority::Medium:
+                return FLinearColor::Yellow;
+            case EOptimizationPriority::High:
+                return FLinearColor(1.0f, 0.5f, 0.0f, 1.0f); // Orange
+            case EOptimizationPriority::Critical:
+                return FLinearColor::Red;
+            default:
+                return FLinearColor::White;
         }
-        
-        if (bRequiresRebuild)
+    }
+
+    /** Add a tag to this recommendation */
+    void AddTag(const FString& Tag)
+    {
+        if (!Tags.Contains(Tag))
         {
-            Summary += TEXT("🔨 Requires Rebuild ");
+            Tags.Add(Tag);
         }
-        
-        if (!bIsReversible)
-        {
-            Summary += TEXT("⚠️ Not Reversible ");
-        }
-        
-        if (!bIsTested)
-        {
-            Summary += TEXT("🧪 Not Tested ");
-        }
-        
-        return Summary.TrimEnd();
     }
 
-    /**
-     * Check if this recommendation can be applied
-     * @return True if recommendation can be applied
-     */
-    bool CanBeApplied() const
+    /** Remove a tag from this recommendation */
+    void RemoveTag(const FString& Tag)
     {
-        return !ID.IsEmpty() && 
-               !Title.IsEmpty() && 
-               !Action.IsEmpty() && 
-               bIsSafe;
+        Tags.Remove(Tag);
     }
 
-    /**
-     * Check if this recommendation conflicts with another
-     * @param Other Other recommendation to check
-     * @return True if recommendations conflict
-     */
-    bool ConflictsWith(const FOptimizationRecommendation& Other) const
+    /** Check if this recommendation has a specific tag */
+    bool HasTag(const FString& Tag) const
     {
-        return Conflicts.Contains(Other.ID) || Other.Conflicts.Contains(ID);
+        return Tags.Contains(Tag);
     }
 
-    /**
-     * Check if this recommendation depends on another
-     * @param Other Other recommendation to check
-     * @return True if this recommendation depends on the other
-     */
-    bool DependsOn(const FOptimizationRecommendation& Other) const
+    /** Update the recommendation */
+    void UpdateRecommendation(const FString& NewTitle, const FString& NewDescription)
     {
-        return Dependencies.Contains(Other.ID);
-    }
-
-    /**
-     * Get total impact score (combination of all impacts)
-     * @return Total impact score
-     */
-    float GetTotalImpactScore() const
-    {
-        float MemoryScore = FMath::Clamp(EstimatedSavingsMB / 100.0f, 0.0f, 1.0f); // Normalize to 100MB
-        float PerformanceScore = EstimatedPerformanceGain;
-        float QualityScore = (EstimatedQualityImpact + 1.0f) * 0.5f; // Convert -1..1 to 0..1
-        
-        // Weighted average
-        return (MemoryScore * 0.4f + PerformanceScore * 0.4f + QualityScore * 0.2f);
-    }
-
-    /**
-     * Get recommendation summary as string
-     * @return Recommendation summary string
-     */
-    FString GetSummary() const
-    {
-        return FString::Printf(TEXT("[%s] %s - %s (Confidence: %s, Impact: %s)"),
-            *GetPriorityString(),
-            *Title,
-            *GetTypeString(),
-            *GetConfidenceString(),
-            *GetImpactSummary()
-        );
-    }
-
-    /**
-     * Create a copy of this recommendation with modified parameters
-     * @param NewParameters New parameters to apply
-     * @return New recommendation with modified parameters
-     */
-    FOptimizationRecommendation CreateCopyWithParameters(const TMap<FString, FString>& NewParameters) const
-    {
-        FOptimizationRecommendation Copy = *this;
-        Copy.Parameters = NewParameters;
-        return Copy;
+        Title = NewTitle;
+        Description = NewDescription;
+        UpdatedAt = FDateTime::Now();
     }
 };
+
+

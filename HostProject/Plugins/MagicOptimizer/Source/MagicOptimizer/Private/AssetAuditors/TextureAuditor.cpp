@@ -369,12 +369,12 @@ void FTextureAuditor::GeneratePlatformRecommendations(const UTexture2D* Texture,
         if (Width > 1024 || Height > 1024)
         {
             FOptimizationRecommendation Rec;
-            Rec.ID = TEXT("MOBILE_OPTIMIZATION");
+            Rec.RecommendationID = TEXT("MOBILE_OPTIMIZATION");
             Rec.Title = TEXT("Mobile Optimization");
             Rec.Description = TEXT("Reduce texture resolution for mobile platforms");
             Rec.Priority = EOptimizationPriority::High;
-            Rec.Type = EAuditOptimizationType::Performance;
-            Rec.EstimatedSavingsMB = 60.0f;
+            Rec.Category = EOptimizationCategory::Performance;
+            Rec.EstimatedMemorySavingsMB = 60.0f;
             Result.AddRecommendation(Rec);
         }
     }

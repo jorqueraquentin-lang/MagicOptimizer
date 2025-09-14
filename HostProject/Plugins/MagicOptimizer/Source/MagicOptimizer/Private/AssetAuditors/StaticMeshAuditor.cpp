@@ -281,12 +281,12 @@ void FStaticMeshAuditor::GeneratePlatformRecommendations(const UStaticMesh* Stat
         if (TotalTriangles > 10000)
         {
             FOptimizationRecommendation Rec;
-            Rec.ID = TEXT("MOBILE_OPTIMIZATION");
+            Rec.RecommendationID = TEXT("MOBILE_OPTIMIZATION");
             Rec.Title = TEXT("Mobile Optimization");
             Rec.Description = TEXT("Reduce polygon count for mobile platforms");
             Rec.Priority = EOptimizationPriority::High;
-            Rec.Type = EAuditOptimizationType::Performance;
-            Rec.EstimatedSavingsMB = 50.0f;
+            Rec.Category = EOptimizationCategory::Performance;
+            Rec.EstimatedMemorySavingsMB = 50.0f;
             Result.AddRecommendation(Rec);
         }
     }

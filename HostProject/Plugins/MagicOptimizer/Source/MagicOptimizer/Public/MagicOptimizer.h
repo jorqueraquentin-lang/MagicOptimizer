@@ -42,10 +42,18 @@ private:
     void RegisterMenus();
     TSharedRef<SDockTab> OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs);
     void OpenSettings();
+    
+    // Manager lifecycle management
+    class UMagicOptimizerUIDataManager* GetOrCreateUIDataManager();
+    void OnTabClosed(TSharedRef<SDockTab> Tab);
 
     TSharedPtr<class FUICommandList> PluginCommands;
     TSharedPtr<SDockTab> MagicOptimizerTab;
     TSharedPtr<class SWidget> MagicOptimizerWidget;
+
+    // Strong references to prevent GC
+    TStrongObjectPtr<class UMagicOptimizerMainWidget> MainWidgetKeeper;
+    TStrongObjectPtr<class UMagicOptimizerUIDataManager> UIDataManagerKeeper;
 
     // NO SETTINGS REGISTRATION FUNCTIONS - This prevents duplicate registration
     // UDeveloperSettings automatically handles all settings registration

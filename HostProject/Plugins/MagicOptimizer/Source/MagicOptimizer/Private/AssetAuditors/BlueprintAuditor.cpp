@@ -194,12 +194,12 @@ void FBlueprintAuditor::GeneratePlatformRecommendations(const UObject* Blueprint
     if (CurrentConfig.TargetPlatform.Contains(TEXT("Mobile")) || CurrentConfig.TargetPlatform.Contains(TEXT("Android")) || CurrentConfig.TargetPlatform.Contains(TEXT("iOS")))
     {
         FOptimizationRecommendation Rec;
-        Rec.ID = TEXT("MOBILE_OPTIMIZATION");
+        Rec.RecommendationID = TEXT("MOBILE_OPTIMIZATION");
         Rec.Title = TEXT("Mobile Optimization");
         Rec.Description = TEXT("Simplify blueprint for mobile platforms");
         Rec.Priority = EOptimizationPriority::High;
-        Rec.Type = EAuditOptimizationType::Performance;
-        Rec.EstimatedSavingsMB = 45.0f;
+        Rec.Category = EOptimizationCategory::Performance;
+        Rec.EstimatedMemorySavingsMB = 45.0f;
         Result.AddRecommendation(Rec);
     }
 }

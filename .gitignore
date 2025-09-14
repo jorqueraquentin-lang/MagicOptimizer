@@ -52,6 +52,7 @@ HostProject/Plugins/MagicOptimizer/Saved/
 *.VC.db
 *.VC.db-wal
 *.VC.db-shm
+*.vsidx
 *.suo
 *.user
 *.userprefs
@@ -173,7 +174,9 @@ Reports/
 # =============================================================================
 # CI AND DEVELOPMENT TOOLS
 # =============================================================================
-# CI artifacts (ephemeral) - keep only curated examples
+# CI artifacts (ephemeral) - keep only latest
+docs/ci/20250*
+!docs/ci/20250913_002045/
 Reports/ci/**
 !Reports/ci/example/**
 

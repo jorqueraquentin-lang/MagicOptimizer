@@ -1,5 +1,6 @@
 #include "MagicOptimizerAuditManager.h"
 #include "MagicOptimizerDiagnostics.h"
+#include "Core/MagicOptimizerProgressManager.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Engine/Engine.h"
 #include "Misc/FileHelper.h"
@@ -176,9 +177,25 @@ bool UMagicOptimizerAuditManager::StartAssetAudit(const FAuditConfig& Config)
     
     MAGIC_LOG(General, FString::Printf(TEXT("Found %d assets to audit"), AssetsToAudit.Num()));
     
+    // Get Progress Manager instance
+    UMagicOptimizerProgressManager* ProgressManager = nullptr;
+    if (GEngine && GWorld && GWorld->GetGameInstance())
+    {
+        ProgressManager = GWorld->GetGameInstance()->GetSubsystem<UMagicOptimizerProgressManager>();
+    }
+    
+    // Start progress tracking
+    if (ProgressManager)
+    {
+        ProgressManager->StartAuditProgress(AssetsToAudit.Num());
+    }
+    
     // Process assets
     CurrentStatus = TEXT("Processing assets");
     int32 ProcessedAssets = 0;
+    int32 AssetsWithIssues = 0;
+    int32 SuccessfulAssets = 0;
+    int32 FailedAssets = 0;
     
     for (const FAssetData& AssetData : AssetsToAudit)
     {
@@ -193,6 +210,41 @@ bool UMagicOptimizerAuditManager::StartAssetAudit(const FAuditConfig& Config)
         ProcessedAssets++;
         CurrentProgress = (float)ProcessedAssets / (float)AssetsToAudit.Num();
         
+        // Update counters based on result
+        if (Result.Issues.Num() > 0)
+        {
+            AssetsWithIssues++;
+        }
+        
+        if (Result.Status == EAuditStatus::Completed)
+        {
+            SuccessfulAssets++;
+        }
+        else if (Result.Status == EAuditStatus::Failed)
+        {
+            FailedAssets++;
+        }
+        
+        // Update Progress Manager
+        if (ProgressManager)
+        {
+            ProgressManager->UpdateProgress(ProcessedAssets, AssetsWithIssues, SuccessfulAssets, FailedAssets, AssetData.AssetName.ToString());
+            
+            // Create AssetAuditData and add to progress manager
+            FAssetAuditData AssetAuditData;
+            AssetAuditData.AssetName = AssetData.AssetName.ToString();
+            AssetAuditData.AssetPath = AssetData.GetObjectPathString(); // Use the new API
+            AssetAuditData.AssetType = TEXT("Texture"); // Default type, will be set by auditors
+            AssetAuditData.AuditStatus = Result.Status;
+            AssetAuditData.QualityLevel = EQualityLevel::Medium; // Default quality level
+            AssetAuditData.Issues = Result.Issues;
+            AssetAuditData.Recommendations = Result.Recommendations;
+            AssetAuditData.QualityScore = FMath::RoundToInt(Result.GetOptimizationScore() * 100.0f);
+            AssetAuditData.MemoryUsageMB = Result.PerformanceMetrics.MemoryUsageMB;
+            
+            ProgressManager->AddAssetResult(AssetAuditData);
+        }
+        
         // Update progress
         UpdateAuditProgress(CurrentProgress);
         
@@ -202,6 +254,12 @@ bool UMagicOptimizerAuditManager::StartAssetAudit(const FAuditConfig& Config)
             MAGIC_LOG(General, FString::Printf(TEXT("Processed %d/%d assets (%.1f%%)"), 
                 ProcessedAssets, AssetsToAudit.Num(), CurrentProgress * 100.0f));
         }
+    }
+    
+    // Complete progress tracking
+    if (ProgressManager)
+    {
+        ProgressManager->CompleteAuditProgress();
     }
     
     CompleteAudit();
@@ -226,6 +284,17 @@ void UMagicOptimizerAuditManager::StopAssetAudit()
     {
         MAGIC_LOG_WARNING(TEXT("No audit is currently running"), TEXT("StopAssetAudit"));
         return;
+    }
+    
+    // Cancel progress tracking
+    UMagicOptimizerProgressManager* ProgressManager = nullptr;
+    if (GEngine && GWorld && GWorld->GetGameInstance())
+    {
+        ProgressManager = GWorld->GetGameInstance()->GetSubsystem<UMagicOptimizerProgressManager>();
+        if (ProgressManager)
+        {
+            ProgressManager->CancelAuditProgress();
+        }
     }
     
     bIsAuditRunning = false;
@@ -614,14 +683,13 @@ FAuditResult UMagicOptimizerAuditManager::ProcessAssetForAudit(const FAssetData&
         // Basic asset analysis
         // Create a basic optimization recommendation
         FOptimizationRecommendation Recommendation;
-        Recommendation.ID = FString::Printf(TEXT("Asset_%d"), FDateTime::Now().GetTicks());
+        Recommendation.RecommendationID = FString::Printf(TEXT("Asset_%d"), FDateTime::Now().GetTicks());
         Recommendation.Title = TEXT("Asset Analysis Complete");
         Recommendation.Description = FString::Printf(TEXT("Successfully analyzed asset: %s"), *AssetPath);
-        Recommendation.EstimatedSavingsMB = 0.1f; // Small saving estimate
+        Recommendation.EstimatedMemorySavingsMB = 0.1f; // Small saving estimate
         Recommendation.Priority = EOptimizationPriority::Low;
-        Recommendation.Action = TEXT("No immediate action required");
-        Recommendation.Type = EAuditOptimizationType::Performance;
-        Recommendation.Confidence = 0.8f;
+        Recommendation.ActionCommand = TEXT("No immediate action required");
+        Recommendation.Category = EOptimizationCategory::Performance;
         
         Result.AddRecommendation(Recommendation);
         
